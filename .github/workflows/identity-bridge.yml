@@ -1,0 +1,56 @@
+name: TACIT 10 identity bridge
+on:
+  pull_request:
+    paths:
+      - 'tools/identity_bridge.py'
+      - 'tools/test_identity_bridge.py'
+      - '.github/workflows/identity-bridge.yml'
+      - 'data/dictionary.json'
+      - 'data/translation-geodesy.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p test_identity_bridge.py -v
+      - name: Resolve real Modular Star snapshot; emit Kuiper replay requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PYTHONPATH=tools python - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+          from modular_snapshot import metadata, unpack_snapshot, gh, PRODUCER, TAG, ASSET
+          from identity_bridge import resolve
+          with tempfile.TemporaryDirectory() as tmp:
+              p=Path(tmp)
+              before=metadata()
+              gh("release","download",TAG,"--repo",PRODUCER,"--pattern",ASSET,"--dir",str(p))
+              after=metadata()
+              db=p/"modular.sqlite"
+              hashes=unpack_snapshot(p/ASSET,db,before,after)
+              result=resolve(json.loads(Path("data/dictionary.json").read_text()),
+                  json.loads(Path("data/translation-geodesy.json").read_text()),
+                  db,hashes["database_sha256"])
+              result["producer_metadata"]=before
+              result["snapshot"]=hashes
+              Path("identity-bridge.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+              Path("kuiper-requests.json").write_text(json.dumps(result["kuiper_requests"],indent=2)+"\n")
+              print(json.dumps({k:v for k,v in result.items() if k not in ("entries","kuiper_requests")},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: identity-bridge
+          path: |
+            identity-bridge.json
+            kuiper-requests.json
+          if-no-files-found: error
+          retention-days: 30
