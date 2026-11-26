@@ -1,0 +1,82 @@
+name: TACIT 8 conversational execution
+on:
+  pull_request:
+    paths:
+      - 'tools/*retrieval.py'
+      - 'tools/*conversational_execution.py'
+      - '.github/workflows/conversational-execution.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  orient:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Development regression
+        run: |
+          python -m unittest discover -s tools -p 'test_*retrieval.py' -v
+          python -m unittest discover -s tools -p test_conversational_execution.py -v
+      - name: Acquire exact producer library, geodesy module and TACIT 10 receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/vedic-inputs" "$RUNNER_TEMP/vedic-results"
+          cd "$RUNNER_TEMP/vedic-inputs"
+          curl -fsSL --retry 2 --max-time 120 'https://raw.githubusercontent.com/Ventusltd/stars/ed657689ca187d8cd237f8f4bd3307a020a5eb8a/library/standalone.mjs' -o standalone.mjs
+          curl -fsSL --retry 2 --max-time 120 'https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-geodesy.js' -o geodesy.mjs
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15122992679/zip > identity.zip
+          echo '90550c70442a3d108f85c435aa5f4cf46e2a953933f79c9748d4a6ccd9406377  identity.zip' | sha256sum -c -
+          unzip -p identity.zip orient-identity.json > orient-identity.json
+          test -s orient-identity.json
+          printf '%s\n' '{"crs":"WGS84","unit":"degrees","point_a":{"longitude":0,"latitude":0},"point_b":{"longitude":1,"latitude":0}}' > points.json
+      - name: Run original module and intent compiler with networking disabled
+        run: |
+          set -euo pipefail
+          base="$RUNNER_TEMP/vedic-inputs"
+          dest="$RUNNER_TEMP/vedic-results"
+          receipt_sha="$(sha256sum "$base/orient-identity.json" | cut -d' ' -f1)"
+          run_intent () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" \
+              "$(command -v python)" tools/conversational_execution.py \
+              --dictionary data/dictionary.json --translations data/translation-geodesy.json \
+              --library "$base/standalone.mjs" --inputs "$base/points.json" \
+              --module "$base/geodesy.mjs" --receipt "$base/orient-identity.json" \
+              --receipt-sha "$receipt_sha" --instruction "$1" --output "$dest/$2.json"
+          }
+          run_intent 'Calculate the distance and initial bearing between two points' orient
+          run_intent 'Calculate the distance and initial bearing between two points' repeat
+          cmp "$dest/orient.json" "$dest/repeat.json"
+          run_intent 'Find the distance and heading between two locations' paraphrase
+          run_intent 'Find a road route distance and bearing' rejected
+          run_intent 'Select two assets in GridAtlas and calculate distance and bearing' asset-unverified
+          cp "$base/orient-identity.json" "$dest/"
+          python - <<'PY'
+          import json, os, math
+          from pathlib import Path
+          p=Path(os.environ["RUNNER_TEMP"])/"vedic-results"
+          for n in ("orient","paraphrase"):
+              r=json.loads((p/(n+".json")).read_text())
+              assert r["state"]=="EXECUTED_GIT_SOURCE_TIER"
+              assert r["curated_count"]==50 and r["compiled_count"]==766
+              assert not r["permanent_identity_complete"]
+              assert math.isclose(r["outputs"]["distance_km"],111.31949079327357,abs_tol=1e-9)
+              assert r["outputs"]["initial_bearing_deg"]==90
+              print(n,r["state"],r["outputs"])
+          for n in ("rejected","asset-unverified"):
+              r=json.loads((p/(n+".json")).read_text())
+              assert r["state"]=="ABSTAIN" and "outputs" not in r
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: conversational-execution-receipts
+          path: ${{ runner.temp }}/vedic-results/
+          if-no-files-found: error
