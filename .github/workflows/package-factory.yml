@@ -5,6 +5,7 @@ on:
       - 'packages/factory/**'
       - 'tools/package_factory.py'
       - 'tests/test_package_factory.py'
+      - 'tests/test_package_factory_second_family.py'
       - '.github/workflows/package-factory.yml'
 permissions:
   contents: read
@@ -42,6 +43,13 @@ jobs:
           PY
           curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o "$p/LICENSE"
           curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/vedic-/2adc1fa9c52f1d242e601b1580927996e7cb31da/tools/package_builder.py -o "$p/prototype.py"
+          q="$RUNNER_TEMP/factory-electrical"
+          mkdir -p "$q"
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/voltage-drop.js -o "$q/voltage-drop.mjs"
+          cp "$p/LICENSE" "$q/LICENSE"
+          for pair in adapter.mjs:adapter.mjs test.mjs:test.mjs README.md:electrical-readme.md; do
+            curl -fsSL --max-time 120 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/vedic-/53d893e877b2287dc45faec4db87e30f418c2b5e/packages/electrical/${pair%:*}" -o "$q/${pair#*:}"
+          done
       - name: Offline validation, negative tests, clean consumer and repeated builds
         run: |
           set -euo pipefail
@@ -61,7 +69,9 @@ jobs:
           cmp "$p/first-result.zip" "$p/second/package.zip"
           cmp "$e/build-receipt.json" "$p/repeat.json"
           unzip -p "$p/second/package.zip" manifest.json > "$e/manifest.json"
-          sha256sum "$p/second/package.zip"
+          echo "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787  $p/second/package.zip" | sha256sum -c -
+          offline tests/test_package_factory_second_family.py -v 2>&1 | tee "$e/second-family-contracts.txt"
+          offline tools/package_factory.py probe-pending-electrical --descriptor packages/factory/pending/electrical.json --inputs "$RUNNER_TEMP/factory-electrical" | tee "$e/electrical-pre-admission.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit1b-factory-evidence-only

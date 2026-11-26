@@ -1,0 +1,107 @@
+{
+  "schema": "vedic.package-descriptor.v1",
+  "candidate": "local:electrical:voltage-drop",
+  "name": "@ventus-internal/vedic-electrical",
+  "version": "0.1.0",
+  "runtime": "node-esm-18",
+  "family": "electrical",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "identity_tier": "GIT_SOURCE_VERIFIED_STARS_INCOMPLETE",
+  "licence": "BLOCKED_PRIVATE_UNLICENSED",
+  "exports": [
+    "annualLossKwh",
+    "dropPercent",
+    "lossesWatts",
+    "voltageDropVolts"
+  ],
+  "ports": {
+    "input": {
+      "mode": "ac-rms",
+      "phases": "three or single",
+      "currentA": "A RMS, positive",
+      "lengthM": "m one-way, positive",
+      "resistanceOhmPerKm": "ohm/km per conductor at operating conditions",
+      "resistanceBasis": "caller-specified-operating-resistance",
+      "reactanceOhmPerKm": "ohm/km per conductor, nonnegative",
+      "powerFactor": "fraction (0,1]",
+      "powerFactorBasis": "lagging-or-unity",
+      "nominalVoltageBasis": "line-to-line (three) or across-supply (single)",
+      "dropVolts": "V positive",
+      "nominalVolts": "V positive",
+      "peakLossWatts": "W positive",
+      "lossLoadFactor": "fraction (0,1]",
+      "hours": "h positive <=8784",
+      "factorBasis": "loss-load-factor"
+    },
+    "output": {
+      "voltageDropVolts": "producer result object, value V",
+      "dropPercent": "producer result object, value %",
+      "lossesWatts": "producer result object, value W",
+      "annualLossKwh": "producer result object, value kWh"
+    }
+  },
+  "dependencies": [],
+  "inputs": [
+    {
+      "role": "module",
+      "filename": "voltage-drop.mjs",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/voltage-drop.js",
+      "algorithm": "sha256",
+      "digest": "8c3d99ca10b0d02722b54c6da21ebf1acb77936fe440cbd413b457266a994287",
+      "output": "voltage-drop.mjs"
+    },
+    {
+      "role": "licence",
+      "filename": "LICENSE",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "LICENSE",
+      "algorithm": "git-blob-sha1",
+      "digest": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "output": "UPSTREAM-LICENSE"
+    },
+    {
+      "role": "adapter",
+      "filename": "adapter.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "53d893e877b2287dc45faec4db87e30f418c2b5e",
+      "path": "packages/electrical/adapter.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "e554f03e6b1d1e7ab2d522e0d3bd4cc43da2bbc6",
+      "output": "adapter.mjs"
+    },
+    {
+      "role": "consumer",
+      "filename": "test.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "53d893e877b2287dc45faec4db87e30f418c2b5e",
+      "path": "packages/electrical/test.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "048936fa5feaf1ad46b325daf39f580ac2b756c8",
+      "output": null
+    },
+    {
+      "role": "documentation",
+      "filename": "electrical-readme.md",
+      "repo": "Ventusltd/vedic-",
+      "commit": "53d893e877b2287dc45faec4db87e30f418c2b5e",
+      "path": "packages/electrical/README.md",
+      "algorithm": "git-blob-sha1",
+      "digest": "4c3218f740385fa41aadde048517832444fadafe",
+      "output": null
+    }
+  ],
+  "evidence": [
+    "https://github.com/Ventusltd/vedic-/pull/16",
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846624339"
+  ],
+  "obligations": [
+    "TACIT10 exact source receipt",
+    "TACIT13 import closure confirmation",
+    "independent package acceptance",
+    "licence clearance"
+  ],
+  "build": "reviewed-family-adapter-v1"
+}

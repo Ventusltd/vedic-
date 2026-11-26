@@ -15,6 +15,7 @@ import zipfile
 LIMIT = 2 * 1024 * 1024
 ROOT = Path(__file__).resolve().parents[1]
 ADMISSIONS = {"orient": ROOT / "packages/factory/admissions/orient.json"}
+PENDING = {"electrical": ROOT / "packages/factory/pending/electrical.json"}
 TOP = "schema candidate name version runtime family edition identity_tier licence exports ports dependencies inputs evidence obligations build".split()
 INPUT = "role filename repo commit path algorithm digest output".split()
 RESERVED = {"package.json", "manifest.json", "index.mjs", "README.md"}
@@ -136,6 +137,8 @@ def read_file(root, name):
     return raw
 
 def admit(d):
+    if isinstance(d,dict) and d.get("family") == "electrical" and "electrical" not in ADMISSIONS:
+        raise Refusal("SOURCE_RECEIPT_PENDING")
     validate(d)
     need(d["family"] in ADMISSIONS, "FAMILY_NOT_ADMITTED")
     trusted = validate(strict(ADMISSIONS[d["family"]].read_bytes()))
@@ -178,7 +181,76 @@ def orient_adapter(d, data):
     readme = values["README"].replace("research package 0.1.0","research package "+d["version"])
     return values["ADAPTER"].encode(), readme.encode(), scripts[0]
 
-ADAPTERS = {"orient": orient_adapter}
+def electrical_adapter(d, data):
+    # Only a future exact reviewed admission may reach this handler.
+    # Receipt schema/contents must be reviewed before lifting this gate.
+    need("receipt" in data, "SOURCE_RECEIPT_PENDING")
+    raise Refusal("ELECTRICAL_RECEIPT_REVIEW_REQUIRED")
+
+ELECTRICAL_INDEX = b"export {annualLossKwh, dropPercent, lossesWatts, voltageDropVolts} from './adapter.mjs';\n"
+
+def electrical_runtime(d, package, root, test_script):
+    """Run pinned peer tests unmodified plus both consumer import surfaces."""
+    test_path = package / "factory-peer-test.mjs"
+    need(not test_path.exists(), "TEST_PATH_COLLISION")
+    test_path.write_text(test_script, encoding="utf-8")
+    env = {"PATH":os.environ["PATH"]}
+    tap = subprocess.check_output(["node","--no-addons","--test",str(test_path)],
+                                  cwd=root,text=True,timeout=25,env=env)
+    total = re.search(r"(?m)^# tests (\d+)$",tap)
+    passed = re.search(r"(?m)^# pass (\d+)$",tap)
+    failed = re.search(r"(?m)^# fail (\d+)$",tap)
+    need(total and passed and failed and total.group(1)==passed.group(1)
+         and int(total.group(1))>=30 and failed.group(1)=="0", "ELECTRICAL_TEST_COUNT")
+    script = """import assert from 'node:assert/strict';
+import * as api from '@ventus-internal/vedic-electrical';
+import * as direct from './node_modules/@ventus-internal/vedic-electrical/index.mjs';
+assert.deepEqual(Object.keys(api).sort(),['annualLossKwh','dropPercent','lossesWatts','voltageDropVolts']);
+for(const key of Object.keys(api)) assert.equal(api[key],direct[key]);
+const wire={mode:'ac-rms',phases:'three',currentA:100,lengthM:1000,resistanceOhmPerKm:0.2,resistanceBasis:'caller-specified-operating-resistance'};
+const drop=api.voltageDropVolts({...wire,reactanceOhmPerKm:0,powerFactor:1,powerFactorBasis:'lagging-or-unity'});
+const loss=api.lossesWatts(wire);
+const annual=api.annualLossKwh({peakLossWatts:loss.value,lossLoadFactor:0.5,hours:8760,factorBasis:'loss-load-factor'});
+const percent=api.dropPercent({mode:'ac-rms',phases:'three',nominalVoltageBasis:'line-to-line',dropVolts:drop.value,nominalVolts:400});
+assert.ok(Math.abs(drop.value-34.64101615137755)<1e-10);
+assert.equal(loss.value,6000); assert.equal(annual.value,26280);
+assert.ok(Math.abs(percent.value-8.660254037844387)<1e-10);
+console.log(JSON.stringify({voltage_drop_V:drop.value,loss_W:loss.value,annual_loss_kWh:annual.value,drop_percent:percent.value}));
+"""
+    (root/"consumer.mjs").write_text(script,encoding="utf-8")
+    result = strict(subprocess.check_output(["node","--no-addons","consumer.mjs"],
+                    cwd=root,text=True,timeout=20,env=env).encode())
+    return {"state":"PACKAGE_DEVELOPMENT_CHECKS_PASS","peer_tests":int(total.group(1)),
+            "clean_imports":["direct","package-name"],"known_answer":result}
+
+def pending_electrical_probe(root):
+    """Separable development proof, never emits an archive or admission."""
+    d = strict(PENDING["electrical"].read_bytes())
+    need("electrical" not in ADMISSIONS, "PENDING_ALREADY_ADMITTED")
+    try:
+        admit(d)
+    except Refusal as e:
+        need(str(e)=="SOURCE_RECEIPT_PENDING", "WRONG_REFUSAL")
+    else:
+        raise Refusal("MISSING_RECEIPT_ACCEPTED")
+    data,pins=verified_inputs(d,root)
+    need(digest(data["module"],"git-blob-sha1")==
+         "85f48ecf7effabb47973b0a056f90e82b8196ef2","SOURCE_BLOB")
+    with tempfile.TemporaryDirectory(prefix="vedic-electrical-pending-") as tmp:
+        clean=Path(tmp)
+        package=clean/"node_modules"/d["name"]
+        package.mkdir(parents=True)
+        for name,raw in {"voltage-drop.mjs":data["module"],"adapter.mjs":data["adapter"],
+                         "index.mjs":ELECTRICAL_INDEX,
+                         "package.json":canonical({"name":d["name"],"type":"module","private":True,
+                                     "exports":{".":"./index.mjs"},"license":"UNLICENSED"})}.items():
+            (package/name).write_bytes(raw)
+        checks=electrical_runtime(d,package,clean,data["consumer"].decode("utf-8"))
+    return {"state":"PRE_ADMISSION_DEVELOPMENT_PROOF_ONLY","archive_produced":False,
+            "admission":"SOURCE_RECEIPT_PENDING","independent_acceptance":False,
+            "redistribution":"BLOCKED","input_pins":pins,"consumer_checks":checks}
+
+ADAPTERS = {"orient": orient_adapter, "electrical": electrical_adapter}
 
 def assemble(d, root):
     admit(d)
@@ -251,6 +323,8 @@ def run_consumer(d, raw, payload, script):
         with zipfile.ZipFile(io.BytesIO(raw)) as z:
             for name in payload:
                 (package/name).write_bytes(z.read(name))
+        if d["family"]=="electrical":
+            return electrical_runtime(d,package,root,script)
         expected=json.dumps(sorted(d["exports"]))
         prefix=("import assertFactory from 'node:assert/strict';\n"
                 "import * as directFactory from './node_modules/"+d["name"]+"/index.mjs';\n"
@@ -293,12 +367,17 @@ def build(d, root, out):
 
 def main():
     p=argparse.ArgumentParser()
-    p.add_argument("action",choices=["validate","build"])
+    p.add_argument("action",choices=["validate","build","probe-pending-electrical"])
     p.add_argument("--descriptor",type=Path,required=True)
     p.add_argument("--inputs",type=Path)
     p.add_argument("--out",type=Path)
     a=p.parse_args()
     try:
+        if a.action=="probe-pending-electrical":
+            need(a.inputs is not None and a.out is None,"CLI_ARGUMENTS")
+            need(a.descriptor.resolve()==PENDING["electrical"].resolve(),"PENDING_DESCRIPTOR")
+            print(canonical(pending_electrical_probe(a.inputs)).decode(),end="")
+            return
         d=admit(strict(read_file(a.descriptor.parent,a.descriptor.name)))
         if a.action=="validate":
             result={"state":"ADMITTED","descriptor_sha256":sha(canonical(d))}
