@@ -1,0 +1,45 @@
+{
+  "schema": "tacit3b.family-candidate.v1",
+  "status": "DEVELOPMENT_ONLY_PENDING_SHARED_FACTORY_AND_INDEPENDENT_ACCEPTANCE",
+  "family": "nearest-substation",
+  "package_name": "@ventus-internal/vedic-nearest",
+  "runtime": "Node >=18, ES modules",
+  "meaning_refs": [
+    "GG2050-VEDIC-000015",
+    "GG2050-VEDIC-000016"
+  ],
+  "new_ids": [],
+  "producer": {
+    "repo": "Ventusltd/ventus-grid-engine",
+    "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+    "source_files": {
+      "engine/v9-nearest-search.js": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+      "engine/v9-geodesy.js": "14023f06d4ef2ea806437863bd35dee954c46b11",
+      "package.json": "7b844504d5776d370b72efc42bef7f8ebae829df",
+      "LICENSE": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+    },
+    "export": "index(points).nearest(lon,lat,options)",
+    "dependency": "v9-nearest-search.js -> ./v9-geodesy.js; no external imports observed",
+    "rights": "Producer manifest private/UNLICENSED conflicts with Apache-2.0 root LICENSE; no software archive or original bytes committed or uploaded; evidence-only."
+  },
+  "contract": {
+    "function": "nearestSubstation",
+    "input": "{crs:'EPSG:4326',query:{longitude,latitude},records:[{id,name,location:{longitude,latitude},voltages_kv:[number]}],minimumKv?:number}",
+    "coordinates": "named decimal degrees, longitude [-180,180], latitude [-90,90]",
+    "metric": "spherical point-to-point distance, radius 6378.137 km",
+    "eligibility": "positive declared numeric kV, at least one >= minimumKv; empty array unknown and excluded",
+    "ties": "exact equal distance: first caller order (stable JS sort); no near-equality tolerance",
+    "output": "null or {id,distance_km}",
+    "bounds": "maximum 10000 records, unique string IDs, max 32 voltage values per record; malformed records rejected; nonfinite producer distance rejected",
+    "limitations": "Synthetic points only; no polygon boundary, route, capacity, connection feasibility, electrical topology or live selection claims."
+  },
+  "evidence": {
+    "stars": "unresolved",
+    "kuiper": "unresolved for this occurrence",
+    "source_sha256": "computed and recorded in CI; external receipt pending TACIT 10",
+    "spider": "data/nearest-spider.json, pinned consumer base 0ee52af60036f32358759a67836578dce6d7da51",
+    "fixture_provenance": "synthetic",
+    "licence_gate": "unresolved",
+    "factory_gate": "awaiting TACIT 1b shared descriptor schema"
+  }
+}
