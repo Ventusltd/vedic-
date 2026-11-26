@@ -1,7 +1,7 @@
 """Turn 17: bounded composition of existing VEDIC intent/coordinate resolver.
 No maths, arbitrary code generation, permanent IDs or admission changes.
 """
-import argparse, copy, json, math, re, sys, urllib.request
+import argparse, base64, copy, json, math, re, subprocess, sys, urllib.request
 from pathlib import Path
 from tacit_a_closure import blob, fetch, need, VEDIC
 from tacit_a_bonds import download
@@ -34,7 +34,16 @@ UNIT=r"(?: in (?:kilometres|kilometers|km) and degrees)?"
 def acquire(root):
     root.mkdir(parents=True,exist_ok=True)
     for name,pin in PINS.items():fetch(VEDIC,RESOLVER,"tools/"+name,pin,root/name)
-    for name,pin in DATA.items():fetch(VEDIC,BASE,"data/"+name,pin,root/name)
+    for name,pin in DATA.items():
+        # Prefer exact checked-out Git object; raw endpoint may transform large text.
+        local=Path(__file__).resolve().parents[1]/"data"/name
+        raw=local.read_bytes() if local.is_file() else b""
+        if blob(raw)!=pin:
+            obj=json.loads(subprocess.check_output(["gh","api","repos/"+VEDIC+"/git/blobs/"+pin],timeout=60))
+            need(obj["sha"]==pin and obj["encoding"]=="base64","DATA_OBJECT")
+            raw=base64.b64decode(obj["content"])
+        need(blob(raw)==pin,"DATA_BLOB:"+name)
+        (root/name).write_bytes(raw)
     with urllib.request.urlopen("https://raw.githubusercontent.com/Ventusltd/stars/"+LIB_COMMIT+"/library/standalone.mjs",timeout=60) as r:
         raw=r.read(10_000_001)
     need(len(raw)<=10_000_000 and blob(raw)==LIB_BLOB,"LIBRARY_PIN")
