@@ -7,7 +7,7 @@ import re
 from urllib.parse import urlsplit
 
 from validate_dictionary import require, validate, verify_source_entries
-from validate_v2_allocation import git_bytes
+from validate_v2_allocation import git_blob, git_bytes
 
 ROOT = Path(__file__).resolve().parents[1]
 DICTIONARY = "data/dictionary.json"
@@ -84,7 +84,10 @@ def main():
     epoch = subprocess.check_output(["git", "show", "-s", "--format=%ct", commit], cwd=ROOT, text=True)
     timestamp = datetime.fromtimestamp(int(epoch), timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     receipt = git_bytes(commit, DECISIONS)
-    require(receipt == (ROOT / DECISIONS).read_bytes(), "Review receipt differs from committed bytes")
+    working_blob = subprocess.check_output(
+        ["git", "hash-object", "--path", DECISIONS, DECISIONS], cwd=ROOT, text=True
+    ).strip()
+    require(git_blob(receipt) == working_blob, "Review receipt differs from committed bytes")
     current = allocate(base, json.loads(receipt)["batches"], commit, timestamp)
     translations = json.loads((ROOT / "data/translation-geodesy.json").read_bytes())
     validate(current, translations, base)
@@ -99,11 +102,11 @@ def main():
         from family_pulse import verify_extension
         queue = json.loads((ROOT / "data/daily-command-queue.json").read_bytes())
         published = json.loads(target.read_bytes())
-        from source_admissions import BASE as SOURCE_BASE, ARCHIVE, pinned, replay
+        from source_admissions import ARCHIVE, BASE as SOURCE_BASE, pinned, replay_published
         historical = pinned(SOURCE_BASE, DICTIONARY)
         verify_extension(current, historical, queue)
         archive = json.loads((ROOT / ARCHIVE).read_bytes())
-        require(replay(historical, archive) == published, "exact source-admission replay mismatch")
+        require(replay_published(historical, archive) == published, "exact source-admission replay mismatch")
         validate(published, translations, current)
         current = published
     print("Reviewed dictionary entries:", len(current["entries"]))
