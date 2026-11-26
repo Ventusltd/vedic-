@@ -1,6 +1,8 @@
 name: VEDIC anatomy checks
 on:
   pull_request:
+  push:
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,3 +21,37 @@ jobs:
       - run: python -m pip install playwright==1.56.0
       - run: python -m playwright install --with-deps chromium webkit
       - run: python tools/browser_smoke.py
+
+  publish:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: vedic-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Stage public dashboard only
+        run: |
+          mkdir -p _site/data
+          cp index.html _site/
+          cp data/anatomy.json data/translation-geodesy.json data/nearest-spider.json _site/data/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy validated dashboard
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Verify exact served dashboard files
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: python tools/verify_published.py
