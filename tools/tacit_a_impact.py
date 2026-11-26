@@ -5,6 +5,8 @@ from tacit_a_closure import canonical,sha,blob,fetch,need,GRID,COMMIT,MODULES,VE
 from tacit_a_index_grain import member,C_REPO,C_SHA,FAMILIES
 from tacit_a_bonds import download,identity,compatible,B_SHA
 from tacit_a_recovery import BOND_ZIP,BOND_SHA,source_guard,property_guard,relation_guard
+IMPACT_ZIP="ab7f89fb7b93a96db3a3d4c0dd0273dd41f17f11c641ba58dcbf258101aff5d0"
+IMPACT_SHA="b49b0cbf518a7b9095339871fad585958640003e860053cfcc03562150fa2592"
 REPAIR_ZIP="f2a66617149a4b51e95dbdc908dd78ea9ff5db94e9946e259ad297888d46d04f"
 REPAIR_SHA="e76464f5f4c70f25cf24b42ffa2ac199d5b8b3eced4189484fe5af159b1a211c"
 B_HEAD="827dc15ffebc236954ee4aa40ba0141cd7c23fa4"
@@ -191,4 +193,4 @@ if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("mode",choices=["acquire","verify","impact"]);p.add_argument("--root",type=Path);p.add_argument("--out",type=Path);p.add_argument("--manifest",type=Path);p.add_argument("--event",type=Path);a=p.parse_args()
     if a.mode=="acquire":acquire(a.root)
     elif a.mode=="verify":verify(a.root,a.out)
-    else:print(canonical(impact(json.loads(a.manifest.read_bytes()),json.loads(a.event.read_bytes()))).decode())
+    else:print(canonical(impact(member(a.manifest,IMPACT_ZIP,"impact.json",IMPACT_SHA),json.loads(a.event.read_bytes()))).decode())
