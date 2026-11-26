@@ -1,0 +1,9 @@
+# TACIT B fourth-turn integration
+
+Isolated consumer; no admission changes, publication, or source redistribution. Main baseline 0ee52af60036f32358759a67836578dce6d7da51. The CI jobs stage exact producer commits and replay their existing factory and browser commands, not competing implementations.
+
+- 1b factory 2ccc717933f97e7d191dae85360559a12de7ed21; 3b bond dd13013c5944ba94115f62f0eeac67c34956eb2c; 5b app 443312611ec1469fe2af173fc1c63e21bdf2e50f; 8 compiler 9330897d89214602077806a3915054b4afc301c5.
+- Existing nearest and electrical admission gates fail closed. The original full English instruction is passed to the existing compiler and must abstain. A separate explicit two-coordinate instruction resolves the actual VEDIC ORIENT graph and executes the exact admitted package via typed execution. The fixture expected nearest ID is used solely to test the existing lookup contract and never as a computational result.
+- Existing electrical pre-admission tests run unchanged. The engineering route length must be independently supplied in metres; geographic kilometres are not cable length. Power loss and annual energy loss are separate quantities; no new electrical admission claimed.
+- Browser staging adds a manual explicit-coordinate fallback, never a selection. It preserves both editions, existing tests and strict layout assertions, and adds a browser fallback test. No public app is deployed.
+- CI uploads evidence JSON and logs only. TACIT C can replay the exact workflow from this branch; the private package is rebuilt in clean offline network namespace from pinned inputs. No archive bytes distributed. Formal TACIT10/13 review and 1b admission remain necessary before true nearest composition.
