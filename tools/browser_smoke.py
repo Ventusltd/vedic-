@@ -132,6 +132,23 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             demo.get_by_role("button",name="RUN DEMONSTRATION").click()
                             assert demo.locator("#result").inner_text().startswith("Cannot run:")
                             demo.close()
+                        if page.locator("#prose-library").count():
+                            fixture = [{"id": f"FIXTURE-{i}", "software": "GridAtlas" if i < 100 else "VEDIC", "prose": ("Long English paragraph. " * 200 + "\n\nFinal paragraph.") if i == 0 else f"Test passage {i}", "status": "Synthetic test"} for i in range(101)]
+                            page.locator("#proseImport").set_input_files({"name":"fixture.json","mimeType":"application/json","buffer":json.dumps({"schema":"vedic.prose.catalogue.v1","records":fixture}).encode()})
+                            page.locator("#proseRows tr").first.wait_for()
+                            assert page.locator("#proseRows tr").count() == 100
+                            assert page.locator("#proseRows .prose-text").first.text_content() == fixture[0]["prose"]
+                            page.locator("#proseNext").click()
+                            assert page.locator("#proseRows tr").count() == 1
+                            page.locator("#proseSearch").fill("Final paragraph")
+                            assert page.locator("#proseRows tr").count() == 1
+                            page.locator("#proseRows summary").click()
+                            assert page.locator("#proseRows details").evaluate("(e) => e.open")
+                            page.locator("#proseFull").click()
+                            assert page.locator("#prose-library").evaluate("(e) => e.classList.contains('reading')")
+                            assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
+                            page.keyboard.press("Escape")
+                            assert not page.locator("#prose-library").evaluate("(e) => e.classList.contains('reading')")
                         assert not errors, errors
                         page.close()
                         passed += 1
