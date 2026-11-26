@@ -1,0 +1,96 @@
+{
+  "schema": "vedic.dictionary.v1",
+  "identity_reference": "https://github.com/Ventusltd/globalgrid2050/blob/b25a3387b31c7bb5a635bf029c47336bf834ecfb/automation/repd/build_v6.py",
+  "next_number": 7,
+  "entries": [
+    {
+      "number": 1,
+      "gg_id": "GG2050-VEDIC-000001",
+      "word": "MEASURE",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:distanceKm",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "distance_km",
+      "demo": "distance",
+      "state": "STATIC_SOURCE_REVIEW"
+    },
+    {
+      "number": 2,
+      "gg_id": "GG2050-VEDIC-000002",
+      "word": "REPRESENT",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:representativePoint",
+      "inputs": [
+        "geojson_geometry"
+      ],
+      "output": "coordinate_pair_or_null",
+      "demo": "point",
+      "state": "STATIC_SOURCE_REVIEW"
+    },
+    {
+      "number": 3,
+      "gg_id": "GG2050-VEDIC-000003",
+      "word": "VOLTAGE",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:voltagesKv",
+      "inputs": [
+        "voltage_properties"
+      ],
+      "output": "kilovolt_list",
+      "demo": "voltage",
+      "state": "STATIC_SOURCE_REVIEW"
+    },
+    {
+      "number": 4,
+      "gg_id": "GG2050-VEDIC-000004",
+      "word": "DESTINATION",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:destinationPoint",
+      "inputs": [
+        "coordinate_pair",
+        "distance_km",
+        "bearing_deg"
+      ],
+      "output": "coordinate_pair",
+      "demo": "destination",
+      "state": "STATIC_SOURCE_REVIEW"
+    },
+    {
+      "number": 5,
+      "gg_id": "GG2050-VEDIC-000005",
+      "word": "BEARING",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:initialBearingDeg",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "bearing_deg",
+      "demo": "bearing",
+      "state": "STATIC_SOURCE_REVIEW"
+    },
+    {
+      "number": 6,
+      "gg_id": "GG2050-VEDIC-000006",
+      "word": "ORIENT",
+      "kind": "COMPOSITION",
+      "purpose": "Measure straight-line distance and initial bearing between two points",
+      "components": [
+        "GG2050-VEDIC-000001",
+        "GG2050-VEDIC-000005"
+      ],
+      "composition_mode": "shared_inputs",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "distance_and_bearing",
+      "demo": "orient",
+      "state": "DEMO_CANDIDATE",
+      "limits": "Demonstration composition only; not navigation, access or an engineered route."
+    }
+  ]
+}
