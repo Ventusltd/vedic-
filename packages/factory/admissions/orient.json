@@ -1,0 +1,79 @@
+{
+  "schema": "vedic.package-descriptor.v1",
+  "candidate": "local:geodesy:orient",
+  "name": "@ventus-internal/vedic-geodesy",
+  "version": "0.2.0",
+  "runtime": "node-esm-18",
+  "family": "orient",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "identity_tier": "GIT_SOURCE_VERIFIED_STARS_INCOMPLETE",
+  "licence": "BLOCKED_PRIVATE_UNLICENSED",
+  "exports": [
+    "orient"
+  ],
+  "ports": {
+    "input": {
+      "crs": "WGS84",
+      "unit": "degrees",
+      "point_a": "named longitude latitude degrees",
+      "point_b": "named longitude latitude degrees"
+    },
+    "output": {
+      "distance_km": "km",
+      "initial_bearing_deg": "degrees"
+    }
+  },
+  "dependencies": [],
+  "inputs": [
+    {
+      "role": "module",
+      "filename": "module.mjs",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/v9-geodesy.js",
+      "algorithm": "sha256",
+      "digest": "af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb",
+      "output": "v9-geodesy.mjs"
+    },
+    {
+      "role": "receipt",
+      "filename": "receipt.json",
+      "repo": "Ventusltd/vedic-",
+      "commit": "70d08339226f052f0da64fcb1b7d59f53286b58c",
+      "path": "source-receipt/receipt.json",
+      "algorithm": "sha256",
+      "digest": "83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19",
+      "output": "source-receipt.json"
+    },
+    {
+      "role": "licence",
+      "filename": "LICENSE",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "LICENSE",
+      "algorithm": "git-blob-sha1",
+      "digest": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "output": "UPSTREAM-LICENSE"
+    },
+    {
+      "role": "prototype",
+      "filename": "prototype.py",
+      "repo": "Ventusltd/vedic-",
+      "commit": "2adc1fa9c52f1d242e601b1580927996e7cb31da",
+      "path": "tools/package_builder.py",
+      "algorithm": "git-blob-sha1",
+      "digest": "63849940adf32580e5c3aab4ea9dc2b36a35c319",
+      "output": null
+    }
+  ],
+  "evidence": [
+    "https://github.com/Ventusltd/vedic-/actions/runs/45844207110",
+    "https://github.com/Ventusltd/vedic-/actions/artifacts/15126683549"
+  ],
+  "obligations": [
+    "independent package acceptance",
+    "exact Stars occurrence",
+    "licence clearance"
+  ],
+  "build": "reviewed-family-adapter-v1"
+}
