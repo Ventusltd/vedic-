@@ -14,6 +14,19 @@ PAIRS={"orient":set(),"nearest-orient":{("nearestSubstation.id","selected_locati
                      ("lossesWatts.value","annualLossKwh.peakLossWatts")}}
 
 class PatternBridge(Bridge):
+    def __init__(self,f,t,space_type,manifest_raw,archive,build,nearest,nsources,esources):
+        super().__init__(f,t,space_type,manifest_raw,archive,copy.deepcopy(build),nearest,nsources,esources)
+        self._manifest_raw=manifest_raw
+        self._build_canonical=f.canonical(self.build)
+
+    def check_stage(self):
+        f=self.f
+        f.need(f.sha(self._manifest_raw)==MANIFEST and
+               f.canonical(self.manifest)==f.canonical(f.strict(self._manifest_raw)),"MANIFEST_STAGE_MUTATION")
+        f.need(f.sha(self.archive)==self.t.ARCHIVE and
+               f.canonical(self.build)==self._build_canonical,"FACTORY_STAGE_MUTATION")
+        f.need(set(f.ADMISSIONS)=={"orient"} and f.REVIEWED_RECEIPTS=={},"REGISTRY_MUTATED")
+
     def pattern(self,op):
         f=self.f;t=self.t;keys=self.keys(op)
         rows={str(x["kuiper"]["key"]):x for x in self.manifest["source_entries"]}

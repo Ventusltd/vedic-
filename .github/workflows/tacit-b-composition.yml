@@ -219,6 +219,18 @@ jobs:
           done
           cmp "$e/tacit-b1-patterns.json" "$RUNNER_TEMP/tacit-b1-repeat.json"
           sha256sum "$e/tacit-b1-patterns.json"
+      - name: B1 convergence context, vector oracle and decision packet (twice offline)
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          for out in "$e/tacit-b1-convergence.json" "$RUNNER_TEMP/tacit-b1-convergence-repeat.json"; do
+            offline tacit-b/tools/tacit_b_convergence.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --decision "$e/tacit-b-admission.json" --prior "$e/tacit-b1-patterns.json" --out "$out"
+          done
+          cmp "$e/tacit-b1-convergence.json" "$RUNNER_TEMP/tacit-b1-convergence-repeat.json"
+          sha256sum "$e/tacit-b1-convergence.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
