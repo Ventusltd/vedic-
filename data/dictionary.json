@@ -24,7 +24,13 @@
       "vedic_class_candidate": "Computation",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "function:geodesy:distanceKm",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a project or substation on the map and inspect nearby infrastructure distances.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 2,
@@ -46,7 +52,13 @@
       "vedic_class_candidate": "Data",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "function:geodesy:representativePoint",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a mapped asset and inspect its position. A representative coordinate need not be the centre of its land area.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 3,
@@ -68,7 +80,13 @@
       "vedic_class_candidate": "Data",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "function:geodesy:voltagesKv",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a mapped substation or voltage-labelled asset and inspect its voltage information.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 4,
@@ -92,7 +110,13 @@
       "vedic_class_candidate": "Computation",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "function:geodesy:destinationPoint",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Explore selected assets and their surrounding map. No separate destination-calculation control has been verified.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 5,
@@ -115,7 +139,13 @@
       "vedic_class_candidate": "Computation",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "function:geodesy:initialBearingDeg",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Explore selected assets and surrounding infrastructure. No separate bearing control has been verified.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 6,
@@ -144,7 +174,13 @@
       "vedic_class_candidate": "Computation",
       "created_utc": "2026-11-26T01:35:15Z",
       "sense_key": "composition:shared_inputs:GG2050-VEDIC-000001,GG2050-VEDIC-000005",
-      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a project or substation and inspect its surrounding infrastructure. A combined distance-and-bearing display is not verified.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 7,
@@ -184,7 +220,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/",
+        "instructions": "Open See Through and inspect mapped features; follow a feature destination link if offered.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 8,
@@ -224,7 +266,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/",
+        "instructions": "Open See Through and inspect its visual layer. Data validation and placement run internally when that layer loads.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 9,
@@ -264,7 +312,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "Solar Design Studio",
+        "url": "https://globalgrid2050.com/energy-transition-simulator/202609282123/overlay.html",
+        "instructions": "Open the terrain scene and move to terrain-covered ground. Binary terrain decoding is internal, not a separate button.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 10,
@@ -306,7 +360,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "Solar Design Studio",
+        "url": "https://globalgrid2050.com/energy-transition-simulator/202609282123/overlay.html",
+        "instructions": "Walk or fly over the terrain. Height sampling is internal to the scene; exact active implementation not confirmed.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 11,
@@ -347,7 +407,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "Solar Design Studio",
+        "url": "https://globalgrid2050.com/energy-transition-simulator/202609282123/overlay.html",
+        "instructions": "Move to ground with streamed LiDAR coverage and inspect any measured-height readout. No height is implied outside coverage.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 12,
@@ -387,7 +453,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a project or substation, open Vicinity and inspect the selected asset card.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 13,
@@ -429,7 +501,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a project or substation, open Vicinity and browse the surrounding assets using its swipe controls.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 14,
@@ -469,7 +547,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Search for a substation by name. Lookup-key normalisation is internal.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 15,
@@ -509,7 +593,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Search for a substation or select a mapped project. Index creation is internal, not a visible button.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 16,
@@ -551,7 +641,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Select a project or substation and inspect nearby infrastructure ranked by distance. This particular source module is not proven active.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 17,
@@ -592,7 +688,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "VENTUS Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/",
+        "instructions": "Explore the map measurement tools. If polygon measurement is available, draw a boundary and inspect its area.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 18,
@@ -634,7 +736,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "VENTUS Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/",
+        "instructions": "Explore the measurement tools. If a length tool is available, add successive points and inspect the total length.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     },
     {
       "number": 19,
@@ -675,7 +783,13 @@
       "tablet_id": null,
       "line_ids": null,
       "proof": null,
-      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved.",
+      "application": {
+        "name": "VENTUS Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/",
+        "instructions": "Explore the measurement tools. If a radius-circle tool is available, draw a circle and inspect its area.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      }
     }
   ],
   "resources": {
