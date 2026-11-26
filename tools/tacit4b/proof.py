@@ -15,8 +15,8 @@ f=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(f)
 name="@ventus-internal/vedic-solar-shape"
 payload={"structures.mjs":raw,"index.mjs":(here/"adapter.mjs").read_bytes(),
- "package.json":f.encoded({"name":name,"version":"0.1.0","type":"module","private":True,"license":"UNLICENSED","exports":{".":"./index.mjs"},"dependencies":{},"engines":{"node":">=18"}})}
-manifest={"schema":"tacit4b.development-evidence.v1","name":name,"source":{"repo":"Ventusltd/globalgrid2050","commit":"2f4b7cb82ee154fa3c684cba634d45f2183c6e7d","path":"energy-transition-simulator/202609282123/mod/engine/structures.mjs","blob":blob(raw),"sha256":sha(raw)},"export":"solarTableShape","source_export":"tableShape","identity_complete":False,"independent_acceptance":False,"redistribution":"BLOCKED","runtime":"Node >=18","runtime_dependencies":[],"scope":"South 2P portrait geometry, synthetic input, metres, not terrain, energy or engineering approval","factory_commit":"2adc1fa9c52f1d242e601b1580927996e7cb31da","files":{k:sha(v) for k,v in sorted(payload.items())}}
+ "package.json":f.encoded({"name":name,"version":"0.2.0","type":"module","private":True,"license":"UNLICENSED","exports":{".":"./index.mjs"},"dependencies":{},"engines":{"node":">=18"}})}
+manifest={"schema":"tacit4b.development-evidence.v1","name":name,"source":{"repo":"Ventusltd/globalgrid2050","commit":"2f4b7cb82ee154fa3c684cba634d45f2183c6e7d","path":"energy-transition-simulator/202609282123/mod/engine/structures.mjs","blob":blob(raw),"sha256":sha(raw)},"export":"solarTableShape","source_export":"tableShape","identity_complete":False,"independent_acceptance":False,"redistribution":"BLOCKED","runtime":"Node >=18","runtime_dependencies":[],"scope":"South 2P/3P portrait and 3L landscape geometry, synthetic input, metres, not terrain, energy or engineering approval","factory_commit":"2adc1fa9c52f1d242e601b1580927996e7cb31da","files":{k:sha(v) for k,v in sorted(payload.items())}}
 payload["manifest.json"]=f.encoded(manifest)
 archive=f.archive(payload)
 assert archive==f.archive(dict(reversed(list(payload.items()))))
@@ -34,7 +34,7 @@ with tempfile.TemporaryDirectory() as tmp:
     script=root/"consumer.mjs"
     script.write_bytes((here/"consumer.mjs").read_bytes())
     result=json.loads(subprocess.check_output(["node","--no-addons",str(script)],cwd=root,text=True,timeout=20))
-result.update(archive_sha256=sha(archive),archive_bytes=len(archive),reproducible=True,tamper_controls=3,independent_acceptance=False)
+result.update(source_sha256=sha(raw),archive_sha256=sha(archive),archive_bytes=len(archive),reproducible=True,tamper_controls=3,independent_acceptance=False)
 output.mkdir(parents=True,exist_ok=True)
 (output/"manifest.json").write_bytes(f.encoded(manifest))
 (output/"result.json").write_bytes(f.encoded(result))
