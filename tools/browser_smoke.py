@@ -27,7 +27,7 @@ def main():
                         page.get_by_role("button", name="Find nearby grid infrastructure").click()
                         page.get_by_text("03 / VEDIC functional language", exact=True).wait_for()
                         page.get_by_text("04 / Source dependency diagram", exact=True).wait_for()
-                        assert page.get_by_text("Measure distance between two geographic points", exact=True).count() == 1
+                        assert page.locator("#detail").get_by_text("Measure distance between two geographic points", exact=True).count() == 1
                         assert page.get_by_text("not loaded by the live Atlas", exact=False).count() == 1
                         assert page.get_by_role("link", name="Spider-compatible graph JSON").count() == 1
                         page.locator("#search").fill("vicinity")
@@ -40,6 +40,28 @@ def main():
                         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), "horizontal overflow"
                         page.get_by_role("button", name="GridAtlas", exact=True).click()
                         assert page.get_by_role("button", name="Find a place", exact=True).count() == 1
+                        page.locator("#dictRows tr").first.wait_for()
+                        assert page.locator("#dictRows tr").count() == 6
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "BEARING"
+                        page.locator("#dictSort").select_option("number")
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
+                        page.locator("#dictSearch").fill("ORIENT")
+                        assert page.locator("#dictRows tr").count() == 1
+                        assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
+                        page.locator("#dictSearch").fill("")
+                        links = page.locator("#dictRows a").evaluate_all("(els) => els.map(e => e.href)")
+                        assert len(links) == 6 and len(set(links)) == 6
+                        for demo_url in links:
+                            demo = browser.new_page(viewport={"width":width,"height":height})
+                            demo.goto(demo_url)
+                            demo.get_by_role("button",name="RUN DEMONSTRATION").wait_for()
+                            demo.get_by_role("button",name="RUN DEMONSTRATION").click(timeout=10000)
+                            result = demo.locator("#result").inner_text()
+                            assert result not in ("Ready","Loading…") and not result.startswith(("Cannot run","Demonstration unavailable")), result
+                            demo.locator("#args").fill("not JSON")
+                            demo.get_by_role("button",name="RUN DEMONSTRATION").click()
+                            assert demo.locator("#result").inner_text().startswith("Cannot run:")
+                            demo.close()
                         assert not errors, errors
                         page.close()
                         passed += 1
