@@ -22,6 +22,7 @@ BATCH = 100
 MAX_ADDITIONS = 20
 QUEUE = ROOT / "data/daily-command-queue.json"
 DICT = ROOT / "data/dictionary.json"
+ARCHIVE = ROOT / "data/admitted-queue-archive.json"
 
 def require(ok, message):
     if not ok:
@@ -50,49 +51,91 @@ def indexes(entries):
         senses.add(e["sense_key"])
     return words, symbols, families, senses
 
-def allocate(dictionary, queue, limit=MAX_ADDITIONS):
-    """Allocate only explicitly reviewed, pinned functions; no inferred semantics."""
+def allocate(dictionary, queue, limit=MAX_ADDITIONS, *, family_ids=None,
+             admitted=None, check_candidate=None):
+    """Isolate bad records; never allocate an ID before all checks pass."""
     require(queue["schema"] == "vedic.daily-command-queue.v1", "queue schema")
+    require(isinstance(queue["records"], list), "queue records")
     words, symbols, families, senses = indexes(dictionary["entries"])
     added, held = [], []
-    for c in queue["records"]:
-        require(c["decision"] == "REVIEWED_FOR_ADMISSION", "unreviewed command")
-        require(isinstance(c["family_refs"], list) and c["family_refs"] and
-                all(type(f) is int and f > 0 for f in c["family_refs"]), "family refs")
-        e = c["entry"]
-        name = key(e["word"])
-        sym = key(e["translation_ref"].rsplit(":", 1)[-1])
-        if not name or name in words or name in symbols or sym in words or sym in symbols or e["sense_key"] in senses or families.intersection(c["family_refs"]):
-            held.append({"word": e["word"], "reason": "existing word, symbol, sense or family; reconcile, do not duplicate"})
-            continue
+    for i, c in enumerate(queue["records"]):
         if limit is not None and len(added) >= limit:
             break
-        require(e["word"] == e["word"].upper(), "canonical command must be uppercase")
-        aliases=e.get("aliases", [])
-        require(isinstance(aliases,list) and all(isinstance(a,str) and key(a) for a in aliases), "invalid aliases")
-        require(len({key(e["word"]), *map(key,aliases)}) == len(aliases)+1, "duplicate aliases")
-        require(e["kind"] == "FUNCTION" and e["state"] == "STATIC_SOURCE_REVIEW" and e["demo"] is None, "unsupported admission")
-        require(len(e["word"]) <= 64 and len(e["purpose"]) <= 240, "command not compact")
-        require(e.get("application") and e["application"]["url"].startswith("https://"), "application/source reference")
-        require(not any(key(a) in words or key(a) in symbols for a in e.get("aliases", [])), "alias collision")
-        n = dictionary["next_number"]
-        row = dict(e, number=n, gg_id=f"GG2050-VEDIC-{n:06d}", modular_family_refs=sorted(set(c["family_refs"])))
+        word = f"queue record {i}"
+        try:
+            require(c["decision"] == "REVIEWED_FOR_ADMISSION", "unreviewed command")
+            refs = c["family_refs"]
+            require(isinstance(refs, list) and refs and
+                    all(type(f) is int and f > 0 for f in refs), "family refs")
+            require(family_ids is None or set(refs) <= family_ids, "unknown Modular Star family")
+            e = c["entry"]
+            word = e["word"]
+            name = key(word)
+            sym = key(e["translation_ref"].rsplit(":", 1)[-1])
+            require(name and sym and name not in words and name not in symbols and
+                    sym not in words and sym not in symbols and e["sense_key"] not in senses,
+                    "existing word, symbol or sense")
+            overlap = families.intersection(refs)
+            reason = c.get("family_overlap_reason")
+            require(not overlap or (isinstance(reason, str) and bool(reason.strip())),
+                    "mapped family requires explicit reviewed overlap rationale")
+            require(word == word.upper(), "canonical command must be uppercase")
+            aliases = e.get("aliases", [])
+            require(isinstance(aliases, list) and all(isinstance(a, str) and key(a) for a in aliases),
+                    "invalid aliases")
+            require(len({name, *map(key, aliases)}) == len(aliases)+1, "duplicate aliases")
+            require(e["kind"] == "FUNCTION" and e["state"] == "STATIC_SOURCE_REVIEW" and
+                    e["demo"] is None, "unsupported admission")
+            require(len(word) <= 64 and len(e["purpose"]) <= 240, "command not compact")
+            require(e.get("application") and e["application"]["url"].startswith("https://"),
+                    "application/source reference")
+            require(not any(key(a) in words or key(a) in symbols or key(a) == sym for a in aliases),
+                    "alias collision")
+            n = dictionary["next_number"]
+            row = dict(e, number=n, gg_id=f"GG2050-VEDIC-{n:06d}",
+                       modular_family_refs=sorted(set(refs)))
+            if check_candidate:
+                check_candidate(row)
+        except (ValueError, KeyError, TypeError, AttributeError, IndexError) as exc:
+            held.append({"index": i, "word": word if isinstance(word, str) else str(i),
+                         "reason": str(exc)})
+            continue
         dictionary["entries"].append(row)
         dictionary["next_number"] += 1
         added.append(row["gg_id"])
-        words.add(name); words.update(key(a) for a in e.get("aliases", []))
-        symbols.add(sym); families.update(c["family_refs"]); senses.add(e["sense_key"])
+        if admitted is not None:
+            admitted.append(i)
+        words.add(name)
+        words.update(key(a) for a in aliases)
+        symbols.add(sym)
+        families.update(refs)
+        senses.add(e["sense_key"])
     return added, held
 
-def verify_extension(historic, current, queue):
-    """Replay reviewed appended rows without changing any historic allocation."""
-    expected=copy.deepcopy(historic)
-    allocate(expected,queue,limit=None)
-    n=len(current["entries"])
-    require(len(historic["entries"])<=n<=len(expected["entries"]),"unreviewed extension length")
-    expected["entries"]=expected["entries"][:n]
-    expected["next_number"]=historic["next_number"]+n-len(historic["entries"])
-    require(expected==current,"dictionary differs from reviewed daily replay")
+def verify_extension(historic, current, archive):
+    """Exact, ordered replay of admitted records; pending items are not evidence."""
+    expected = copy.deepcopy(historic)
+    added, held = allocate(expected, archive, limit=None)
+    require(not held and len(added) == len(archive["records"]), "invalid admission archive")
+    require(expected == current, "dictionary differs from reviewed daily replay")
+
+def proposal_files(queue, archive, admitted):
+    require(archive["schema"] == queue["schema"], "archive schema")
+    indices = set(admitted)
+    require(len(indices) == len(admitted) and admitted == sorted(indices) and
+            all(type(i) is int and 0 <= i < len(queue["records"]) for i in indices),
+            "invalid admitted queue indices")
+    pending = dict(queue, records=[c for i, c in enumerate(queue["records"]) if i not in indices])
+    history = dict(archive, records=archive["records"] + [queue["records"][i] for i in admitted])
+    return pending, history
+
+def verify_proposal(prior, queue, archive, out):
+    indices = read(out / "admitted-indices.json")
+    pending, history = proposal_files(queue, archive, indices)
+    require(read(out / "daily-command-queue.json") == pending, "queue partition changed")
+    require(read(out / "admitted-queue-archive.json") == history, "archive prefix changed")
+    batch = dict(queue, records=[queue["records"][i] for i in indices])
+    verify_extension(prior, read(out / "dictionary.json"), batch)
 
 def asset_metadata():
     release = json.loads(subprocess.check_output(["gh","api",f"repos/{PRODUCER}/releases/tags/{TAG}"], timeout=30))
@@ -115,11 +158,13 @@ def acquire(directory):
     require(isinstance(d["families"],dict) and isinstance(d["family_by_hash"],dict), "producer schema")
     return d, before
 
-def family_rows(catalogue, entries, cursor):
+def family_rows(catalogue, entries, cursor, pass_number=1):
+    require(type(cursor) is int and cursor >= 0 and type(pass_number) is int and pass_number >= 1, "invalid cursor state")
     words, symbols, mapped, _ = indexes(entries)
     families = sorted((int(n), v) for n,v in catalogue["families"].items())
     require(families, "empty producer catalogue")
     unseen = [(n,v) for n,v in families if n > cursor]
+    wrapped = not unseen
     selected = (unseen or families)[:BATCH]
     rows = []
     for n,v in selected:
@@ -130,7 +175,7 @@ def family_rows(catalogue, entries, cursor):
         groups=sorted(p for p,words in PATTERNS.items() if terms.intersection(words))
         labels=sorted({tokens(name).upper() for name in names if tokens(name)})
         rows.append((n,json.dumps(names),int(v["repos"]),json.dumps(v.get("places",[])),status,json.dumps(possible),json.dumps(groups),json.dumps(labels)))
-    return rows, selected[-1][0], len(families)
+    return rows, selected[-1][0], len(families), pass_number + int(wrapped)
 
 def export_pulse(rows, out):
     import duckdb
@@ -146,28 +191,52 @@ def export_pulse(rows, out):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cursor",type=int,default=0)
+    parser.add_argument("--cursor", type=int, default=0)
+    parser.add_argument("--pass-number", type=int, default=1)
+    parser.add_argument("--verify-proposal", action="store_true")
     args = parser.parse_args()
-    d, queue = read(DICT), read(QUEUE)
-    prior = json.loads(json.dumps(d))
+    prior, queue, archive = read(DICT), read(QUEUE), read(ARCHIVE)
+    out = ROOT / "receipts"
+    admission = out / "admission"
+    if args.verify_proposal:
+        verify_proposal(prior, queue, archive, admission)
+        return
+    d = copy.deepcopy(prior)
     with tempfile.TemporaryDirectory(prefix="vedic-family-") as temp:
         catalogue, asset = acquire(Path(temp))
         family_ids = {int(n) for n in catalogue["families"]}
-        for c in queue["records"]:
-            require(set(c["family_refs"]) <= family_ids,"unknown Modular Star family")
-        added, held = allocate(d,queue)
-        if added:
-            validate(d,read(ROOT/"data/translation-geodesy.json"),prior)
-            verify_source_entries({"entries":[e for e in d["entries"] if e["gg_id"] in added]})
-            write(ROOT/"receipts/admission/dictionary.json",d)
-        rows, cursor, total = family_rows(catalogue,d["entries"],args.cursor)
-        out = ROOT/"receipts"
+        # Discovery is independent of pending admission validity.
+        rows, cursor, total, pass_number = family_rows(catalogue, prior["entries"],
+                                                       args.cursor, args.pass_number)
         out.mkdir(exist_ok=True)
-        export_pulse(rows,out/"family-pulse.parquet")
-        write(out/"family-research.json",{"schema":"vedic.daily-family-pulse.v1","producer_asset":asset,
-              "producer_family_count":total,"scanned_families":len(rows),"next_cursor":cursor,
-              "dictionary_count":len(d["entries"]),"added":added,"held":held,
-              "execution_claim":False,"coverage":"family candidates, not semantic or executable coverage"})
-        print(json.dumps({"added":added,"next_cursor":cursor,"family_count":total,"scanned_families":len(rows),"possible_existing":sum(r[4]=="POSSIBLE_EXISTING_COMMAND" for r in rows),"review_required":sum(r[4]=="REVIEW_REQUIRED" for r in rows),"parquet_bytes":(out/"family-pulse.parquet").stat().st_size}))
+        export_pulse(rows, out / "family-pulse.parquet")
+        translations = read(ROOT / "data/translation-geodesy.json")
+        def check_candidate(row):
+            candidate = dict(d, entries=d["entries"] + [row],
+                             next_number=d["next_number"] + 1)
+            validate(candidate, translations, prior)
+            verify_source_entries({"entries": [row]})
+        indices = []
+        added, held = allocate(d, queue, family_ids=family_ids, admitted=indices,
+                               check_candidate=check_candidate)
+        if added:
+            pending, history = proposal_files(queue, archive, indices)
+            write(admission / "dictionary.json", d)
+            write(admission / "daily-command-queue.json", pending)
+            write(admission / "admitted-queue-archive.json", history)
+            write(admission / "admitted-indices.json", indices)
+            verify_proposal(prior, queue, archive, admission)
+        write(out / "family-research.json", {
+            "schema": "vedic.daily-family-pulse.v2", "producer_asset": asset,
+            "producer_family_count": total, "scanned_families": len(rows),
+            "next_cursor": cursor, "pass_number": pass_number,
+            "wrapped": pass_number != args.pass_number, "pass_complete": cursor == max(family_ids),
+            "dictionary_count": len(prior["entries"]), "proposed_dictionary_count": len(d["entries"]),
+            "added": added, "held": held, "pending_count": len(queue["records"]) - len(indices),
+            "execution_claim": False, "coverage": "family candidates, not semantic or executable coverage"})
+        print(json.dumps({"added": added, "next_cursor": cursor, "pass_number": pass_number,
+                          "family_count": total, "scanned_families": len(rows),
+                          "parquet_bytes": (out / "family-pulse.parquet").stat().st_size}))
+
 if __name__ == "__main__":
     main()
