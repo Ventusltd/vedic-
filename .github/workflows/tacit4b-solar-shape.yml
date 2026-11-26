@@ -28,6 +28,8 @@ jobs:
           mkdir -p "$RUNNER_TEMP/tacit4b"
           curl -fsSL --max-time 60 https://raw.githubusercontent.com/Ventusltd/globalgrid2050/2f4b7cb82ee154fa3c684cba634d45f2183c6e7d/energy-transition-simulator/202609282123/mod/engine/structures.mjs -o "$RUNNER_TEMP/tacit4b/structures.mjs"
           gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_builder.py?ref=2adc1fa9c52f1d242e601b1580927996e7cb31da' > "$RUNNER_TEMP/tacit4b/factory.py"
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_factory.py?ref=050aa53d553eff6a7990fc0ed5f00623788babdd' > "$RUNNER_TEMP/tacit4b/shared_factory.py"
+          test "$(git hash-object "$RUNNER_TEMP/tacit4b/shared_factory.py")" = 9512aa3c6db77ea32d54619ed484119d3cb08d7d
           test "$(git hash-object "$RUNNER_TEMP/tacit4b/structures.mjs")" = 52619f60fea35e05d7634d760b7c19b6712f9b97
           test "$(git hash-object "$RUNNER_TEMP/tacit4b/factory.py")" = 63849940adf32580e5c3aab4ea9dc2b36a35c319
       - name: Offline clean consumer and deterministic archive proof
@@ -35,6 +37,11 @@ jobs:
           set -euo pipefail
           p="$RUNNER_TEMP/tacit4b"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" tools/tacit4b/proof.py "$p/structures.mjs" "$p/factory.py" "$p/evidence"
+      - name: Prove common factory refuses incomplete descriptor offline
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit4b"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" tools/tacit4b/descriptor_gate.py "$p/shared_factory.py" tools/tacit4b/descriptor.json "$p/structures.mjs" "$p/evidence/factory-refusal.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit4b-solar-shape-evidence-only

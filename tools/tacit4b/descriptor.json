@@ -1,0 +1,83 @@
+{
+  "schema": "vedic.package-descriptor.v1",
+  "candidate": "local:solar:table-shape",
+  "name": "@ventus-internal/vedic-solar-shape",
+  "version": "0.2.0",
+  "runtime": "node-esm-18",
+  "family": "solar-shape",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "identity_tier": "GIT_SOURCE_VERIFIED_STARS_INCOMPLETE",
+  "licence": "BLOCKED_PRIVATE_UNLICENSED",
+  "exports": [
+    "solarTableShape"
+  ],
+  "ports": {
+    "input": {
+      "unit": "m",
+      "layout": "south",
+      "tiers": "integer 2 or 3; 2 requires portrait",
+      "orient": "portrait or landscape; 3L supported",
+      "moduleLongM": "number metres, >= moduleShortM, <= 10",
+      "moduleShortM": "positive finite number metres",
+      "moduleGapM": "finite number metres, 0 to 1 inclusive",
+      "tableCols": "integer 1 to 10000, explicit",
+      "modulesPerString": "integer 1 to 10000; explicit, no electrical string validation"
+    },
+    "output": {
+      "tiers": "integer",
+      "orient": "portrait or landscape",
+      "along": "module side along row, m",
+      "up": "module side up slant, m",
+      "slope": "table slant length, m; not horizontal footprint",
+      "cols": "integer columns",
+      "modules": "integer panel count"
+    }
+  },
+  "dependencies": [],
+  "inputs": [
+    {
+      "role": "module",
+      "filename": "structures.mjs",
+      "repo": "Ventusltd/globalgrid2050",
+      "commit": "2f4b7cb82ee154fa3c684cba634d45f2183c6e7d",
+      "path": "energy-transition-simulator/202609282123/mod/engine/structures.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "52619f60fea35e05d7634d760b7c19b6712f9b97",
+      "output": "structures.mjs"
+    },
+    {
+      "role": "adapter",
+      "filename": "adapter.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "d769e409cf2c31ef2cd260aa9ca665c123bea88b",
+      "path": "tools/tacit4b/adapter.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "e9b079eb7931cb5040a03d2d5db1ab4e717a8bba",
+      "output": null
+    },
+    {
+      "role": "consumer",
+      "filename": "consumer.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "d769e409cf2c31ef2cd260aa9ca665c123bea88b",
+      "path": "tools/tacit4b/consumer.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "084da09c833125445828bdb9f1f9eb9e4a387854",
+      "output": null
+    }
+  ],
+  "evidence": [
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846608893",
+    "https://github.com/Ventusltd/vedic-/actions/artifacts/15130747784"
+  ],
+  "obligations": [
+    "TACIT10 receipt pin absent; required role intentionally omitted",
+    "licence provenance absent; required role intentionally omitted; blocked policy enum is not proof upstream private",
+    "TACIT13 import closure independent confirmation",
+    "upstream v12 identity unverified; archived source occurrence only",
+    "TACIT1b reviewed solar family handler and admission pending",
+    "TACIT9 independent acceptance pending",
+    "no energy yield, terrain, electrical string design or constructability claims"
+  ],
+  "build": "reviewed-family-adapter-v1"
+}

@@ -1,0 +1,28 @@
+{
+  "synthetic": true,
+  "export": "solarTableShape",
+  "input": {
+    "unit": "m",
+    "layout": "south",
+    "tiers": 3,
+    "orient": "landscape",
+    "moduleLongM": 2.384,
+    "moduleShortM": 1.134,
+    "moduleGapM": 0.02,
+    "tableCols": 12,
+    "modulesPerString": 30
+  },
+  "expected": {
+    "tiers": 3,
+    "orient": "landscape",
+    "along": 2.384,
+    "up": 1.134,
+    "slope": 3.442,
+    "cols": 12,
+    "modules": 36
+  },
+  "tolerance": {
+    "slope": 1e-12
+  },
+  "availability": "development-only; no admitted package"
+}
