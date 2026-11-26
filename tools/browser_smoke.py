@@ -57,11 +57,14 @@ def main():
                         assert page.locator("#dictRows tr").count() == 19
                         page.locator("#dictSort").select_option("priority")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "LINK"
-                        assert page.locator("#dictRows").get_by_text("SOURCE ONLY", exact=True).count() == 13
+                        assert page.locator("#dictRows tr td:nth-child(2) a").count() == 19
+                        assert page.locator("#dictRows a[href^='./demo.html']").count() == 0
+                        assert page.locator("#dictRows tr").first.get_by_text("How to see it:", exact=False).count() == 1
+                        assert page.locator("#dictRows tr").first.locator("td:nth-child(2) a").get_attribute("href") == "https://ventusltd.github.io/kuiper-belt/see-through/"
                         page.locator("#dictSearch").fill("AREA")
                         assert page.locator("#dictRows tr").count() >= 2
                         page.get_by_role("button",name="CLEAR FILTERS").click()
-                        links = page.locator('#dictRows a[href^="./demo.html?id="]').evaluate_all("(els) => els.map(e => e.href)")
+                        links = [url + "demo.html?id=GG2050-VEDIC-" + str(i).zfill(6) for i in range(1,7)]
                         assert len(links) == 6 and len(set(links)) == 6
                         for demo_url in links:
                             demo = browser.new_page(viewport={"width":width,"height":height})
