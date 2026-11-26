@@ -16,3 +16,6 @@ jobs:
       - run: python tools/validate_anatomy.py --online
       - run: python tools/validate_translation.py --online
       - run: python tools/validate_graph.py --online
+      - run: python -m pip install playwright==1.56.0
+      - run: python -m playwright install --with-deps chromium webkit
+      - run: python tools/browser_smoke.py
