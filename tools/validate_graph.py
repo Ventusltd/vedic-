@@ -46,9 +46,33 @@ def validate(g, reader=None):
     require(bool(seen), "empty graph")
     return len(nodes), len(seen)
 
+def occurrence_key(source):
+    # Physical source range, not a permanent Stars identity.
+    return tuple(source[k] for k in ("repo", "commit", "path", "blob", "first", "last"))
+
+def validate_aliases(graph, catalogue):
+    records = catalogue["records"]
+    by_id = {r["id"]: r for r in records}
+    by_occurrence = {occurrence_key(r["source"]): r["id"] for r in records}
+    require(len(by_id) == len(records) == len(by_occurrence), "duplicate catalogue occurrence")
+    standalone = set()
+    for n in graph["nodes"]:
+        key = occurrence_key(n["source"])
+        alias = n.get("catalogue_ref")
+        if key in by_occurrence:
+            require(alias == by_occurrence[key], "shared occurrence must reference catalogue")
+        else:
+            require(alias is None, "alias does not match exact source occurrence")
+            require(key not in standalone, "duplicate standalone graph occurrence")
+            standalone.add(key)
+    # Never use this count as global line/family coverage.
+    return len(by_occurrence) + len(standalone)
+
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--online", action="store_true")
     args = p.parse_args()
     graph = json.loads((ROOT / "data/nearest-spider.json").read_text())
     print("Static graph nodes / edges:", validate(graph, fetch if args.online else None))
+    catalogue = json.loads((ROOT / "data/translation-geodesy.json").read_text())
+    print("Distinct source ranges (not permanent line IDs):", validate_aliases(graph, catalogue))
