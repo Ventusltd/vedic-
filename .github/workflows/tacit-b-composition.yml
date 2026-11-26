@@ -207,6 +207,18 @@ jobs:
           e="$RUNNER_TEMP/factory-evidence"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_kuiper.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-kuiper.json"
           sha256sum "$e/tacit-b-kuiper.json"
+      - name: B1 reusable pattern and fresh typed executions (two offline replays)
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          for out in "$e/tacit-b1-patterns.json" "$RUNNER_TEMP/tacit-b1-repeat.json"; do
+            offline tacit-b/tools/tacit_b_patterns.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --electrical "$e/tacit-b-electrical.json" --decision "$e/tacit-b-admission.json" --out "$out"
+          done
+          cmp "$e/tacit-b1-patterns.json" "$RUNNER_TEMP/tacit-b1-repeat.json"
+          sha256sum "$e/tacit-b1-patterns.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
