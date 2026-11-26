@@ -92,7 +92,8 @@ def kuiper_join(s, receipt):
     space = receipt.get("summary",{}).get("wafer_address_space")
     ints = ("key","k0","lines_before","commit_lines_measured","commit_lines_wafer","blob_lines","wafer_row")
     valid = (r.get("verified") is True and r.get("on_wafer") is True and r.get("blob_matches_body") is True
-             and r.get("blob_at_path")==s["blob"] and r.get("repo_on_wafer")==q["repo"]
+             and r.get("blob_at_path")==s["blob"]
+             and isinstance(r.get("repo_on_wafer"), str) and r["repo_on_wafer"].casefold()==q["repo"].casefold()
              and not r.get("wafer_rows_same_sha12") and r.get("quote_matches") is not False
              and all(type(r.get(k)) is int and r[k]>=0 for k in ints)
              and type(space) is int and 0<=r["key"]<space
