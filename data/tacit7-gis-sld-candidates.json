@@ -1,0 +1,510 @@
+{
+  "schema": "vedic.candidate-receipt.v1",
+  "agent": "Tacit 7",
+  "estate_group": "GIS SLD Financial Sandbox",
+  "discipline": "Solar electrical design / financial modelling",
+  "classification_state": "CURATED_CANDIDATE",
+  "application": {
+    "url": "https://globalgrid2050.com/solar-bess-topology-v7/gis-sld-financial-sandbox/index.html",
+    "status": "ARCHIVED_HOMEPAGE_LISTING",
+    "runtime_verified": false
+  },
+  "source_activation_evidence": [
+    {
+      "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/index.html",
+      "blob": "fbbca11d07569b78c94f402709795c97ed793f11",
+      "ranges": [
+        [
+          35,
+          69
+        ],
+        [
+          84,
+          140
+        ],
+        [
+          195,
+          208
+        ],
+        [
+          497,
+          503
+        ]
+      ]
+    },
+    {
+      "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-ui-core.js",
+      "blob": "10f5809cb909c42198bec054e86037eba2b5594b",
+      "ranges": [
+        [
+          64,
+          72
+        ]
+      ]
+    },
+    {
+      "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-ui.js",
+      "blob": "71064ce4f68b527515dcd3f09e6b9697ef26bef3",
+      "ranges": [
+        [
+          1203,
+          1204
+        ],
+        [
+          1225,
+          1226
+        ]
+      ]
+    }
+  ],
+  "notes": "No permanent VEDIC or producer IDs allocated. Source sub-bodies cannot be represented as standalone functions. Activation evidence is static, not execution proof. Candidate word relationships are not permanent IDs. Finance and engineering values are illustrative.",
+  "entries": [
+    {
+      "word": "QUANTIFY PLANT",
+      "kind": "FUNCTION",
+      "parent_symbol": "buildStats",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-calculations.js",
+        "blob": "7787553ccd9d8b5c49b165760bfc4b8c6168450c",
+        "first": 32,
+        "last": 75
+      },
+      "purpose": "Estimate DC capacity, AC capacity, land area and module logistics from a proposed solar plant configuration.",
+      "inputs": [
+        "opts.total_blocks",
+        "opts.module_count",
+        "opts.ac_mw_direct (optional)",
+        "opts.dc_ac_ratio",
+        "opts.physical: mod_wp, mod_l, mod_w, gcr, gross_factor, mods_pallet, mods_container, spare_pct",
+        "opts engineering and rating fields"
+      ],
+      "outputs": [
+        "dc_mwp",
+        "ac_mw",
+        "net_mod_area_m2",
+        "net_array_area_m2",
+        "gross_site_area_m2",
+        "pallet/container counts including spares",
+        "rating and warning fields"
+      ],
+      "mechanical": "DC MWp = modules × module Wp / 1e6. AC = direct value or DC divided by ratio. Net module area = count × L × W; array area divides by GCR; gross area multiplies site factor. Logistics counts round upward.",
+      "limits": "No site survey, layout feasibility, cable or grid capacity proof. Direct AC value is accepted without verifying MW versus MVA. Positive packaging divisors are assumed.",
+      "activation": "String or Central tab; change Module Rating, Mounting & GCR, Gross Site Factor or topology inputs; inspect calculated stats.",
+      "dependencies": [
+        "Math.ceil",
+        "opts from computeStringStats or computeCentralStats"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "CONFIGURE STRING TOPOLOGY",
+      "kind": "FUNCTION",
+      "parent_symbol": "computeStringStats",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-calculations.js",
+        "blob": "7787553ccd9d8b5c49b165760bfc4b8c6168450c",
+        "first": 95,
+        "last": 121
+      },
+      "purpose": "Translate string-inverter hierarchy and skid/ring counts into a plant capacity and engineering-warning record.",
+      "inputs": [
+        "DOM: x_mods,z_strings,y_invs,s_subs,b_cols,dc_ac_ratio,string_inv_kva,string_skid_mva",
+        "physical inputs"
+      ],
+      "outputs": [
+        "buildStats result",
+        "total_blocks",
+        "module_count",
+        "inverter_acmax_mva",
+        "ring_main_ac_mva"
+      ],
+      "mechanical": "Blocks = rings × skids per ring; modules = blocks × inverters per skid × strings per inverter × modules per string. Inverter MVA = inverter count × kVA / 1000; ring MVA = skid rating × skids per ring.",
+      "limits": "AC direct uses skid MVA as MW; power factor, derating and export limits are not established. Warning text is screening only.",
+      "activation": "String tab; change Modules per String, Strings per String Inverter, String Inverters per Skid or ring counts.",
+      "dependencies": [
+        "readPhysicalInputs",
+        "num",
+        "intVal",
+        "zeroStats",
+        "buildStats"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "CONFIGURE CENTRAL TOPOLOGY",
+      "kind": "FUNCTION",
+      "parent_symbol": "computeCentralStats",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-calculations.js",
+        "blob": "7787553ccd9d8b5c49b165760bfc4b8c6168450c",
+        "first": 123,
+        "last": 164
+      },
+      "purpose": "Estimate string, combiner, inverter and ring counts for a central-inverter solar layout.",
+      "inputs": [
+        "DOM: x_mods_c,str_per_cb_c,inv_per_mv_c,mv_per_ring_c,rings_c,combiner_limit_kwdc_c",
+        "central AC/DC ratings and skid MVA",
+        "physical inputs"
+      ],
+      "outputs": [
+        "buildStats result",
+        "combiner_boxes_per_inverter",
+        "total_combiner_boxes",
+        "module_count",
+        "ac_mw_direct"
+      ],
+      "mechanical": "String kWp = modules per string × module Wp / 1000; strings = ceil(inverter DC kW / string kWp); combiner boxes = ceil(strings / strings per box). Blocks = units per skid × skids per ring × rings. L147 multiplies blocks by skid MVA and units per skid again.",
+      "limits": "Potential double multiplication of units per skid at L147; MVA also labelled MW. Do not reuse as certified AC-capacity logic. Verify engineering assumptions independently.",
+      "activation": "Central tab; change Central Inverter Units per Skid, Central Skids per 33 kV Ring Main or combiner inputs.",
+      "dependencies": [
+        "readPhysicalInputs",
+        "getCentralInverterMwac",
+        "getCentralInverterDcMwdc",
+        "getCentralSkidMva",
+        "num",
+        "intVal",
+        "zeroStats",
+        "buildStats"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "SET DEVELOPMENT DEFAULTS",
+      "kind": "FUNCTION",
+      "parent_symbol": "applyDevelopmentStageDefaults",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 70,
+        "last": 89
+      },
+      "purpose": "Populate indicative development cost and assumed success probability from a selected milestone.",
+      "inputs": [
+        "prefix",
+        "DOM: prefix_dev_stage,prefix_dev_cost_mw,prefix_dev_success"
+      ],
+      "outputs": [
+        "writes development cost field and success probability field"
+      ],
+      "mechanical": "Copies selected stage value to cost field; maps seven fixed stage values to percentages 10,15,30,55,70,80,95.",
+      "limits": "Defaults are hardcoded assumptions, not empirical probabilities or actual planning outcomes.",
+      "activation": "Open Baseline Project Economics; select Development Stage and inspect the editable cost and success fields.",
+      "dependencies": [
+        "$ DOM helper",
+        "migrateFinanceUnitsToWp supplies converted stage values"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "PROJECT SOLAR GENERATION",
+      "kind": "SUB_BODY",
+      "parent_symbol": "computeFinance",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 120,
+        "last": 131
+      },
+      "purpose": "Project annual and cumulative solar generation under loss, bifacial gain and degradation assumptions.",
+      "inputs": [
+        "dc_mwp",
+        "yieldVal kWh/kWp",
+        "bifacial %",
+        "totalLoss %",
+        "deg %"
+      ],
+      "outputs": [
+        "year1Gen MWh",
+        "gen25 MWh",
+        "gen35 MWh"
+      ],
+      "mechanical": "Clamp total loss to 0–100%; year one = MWp × base yield × (1+bifacial/100) × (1-loss/100); sum geometric annual degradation through years 25 and 35.",
+      "limits": "Not irradiance/time-series simulation. No validated weather, clipping or curtailment; degradation input is not clamped in this block. Generation totals are internal inputs to revenue.",
+      "activation": "Baseline Project Economics; change Base Yield, Bifacial Gain, Base Losses or Degradation; inspect revenue projections as downstream effects.",
+      "dependencies": [
+        "computeFinance parent context",
+        "Math.min/max/pow"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "VALUE STORAGE CYCLES",
+      "kind": "SUB_BODY",
+      "parent_symbol": "computeFinance",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 133,
+        "last": 137
+      },
+      "purpose": "Estimate annual storage-cycle revenue and combine it with solar revenue projections.",
+      "inputs": [
+        "year1Gen",
+        "gen25",
+        "gen35",
+        "price",
+        "other",
+        "bessMwh",
+        "bessCycles",
+        "bessRevenuePerMwh",
+        "safeBessEff"
+      ],
+      "outputs": [
+        "annualSolarRevenue",
+        "bessAnnualValue",
+        "annualRevenue",
+        "revenue25",
+        "revenue35"
+      ],
+      "mechanical": "Storage value = MWh × cycles × £/MWh × efficiency; combine with solar generation × unit income, repeat constant storage value over 25 and 35 years.",
+      "limits": "No dispatch, degradation, tariff, availability, power-duration constraints or revenue-stack optimisation. Storage value is an assumed screening estimate.",
+      "activation": "Baseline Project Economics; edit BESS energy, cycles, efficiency and revenue per MWh; inspect Year 1/25/35 Revenue.",
+      "dependencies": [
+        "computeFinance parent context",
+        "safeBessEff clamp L121"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "ESTIMATE CAPITAL EXPENDITURE",
+      "kind": "SUB_BODY",
+      "parent_symbol": "computeFinance",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 141,
+        "last": 146
+      },
+      "purpose": "Estimate solar and storage project capital expenditure and normalise it per DC watt peak.",
+      "inputs": [
+        "dc_mwp",
+        "epcEx",
+        "modules",
+        "otherCapex",
+        "floodAdder",
+        "cont",
+        "bessMwh",
+        "bessCapexRate",
+        "fixedCapex"
+      ],
+      "outputs": [
+        "baseCapexWp",
+        "baseCapex",
+        "contingency",
+        "bessCapex",
+        "totalCapex",
+        "capexPerWp"
+      ],
+      "mechanical": "Base capex = DC MWp × 1e6 × summed £/Wp rates; add percentage contingency on base capex, fixed cost and storage energy × £/MWh; divide by DC Wp when positive.",
+      "limits": "Rates are user assumptions, not offers or priced designs. No contingency on fixed/BESS cost in this implementation.",
+      "activation": "Baseline Project Economics > CAPEX; change rates or contingency; inspect Total CAPEX and CAPEX per Wp.",
+      "dependencies": [
+        "computeFinance parent context"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "ESTIMATE UNDISCOUNTED SURPLUS",
+      "kind": "SUB_BODY",
+      "parent_symbol": "computeFinance",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 139,
+        "last": 149
+      },
+      "purpose": "Subtract constant operating cost and upfront capital cost from cumulative revenue.",
+      "inputs": [
+        "ac_mw",
+        "opexRate £/MWac/year",
+        "revenue25",
+        "revenue35",
+        "totalCapex (computed L141–145)"
+      ],
+      "outputs": [
+        "annualOpex",
+        "surplus25",
+        "surplus35"
+      ],
+      "mechanical": "Annual OPEX = AC MW × OPEX rate; surplus = cumulative revenue − annual OPEX × years − total capex. Span overlaps CAPEX as a dependency, not a new independent primitive.",
+      "limits": "No discounting, tax, finance, inflation or debt schedule. Not NPV, IRR or bankable cash flow.",
+      "activation": "Baseline Project Economics; change OPEX and CAPEX assumptions; inspect Undiscounted 25/35 Year Cash Surplus.",
+      "dependencies": [
+        "computeFinance parent context",
+        "ESTIMATE CAPITAL EXPENDITURE candidate"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "VALUE DEVELOPMENT RISK",
+      "kind": "SUB_BODY",
+      "parent_symbol": "computeFinance",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 163,
+        "last": 174
+      },
+      "purpose": "Translate £/Wp development and exit assumptions into indicative capital at risk, margin and probability-weighted value.",
+      "inputs": [
+        "dc_mwp",
+        "devCostPerMw",
+        "devModulePerMwp",
+        "devEpcPerMw",
+        "devOwnerPerMw",
+        "devGridPerMw",
+        "devExitPerMwp",
+        "devNpvPerMwp",
+        "devSuccessPct"
+      ],
+      "outputs": [
+        "devCapitalAtRisk",
+        "devTotalBuildCost",
+        "devExitValue",
+        "devOperatingNpv",
+        "devGrossMargin",
+        "devRiskAdjustedValue",
+        "devReturnMultiple"
+      ],
+      "mechanical": "Multiply DC Wp by each rate; gross margin = exit − total build cost; risk-adjusted value = margin × success percentage; multiple = margin / capital at risk when positive.",
+      "limits": "Operating NPV is an input multiplied by capacity, not discounted cash-flow valuation. Success weighting ignores failure costs and timing; devYears is not used here.",
+      "activation": "Baseline Project Economics > Development Financials; edit stage, costs, exit and probability; inspect risk-adjusted value and multiple.",
+      "dependencies": [
+        "computeFinance parent context",
+        "finance unit migration L23–68"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    },
+    {
+      "word": "SCREEN FINANCIAL ASSUMPTIONS",
+      "kind": "FUNCTION",
+      "parent_symbol": "renderFinanceWarnings",
+      "source": {
+        "repo": "Ventusltd/globalgrid2050",
+        "commit": "ce03ce920f303e3457ad9c7cc232cd0aa64818e3",
+        "path": "solar-bess-topology-v7/gis-sld-financial-sandbox/gis-sld-v5-finance.js",
+        "blob": "bdd51b6a34366317e60b049d67bf8a2bc4160c9f",
+        "first": 210,
+        "last": 254
+      },
+      "purpose": "Generate warning messages when selected financial, electrical or logistics assumptions cross hardcoded thresholds.",
+      "inputs": [
+        "prefix",
+        "fin",
+        "stats",
+        "state.activeTab",
+        "DOM: electrical loss fields and gross factor"
+      ],
+      "outputs": [
+        "DOM prefix_warnings innerHTML"
+      ],
+      "mechanical": "Build warning list from input signs, ranges, pricing, losses, BESS duration, cycles, site factor and packaging, then render it.",
+      "limits": "Thresholds are hardcoded and not independently verified or current regulatory advice. Negative electricity prices can occur; warning text is not a validation of market rules.",
+      "activation": "Baseline Project Economics; change assumptions and inspect displayed warnings.",
+      "dependencies": [
+        "num",
+        "$",
+        "state.activeTab"
+      ],
+      "output_class": "ILLUSTRATIVE_INDICATIVE_MODEL",
+      "state": "STATIC_SOURCE_REVIEW",
+      "application_state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+      "vedic_id": null,
+      "kuiper_key": null,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null
+    }
+  ]
+}
