@@ -4,13 +4,14 @@ on:
     paths:
       - 'packages/electrical/**'
       - 'tools/tacit2b_electrical_acquire.py'
+      - 'tools/tacit2b_source_proof.py'
       - '.github/workflows/tacit2b-electrical-candidate.yml'
 permissions:
   contents: read
 jobs:
   replay:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,4 +47,17 @@ jobs:
             ${{ runner.temp }}/tacit2b-input/acquisition.json
             ${{ runner.temp }}/tacit2b-tests.txt
             ${{ runner.temp }}/tacit2b-consumer.json
+          retention-days: 30
+      - name: Exact source and Kuiper candidate evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0
+          node packages/electrical/source-parse.mjs "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" "$RUNNER_TEMP/electrical-parser.json"
+          python3 tools/tacit2b_source_proof.py --module "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" --dictionary data/dictionary.json --parser "$RUNNER_TEMP/electrical-parser.json" --work "$RUNNER_TEMP/electrical-proof-work" --out "$RUNNER_TEMP/electrical-proof"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit2b-electrical-source-proof-candidate
+          path: ${{ runner.temp }}/electrical-proof/
+          if-no-files-found: error
           retention-days: 30
