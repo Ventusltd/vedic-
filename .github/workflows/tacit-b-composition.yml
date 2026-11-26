@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: c4d6d309940d131d2a1ae6181701086aa7221839
+          ref: 8e3dff7c905095349843c6b5341766019a67ee82
           path: tacit-b-a1-t17
           persist-credentials: false
       - uses: actions/setup-python@v5

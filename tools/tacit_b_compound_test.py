@@ -8,7 +8,7 @@ from tacit_b_convergence import oracle
 from tacit_b_compound import execute_compound,verify_compound
 from tacit_b_composition import refusal
 
-A1="c4d6d309940d131d2a1ae6181701086aa7221839"
+A1="8e3dff7c905095349843c6b5341766019a67ee82"
 COMMAND="Calculate the distance and initial bearing from point A to point B and from point A to point C, then identify the nearer destination."
 
 def main():
