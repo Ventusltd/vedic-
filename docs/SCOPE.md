@@ -51,4 +51,16 @@ Owner authorises first useful VEDIC preview, ideally 04:29 UTC 26 Nov, before wa
 - CVAA: https://github.com/Ventusltd/cvaa/blob/main/README.md
 - Local recovery: docs/MODULAR-CONSUMER.md and docs/VEDIC-LANGUAGE.md.
 
+### 12. Intentional ambiguity and the philosophy of inquiry
+The owner intends VEDIC to have layered meaning and remain open to discovery. Express philosophical inspiration in secular, inclusive English, without religious names, doctrinal claims or assertions of authority in the public language. The following are design analogies, not scientific claims or a translation of a single doctrine.
+
+- **Question before conclusion.** Explore several meanings, inspect counterexamples and ask what lies beneath an implementation. Search may resolve to many candidates; do not force one interpretation.
+- **The whole and the parts.** A functional body can participate in many applications and combinations. Reveal underlying relationships and reusable principles without confusing analogy with verified equivalence.
+- **Define through boundaries as well as purpose.** Explain what an entry does and what it does not establish. Preserve negative evidence and failed experiments.
+- **One word, many contexts.** A shorthand may have several senses, aliases or candidate interpretations. Give distinct meanings stable identities and context; preserve relationships rather than erase differences. Search may be ambiguous; a selected executable reference, version, units, inputs, effects and test assertions must be unambiguous.
+- **Knowledge is revisable.** Preserve open questions, competing hypotheses and alternative compositions. Distinguish candidate from evidence; refine the dictionary without erasing history.
+- **Discovery and execution are separate.** Ambiguity is useful in exploration, metaphor and human-facing language; never use it to hide missing evidence, invent coverage or weaken deterministic validation. Resolve meanings before execution; if unresolved, show alternatives rather than guessing.
+
+These principles supplement Sections 1–11. Keep public vocabulary plain English and welcoming to all backgrounds. Do not introduce religious nomenclature into classifications, UI, IDs or executable commands. Existing engineering provenance and exact source records remain intact. The current dictionary's unique-word constraint is a seed limitation: evolve it to permit qualified multiple senses with distinct permanent IDs, preserving all previously allocated identities.
+
 One architecture. Growing vocabulary. New combinations. Reproducible evidence. Live long and prosper. 🖖
