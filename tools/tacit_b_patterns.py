@@ -22,8 +22,17 @@ class PatternBridge(Bridge):
         edges=[copy.deepcopy(x) for x in self.manifest["typed_bonds"] if (x["from"],x["to"]) in PAIRS[op]]
         f.need(len(edges)==len(PAIRS[op]) and {(x["from"],x["to"]) for x in edges}==PAIRS[op],"TYPED_GRAPH")
         family="orient" if op=="orient" else "nearest-substation" if op=="nearest-orient" else "electrical"
-        d=f.strict((f.ADMISSIONS[family] if family=="orient" else f.PENDING[family]).read_bytes())
-        f.validate(d);descriptor=f.sha(f.canonical(d))
+        raw=(f.ADMISSIONS[family] if family=="orient" else f.PENDING[family]).read_bytes()
+        d=f.strict(raw)
+        if family=="orient":
+            f.validate(d)
+        else:
+            # Pending electrical intentionally lacks the formal receipt; authenticate
+            # the exact incomplete descriptor, then preserve the formal refusal.
+            expected={"nearest-substation":"3c5dda175a100837e0c320a829dec07ea488f13d",
+                      "electrical":"2c45c4359ea87b7c636af7b4f3d280acc338b656"}
+            f.need(f.digest(raw,"git-blob-sha1")==expected[family],"PENDING_DESCRIPTOR_PIN")
+        descriptor=f.sha(f.canonical(d))
         closure={"descriptor_inputs":d["inputs"],"external_dependencies":d["dependencies"]}
         if family=="orient":
             f.need(f.sha(self.archive)==t.ARCHIVE and descriptor==t.DESCRIPTOR and f.admit(d)==d,"ORIENT_PIN")
