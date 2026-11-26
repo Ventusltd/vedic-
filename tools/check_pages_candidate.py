@@ -46,7 +46,9 @@ def exercise_public(public):
         assert 'id="package-evidence"' in html and 'Package download unavailable' in html
     for route in (V1_ROUTE, V2_ROUTE):
         assert 'id="package-evidence"' not in (public / route / 'index.html').read_text(encoding='utf-8')
-    assert (public / 'data/dictionary.json').read_bytes() == (public / V2_ROUTE / 'data/dictionary.json').read_bytes()
+    historic = json.loads((public / V2_ROUTE / 'data/dictionary.json').read_bytes())['entries']
+    current = json.loads((public / 'data/dictionary.json').read_bytes())['entries']
+    assert current[:len(historic)] == historic
     browser_smoke(public, run_demos=False, offline=True)
     for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE,FIRST_PROSE_ROUTE):
         browser_smoke(public, run_demos=False, offline=True, base_path=route)

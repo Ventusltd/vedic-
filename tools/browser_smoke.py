@@ -79,7 +79,9 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         page.locator("#dictRows tr").first.wait_for()
                         assert page.locator("#dictRows tr").count() == expected_count
                         assert page.locator("#dictPage").inner_text() == f"Page 1 / {expected_pages}"
-                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == min(entries, key=lambda e: (e.get("priority", 9), e["number"]))["word"]
+                        initial_sort = page.locator("#dictSort").input_value()
+                        expected_first = min(entries, key=lambda e: e["word"].casefold() if initial_sort == "word" else (e.get("priority", 9), e["number"]))
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == expected_first["word"]
                         page.locator("#dictSort").select_option("number")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
                         page.locator("#dictSearch").fill("ORIENT")

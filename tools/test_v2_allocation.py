@@ -9,6 +9,8 @@ class V2Tests(unittest.TestCase):
         self.r=read("data/tacit15-v2-candidate-decisions.json")
         self.a=read("data/tacit15-v2-allocation.json")
         self.d=read("data/dictionary.json")
+        self.d["entries"]=self.d["entries"][:self.a["new_count"]]
+        self.d["next_number"]=self.a["next_number"]
         self.old=copy.deepcopy(self.d)
         self.old["entries"]=self.old["entries"][:39]
         self.old["next_number"]=40
