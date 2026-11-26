@@ -1,0 +1,1198 @@
+{
+  "schema": "vedic.estate-crib-library.v1",
+  "groups": [
+    {
+      "title": "MODEL ENERGY TRANSITION",
+      "actions": [
+        "model",
+        "simulate",
+        "forecast",
+        "estimate",
+        "scenario"
+      ],
+      "objects": [
+        "transition",
+        "electrification",
+        "fleet",
+        "demand",
+        "generation",
+        "decarbonisation",
+        "adoption",
+        "capacity"
+      ],
+      "repositories": [
+        "energy-transition-simulator"
+      ],
+      "path_contains": [
+        "energy-transition-simulator/",
+        "build_transition_context"
+      ]
+    },
+    {
+      "title": "TRACK REPD PROJECTS",
+      "actions": [
+        "track",
+        "update",
+        "filter",
+        "search",
+        "list",
+        "resolve"
+      ],
+      "objects": [
+        "repd",
+        "renewable",
+        "planning",
+        "project",
+        "capacity",
+        "pipeline",
+        "application",
+        "consent"
+      ],
+      "repositories": [
+        "pipelinenews"
+      ],
+      "path_contains": [
+        "uk_renewables_pipeline/",
+        "repd/",
+        "repd_"
+      ]
+    },
+    {
+      "title": "LOAD REPD DETAIL PARTITIONS",
+      "actions": [
+        "load",
+        "read",
+        "validate",
+        "import",
+        "parse"
+      ],
+      "objects": [
+        "repd",
+        "detail",
+        "partition",
+        "project",
+        "parquet",
+        "json",
+        "columns"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "repd_columnar/",
+        "repd-data/",
+        "projects-detail"
+      ]
+    },
+    {
+      "title": "RECONCILE PLANNING IDENTITIES",
+      "actions": [
+        "match",
+        "reconcile",
+        "resolve",
+        "validate",
+        "bind"
+      ],
+      "objects": [
+        "repd",
+        "identity",
+        "project",
+        "reference",
+        "address",
+        "coordinate",
+        "postcode",
+        "locality"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "project_identity",
+        "repd-address",
+        "build_repd_datacentres"
+      ]
+    },
+    {
+      "title": "NAVIGATE OFF ROAD",
+      "actions": [
+        "navigate",
+        "route",
+        "steer",
+        "locate",
+        "follow",
+        "focus"
+      ],
+      "objects": [
+        "satnav",
+        "route",
+        "waypoint",
+        "heading",
+        "corridor",
+        "telemetry",
+        "bearing",
+        "nearest"
+      ],
+      "repositories": [
+        "satnav"
+      ],
+      "path_contains": [
+        "satnav-",
+        "satnav/"
+      ]
+    },
+    {
+      "title": "TRACE OVERHEAD POWER LINES",
+      "actions": [
+        "trace",
+        "follow",
+        "scan",
+        "draw",
+        "sample",
+        "classify"
+      ],
+      "objects": [
+        "overhead",
+        "conductor",
+        "pylon",
+        "tower",
+        "pole",
+        "wayleave",
+        "powerline",
+        "span"
+      ],
+      "repositories": [
+        "wire-frame-scanner"
+      ],
+      "path_contains": [
+        "overhead",
+        "pylon",
+        "conductor",
+        "wayleave",
+        "power-line"
+      ]
+    },
+    {
+      "title": "TRACE UNDERGROUND CABLES",
+      "actions": [
+        "trace",
+        "route",
+        "drill",
+        "trench",
+        "place",
+        "draw"
+      ],
+      "objects": [
+        "underground",
+        "cable",
+        "trench",
+        "drilling",
+        "duct",
+        "ducting",
+        "burial",
+        "conduit"
+      ],
+      "repositories": [
+        "cable-trench-or-drill"
+      ],
+      "path_contains": [
+        "cable-trench",
+        "trench",
+        "duct",
+        "underground-cable",
+        "burial"
+      ]
+    },
+    {
+      "title": "ANIMATE POWER NETWORKS",
+      "actions": [
+        "animate",
+        "play",
+        "replay",
+        "transition",
+        "tick",
+        "render"
+      ],
+      "objects": [
+        "animation",
+        "topology",
+        "sld",
+        "playback",
+        "network",
+        "electrical",
+        "circuit",
+        "shimmer"
+      ],
+      "repositories": [
+        "sld"
+      ],
+      "path_contains": [
+        "sld-connect",
+        "sld-sandbox",
+        "sld-studio",
+        "playback",
+        "animation"
+      ]
+    },
+    {
+      "title": "SAMPLE TERRAIN HEIGHT",
+      "actions": [
+        "sample",
+        "load",
+        "interpolate",
+        "query",
+        "measure",
+        "profile"
+      ],
+      "objects": [
+        "terrain",
+        "elevation",
+        "lidar",
+        "dtm",
+        "dem",
+        "height",
+        "ground",
+        "contour"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "/terrain/",
+        "terrain-",
+        "heightfield",
+        "height-field"
+      ]
+    },
+    {
+      "title": "PLAN TERRAIN ROUTES",
+      "actions": [
+        "plan",
+        "route",
+        "avoid",
+        "search",
+        "minimise",
+        "calculate"
+      ],
+      "objects": [
+        "corridor",
+        "obstacle",
+        "access",
+        "terrain",
+        "route",
+        "slope",
+        "waypoint",
+        "gradient"
+      ],
+      "repositories": [
+        "buggy"
+      ],
+      "path_contains": [
+        "access-route",
+        "terrain-routing",
+        "terrain_route",
+        "route-planner"
+      ]
+    },
+    {
+      "title": "CALCULATE CIRCUIT LOSSES",
+      "actions": [
+        "calculate",
+        "estimate",
+        "sum",
+        "solve",
+        "measure"
+      ],
+      "objects": [
+        "loss",
+        "losses",
+        "voltage",
+        "drop",
+        "conductor",
+        "resistance",
+        "current",
+        "circuit",
+        "impedance"
+      ],
+      "repositories": [
+        "solar-electrical-topology-analysis-engine-text-based"
+      ],
+      "path_contains": [
+        "circuit_calculations",
+        "voltage-drop",
+        "voltage_drop"
+      ]
+    },
+    {
+      "title": "CHECK GRID CONNECTION CAPACITY",
+      "actions": [
+        "check",
+        "assess",
+        "estimate",
+        "validate",
+        "calculate"
+      ],
+      "objects": [
+        "connection",
+        "substation",
+        "transformer",
+        "capacity",
+        "mva",
+        "firm",
+        "demand",
+        "grid"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "connection-capacity",
+        "firm-capacity",
+        "substation-intelligence"
+      ]
+    },
+    {
+      "title": "DESIGN BATTERY STORAGE",
+      "actions": [
+        "design",
+        "size",
+        "simulate",
+        "calculate",
+        "schedule"
+      ],
+      "objects": [
+        "battery",
+        "bess",
+        "storage",
+        "dispatch",
+        "charge",
+        "discharge",
+        "peak",
+        "shaving"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "bess",
+        "battery",
+        "storage-dispatch"
+      ]
+    },
+    {
+      "title": "ANIMATE SOLAR LAYOUTS",
+      "actions": [
+        "animate",
+        "tween",
+        "morph",
+        "draw",
+        "render",
+        "place"
+      ],
+      "objects": [
+        "solar",
+        "panel",
+        "layout",
+        "table",
+        "tracker",
+        "array",
+        "morph",
+        "animation"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "solar-design-studio/",
+        "morph",
+        "solar-layout"
+      ]
+    },
+    {
+      "title": "COMPARE FUEL GENERATION",
+      "actions": [
+        "compare",
+        "summarise",
+        "summarize",
+        "aggregate",
+        "calculate"
+      ],
+      "objects": [
+        "generation",
+        "fuel",
+        "output",
+        "electricity",
+        "emissions",
+        "mix",
+        "renewable",
+        "share"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "generation_mix",
+        "generation-mix",
+        "fuel-type",
+        "fuel_group"
+      ]
+    },
+    {
+      "title": "AUDIT SECTOR DATA",
+      "actions": [
+        "audit",
+        "validate",
+        "verify",
+        "check"
+      ],
+      "objects": [
+        "sector",
+        "parquet",
+        "ledger",
+        "schema",
+        "compression",
+        "dataset",
+        "columnar",
+        "audit"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "sector-intelligence",
+        "sector_intelligence"
+      ]
+    },
+    {
+      "title": "PLACE ELECTRICAL ASSETS",
+      "actions": [
+        "place",
+        "locate",
+        "build",
+        "draw",
+        "transform",
+        "select"
+      ],
+      "objects": [
+        "substation",
+        "pylon",
+        "switchgear",
+        "transformer",
+        "cable",
+        "conductor",
+        "coordinates"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "electrical-scene",
+        "sld-geometry",
+        "asset-placement",
+        "world/overhead"
+      ]
+    },
+    {
+      "title": "VERIFY SOURCE AND RELEASES",
+      "actions": [
+        "verify",
+        "validate",
+        "check",
+        "compare",
+        "audit"
+      ],
+      "objects": [
+        "manifest",
+        "commit",
+        "sha256",
+        "blob",
+        "digest",
+        "version",
+        "receipt",
+        "release"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "release_manifest",
+        "release-manifest",
+        "source-code",
+        "hash-cartridge"
+      ]
+    },
+    {
+      "title": "LOAD LIDAR TERRAIN TILES",
+      "actions": [
+        "load",
+        "stream",
+        "read",
+        "fetch",
+        "decode",
+        "sample"
+      ],
+      "objects": [
+        "lidar",
+        "dtm",
+        "dem",
+        "tile",
+        "raster",
+        "easting",
+        "northing",
+        "elevation",
+        "resampling",
+        "height"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "lidar",
+        "dtm",
+        "dem-tile",
+        "terrain/tiles"
+      ]
+    },
+    {
+      "title": "BUILD TERRAIN COST GRID",
+      "actions": [
+        "build",
+        "derive",
+        "compute",
+        "rasterise",
+        "rasterize"
+      ],
+      "objects": [
+        "terrain",
+        "cost",
+        "grid",
+        "mask",
+        "slope",
+        "traversal",
+        "elevation",
+        "raster"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "cost-grid",
+        "terrain-mask",
+        "asset-adapter.mjs"
+      ]
+    },
+    {
+      "title": "MATCH FIX TO ROUTE",
+      "actions": [
+        "match",
+        "project",
+        "snap",
+        "track",
+        "locate",
+        "resolve"
+      ],
+      "objects": [
+        "gps",
+        "fix",
+        "route",
+        "progress",
+        "offset",
+        "line",
+        "string",
+        "waypoint"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "route-follower",
+        "point-vicinity",
+        "satnav-practice-line"
+      ]
+    },
+    {
+      "title": "ESTIMATE BORE LENGTH",
+      "actions": [
+        "estimate",
+        "calculate",
+        "sum",
+        "model"
+      ],
+      "objects": [
+        "bore",
+        "width",
+        "setback",
+        "depth",
+        "dip",
+        "trench",
+        "crossing"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "route-obstacles",
+        "drill-bore"
+      ]
+    },
+    {
+      "title": "COMPILE REPD CAPACITY REPORT",
+      "actions": [
+        "compile",
+        "build",
+        "group",
+        "report",
+        "accumulate"
+      ],
+      "objects": [
+        "repd",
+        "capacity",
+        "report",
+        "technology",
+        "status",
+        "dimension",
+        "operator",
+        "region"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "repd-reports",
+        "capacity-report"
+      ]
+    },
+    {
+      "title": "VALIDATE REPD COORDINATES",
+      "actions": [
+        "validate",
+        "check",
+        "gate",
+        "transform",
+        "parse"
+      ],
+      "objects": [
+        "coordinate",
+        "coordinates",
+        "bounds",
+        "numeric",
+        "easting",
+        "northing",
+        "anomaly",
+        "repd"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "automation/repd/validate.py",
+        "coordinate_gates",
+        "project_geography"
+      ]
+    },
+    {
+      "title": "VALIDATE ENERGY FEED DATA",
+      "actions": [
+        "validate",
+        "valid",
+        "check",
+        "reject"
+      ],
+      "objects": [
+        "energy",
+        "demand",
+        "solar",
+        "generation",
+        "gw",
+        "mix",
+        "fuel"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "update_uk_energy",
+        "uk_energy_tracking"
+      ]
+    },
+    {
+      "title": "BIND DATA CENTRE NEWS",
+      "actions": [
+        "bind",
+        "match",
+        "classify",
+        "normalise",
+        "normalize"
+      ],
+      "objects": [
+        "centre",
+        "centers",
+        "centres",
+        "site",
+        "alias",
+        "headline",
+        "operator",
+        "register"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "datacentre-binder",
+        "data-centre-news"
+      ]
+    },
+    {
+      "title": "ESTIMATE CABLE CORRIDOR LENGTH",
+      "actions": [
+        "estimate",
+        "calculate",
+        "can",
+        "plan"
+      ],
+      "objects": [
+        "cable",
+        "corridor",
+        "distance",
+        "kilometre",
+        "length",
+        "route"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "corridor-estimate",
+        "cable-route",
+        "cable-routing"
+      ]
+    },
+    {
+      "title": "PLAY TRANSMISSION LINE JOURNEYS",
+      "actions": [
+        "play",
+        "animate",
+        "replay",
+        "advance",
+        "follow"
+      ],
+      "objects": [
+        "journey",
+        "cursor",
+        "overhead",
+        "route",
+        "span",
+        "waypoint",
+        "animation",
+        "conductor"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "grid-journey",
+        "cmd-anim",
+        "route-playback",
+        "line-journey"
+      ]
+    },
+    {
+      "title": "SCREEN CONDUCTOR CLEARANCE",
+      "actions": [
+        "screen",
+        "measure",
+        "sample",
+        "calculate",
+        "compare"
+      ],
+      "objects": [
+        "conductor",
+        "clearance",
+        "sag",
+        "ground",
+        "terrain",
+        "gap",
+        "wire",
+        "span"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "overhead.mjs",
+        "conductor-clearance"
+      ]
+    },
+    {
+      "title": "DRAW TRENCH CROSS SECTION",
+      "actions": [
+        "draw",
+        "render",
+        "plot",
+        "build"
+      ],
+      "objects": [
+        "trench",
+        "section",
+        "depth",
+        "width",
+        "duct",
+        "bedding",
+        "layers",
+        "cross"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "ac-trenches",
+        "trench-section",
+        "crosssection"
+      ]
+    },
+    {
+      "title": "PLAY CABLE INSTALLATION",
+      "actions": [
+        "play",
+        "animate",
+        "replay",
+        "build",
+        "show"
+      ],
+      "objects": [
+        "cable",
+        "installation",
+        "segment",
+        "partial",
+        "trench",
+        "sequence",
+        "placement"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "block-sequence",
+        "block-ui",
+        "cmd-anim"
+      ]
+    },
+    {
+      "title": "SCREEN CABLE CROSSINGS",
+      "actions": [
+        "screen",
+        "check",
+        "assess",
+        "test",
+        "find"
+      ],
+      "objects": [
+        "cable",
+        "crossing",
+        "road",
+        "obstacle",
+        "railway",
+        "watercourse",
+        "overlap",
+        "route"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "route-obstacles",
+        "cable-crossing",
+        "crossings"
+      ]
+    },
+    {
+      "title": "DRAW RAILWAY LAYERS",
+      "actions": [
+        "draw",
+        "render",
+        "load",
+        "toggle",
+        "add"
+      ],
+      "objects": [
+        "rail",
+        "railway",
+        "railways",
+        "track",
+        "station",
+        "mainline",
+        "trains",
+        "metro",
+        "layer"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "railways",
+        "uk_mainline_railway"
+      ]
+    },
+    {
+      "title": "LOAD ATLAS LAYER CONFIG",
+      "actions": [
+        "load",
+        "register",
+        "freeze",
+        "prepare",
+        "configure",
+        "apply"
+      ],
+      "objects": [
+        "layer",
+        "layers",
+        "config",
+        "preload",
+        "geojson",
+        "parquet",
+        "atlas",
+        "cartridge",
+        "source"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "pre-snapped-config",
+        "layer-availability",
+        "ventus-corev8engine.js",
+        "202608300453-atlas-v9/index.html"
+      ]
+    },
+    {
+      "title": "CHECK MAP LAYER AVAILABILITY",
+      "actions": [
+        "check",
+        "probe",
+        "report",
+        "update"
+      ],
+      "objects": [
+        "layer",
+        "availability",
+        "rendered",
+        "loaded",
+        "empty",
+        "status",
+        "map",
+        "visibility"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "layer-availability",
+        "streaming-parquet-bridge"
+      ]
+    },
+    {
+      "title": "DRAW SINGLE LINE DIAGRAMS",
+      "actions": [
+        "draw",
+        "render",
+        "build",
+        "show"
+      ],
+      "objects": [
+        "sld",
+        "circuit",
+        "diagram",
+        "electrical",
+        "power",
+        "cable",
+        "topology"
+      ],
+      "repositories": [
+        "sld"
+      ],
+      "path_contains": [
+        "gis-sld-v5-drawing",
+        "draw-sld",
+        "sld-drawing"
+      ]
+    },
+    {
+      "title": "COMPARE PROJECT FINANCIALS",
+      "actions": [
+        "compare",
+        "calculate",
+        "evaluate",
+        "discount",
+        "model"
+      ],
+      "objects": [
+        "finance",
+        "financial",
+        "capex",
+        "opex",
+        "npv",
+        "irr",
+        "cashflow",
+        "investment",
+        "yield"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "gis-sld-v5-finance",
+        "financial-sandbox",
+        "cashflow"
+      ]
+    },
+    {
+      "title": "SIZE SOLAR INVERTER LAYOUTS",
+      "actions": [
+        "size",
+        "fit",
+        "build",
+        "calculate",
+        "classify"
+      ],
+      "objects": [
+        "inverter",
+        "string",
+        "central",
+        "transformer",
+        "collector",
+        "array",
+        "dc",
+        "ac"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "gis-sld-v5-calculations",
+        "solar-bess-topology-v7"
+      ]
+    },
+    {
+      "title": "LOAD GB GRID TOPOLOGY",
+      "actions": [
+        "load",
+        "build",
+        "validate",
+        "derive",
+        "verify"
+      ],
+      "objects": [
+        "neso",
+        "etys",
+        "network",
+        "node",
+        "fault",
+        "impedance",
+        "circuit",
+        "topology",
+        "transformer"
+      ],
+      "repositories": [
+        "data-grid-gb"
+      ],
+      "path_contains": [
+        "transmission-network",
+        "network_model",
+        "connection_points"
+      ]
+    },
+    {
+      "title": "FOLLOW FEDERATED DATA FEEDS",
+      "actions": [
+        "follow",
+        "find",
+        "resolve",
+        "link",
+        "build"
+      ],
+      "objects": [
+        "spider",
+        "federation",
+        "provenance",
+        "relationship",
+        "edge",
+        "repository",
+        "source",
+        "feed"
+      ],
+      "repositories": [
+        "spiders",
+        "data-federation-map-for-globalgrid2050-all-repos"
+      ],
+      "path_contains": [
+        "spider_maya",
+        "species/genome-spider"
+      ]
+    },
+    {
+      "title": "INGEST GB ELECTRICITY DATA",
+      "actions": [
+        "ingest",
+        "update",
+        "clean",
+        "read",
+        "fetch",
+        "convert"
+      ],
+      "objects": [
+        "elexon",
+        "bmrs",
+        "gb",
+        "electricity",
+        "generation",
+        "demand",
+        "parquet",
+        "settlement",
+        "partition"
+      ],
+      "repositories": [
+        "data-gb-electricity"
+      ],
+      "path_contains": [
+        "fetch_elexon",
+        "port_csv_to_parquet",
+        "price_decade"
+      ]
+    },
+    {
+      "title": "COMPILE GB PRICE HISTORY",
+      "actions": [
+        "compile",
+        "rollup",
+        "aggregate",
+        "market",
+        "sum"
+      ],
+      "objects": [
+        "price",
+        "prices",
+        "gb",
+        "settlement",
+        "market",
+        "electricity",
+        "hour",
+        "elexon",
+        "revenue"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "price_decade",
+        "uk_energy_tracking_v6",
+        "market_intelligence"
+      ]
+    },
+    {
+      "title": "CHECK GRID SCREENING SCOPE",
+      "actions": [
+        "check",
+        "screen",
+        "scope",
+        "verify",
+        "classify"
+      ],
+      "objects": [
+        "network",
+        "electrical",
+        "substation",
+        "grid",
+        "connection",
+        "declared",
+        "availability",
+        "model"
+      ],
+      "repositories": [
+        "gridmachine1",
+        "ventus-grid-engine"
+      ],
+      "path_contains": [
+        "route-obstacles",
+        "corridor-estimate",
+        "connection-scope"
+      ]
+    },
+    {
+      "title": "RESOLVE ATLAS VICINITY",
+      "actions": [
+        "resolve",
+        "select",
+        "search",
+        "launch",
+        "focus"
+      ],
+      "objects": [
+        "vicinity",
+        "repd",
+        "project",
+        "assets",
+        "nearby",
+        "substation",
+        "radius",
+        "map"
+      ],
+      "repositories": [],
+      "path_contains": [
+        "vicinity-entry",
+        "vicinity-focus",
+        "project-vicinity"
+      ]
+    }
+  ],
+  "public_application_evidence": {
+    "solar_design_studio": "https://globalgrid2050.com/energy-transition-simulator/202609282123/overlay.html",
+    "pipeline_news": "https://globalgrid2050.com/uk_renewables_pipeline/202611232245/",
+    "gridatlas": "https://ventusltd.github.io/gridatlas/atlas/",
+    "satnav_scope": "https://ventusltd.github.io/satnav/scope/",
+    "generation_history": "https://globalgrid2050.com/uk_energy_tracking_v6/generation_history/",
+    "gridatlas_layer_shell": "https://github.com/Ventusltd/gridatlas/blob/afffa9781f6130529ae93052604cd3d98d172a35/atlas/releases/202608300453-atlas-v9/index.html#L150-L197",
+    "gis_sld_financial_sandbox": "https://github.com/Ventusltd/globalgrid2050/tree/2f4b7cb82ee154fa3c684cba634d45f2183c6e7d/solar-bess-topology-v7/gis-sld-financial-sandbox",
+    "spiders_genome": "https://github.com/Ventusltd/spiders/blob/830e86ea65e98b03df7250d2dd55d2753799687a/species/genome-spider/data/genome.json",
+    "grid_data": "https://github.com/Ventusltd/data-grid-gb/tree/ad88ffbb3711a3c80261074311c3fc92b4430a9d",
+    "electricity_data": "https://github.com/Ventusltd/data-gb-electricity/tree/cf48c8d6fdd9ab686c4af7261149d81a0129f7fc"
+  }
+}
