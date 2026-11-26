@@ -181,11 +181,86 @@ def compile_manifest(dictionary, translations, reader, parse=True):
                        "application": e.get("application"), "runtime_verified": False,
                        "producer_ids": {k: e.get(k, t.get(k)) for k in ("family_id", "element_id", "tablet_id", "line_ids")},
                        "kuiper_key": UNVERIFIED})
+    graph = {e["gg_id"]: e["components"] for e in result}
     for e in result:
-        require(all(x in ids for x in e["components"]), "unknown composition component")
+        require(all(x in graph for x in e["components"]), "unknown composition component")
+        require(len(e["components"]) == len(set(e["components"])), "duplicate composition component")
+        if e["kind"] == "FUNCTION":
+            require(e["mechanical"] is not None and not e["components"], "function missing source or has components")
+        elif e["kind"] == "COMPOSITION":
+            require(len(e["components"]) >= 2 and e["mechanical"] is None, "invalid composition structure")
+        else:
+            raise ValueError("unknown dictionary kind")
+    visiting, done = set(), set()
+    def visit(node):
+        require(node not in visiting, "composition cycle")
+        if node in done:
+            return
+        visiting.add(node)
+        for dep in graph[node]:
+            visit(dep)
+        visiting.remove(node)
+        done.add(node)
+    for node in graph:
+        visit(node)
+    syntax_counts = Counter(p["syntax"]["state"] for p in spans.values())
     return {"schema": SCHEMA, "dictionary_entries": len(result),
             "unique_verified_spans": len(spans), "unique_verified_files": len(cache),
+            "syntax_observation_counts": dict(sorted(syntax_counts.items())),
             "fully_verified_state_signatures": 0, "entries": result}
+
+def verify_candidate_receipt(receipt, reader):
+    """Verify original bytes and explicit sub-body boundaries; do not allocate IDs."""
+    require(receipt["schema"] == "vedic.candidate-receipt.v1", "invalid receipt schema")
+    cache, keys, words, result = {}, set(), set(), []
+    def load(s):
+        k = source_key(s)
+        file_key = k[:3]
+        if file_key not in cache:
+            cache[file_key] = reader(*file_key)
+        raw = cache[file_key]
+        require(isinstance(raw, bytes) and len(raw) <= 1_000_000, "unsupported source bytes")
+        require(git_blob(raw) == s["blob"], "source blob mismatch")
+        lines = physical_lines(raw)
+        require(s["last"] <= len(lines), "span exceeds file")
+        return k, raw, lines
+    for e in receipt["entries"]:
+        require(e["word"] not in words and bool(e["word"].strip()), "duplicate or empty candidate word")
+        words.add(e["word"])
+        require(all(e.get(k) is None for k in ("vedic_id","kuiper_key","family_id","element_id","tablet_id","line_ids")), "unverified identity assigned")
+        require(e["state"] == "STATIC_SOURCE_REVIEW" and e["application_state"] == "RELATED_APPLICATION_RUNTIME_UNVERIFIED", "unsupported proof state")
+        require(e["output_class"] in ("VERIFIED_SOURCE_DATA","ILLUSTRATIVE_INDICATIVE_MODEL","UNVERIFIED"), "invalid output classification")
+        require(all(e.get(k) for k in ("purpose","inputs","outputs","mechanical","limits","activation","dependencies")), "incomplete candidate")
+        s = e["source"]
+        key, raw, lines = load(s)
+        require(key not in keys, "duplicate exact source span")
+        keys.add(key)
+        # Formal JS parser may not support modern syntax. An independent lexical
+        # anchor proves only the pinned parent header, not AST validity.
+        name = e["parent_symbol"]
+        require(bool(re.fullmatch(r"[A-Za-z_$][A-Za-z0-9_$]*", name)), "invalid parent symbol")
+        headers = [i+1 for i, line in enumerate(lines) if re.match(rb"^\s*function\s+" + name.encode() + rb"\s*\(", line)]
+        require(len(headers) == 1, "ambiguous or missing parent declaration")
+        parent_first = headers[0]
+        if e["kind"] == "FUNCTION":
+            require(parent_first == s["first"] and lines[s["last"]-1].strip() == b"}", "whole-function anchor mismatch")
+        elif e["kind"] == "SUB_BODY":
+            require(parent_first < s["first"] and not any(parent_first < i <= s["last"] for i,line in enumerate(lines,1)
+                if re.match(rb"^function\s+[A-Za-z_$][A-Za-z0-9_$]*\s*\(",line)), "sub-body crosses next top-level function")
+        else:
+            raise ValueError("unknown candidate kind")
+        chunk = b"".join(lines[s["first"]-1:s["last"]])
+        result.append({"word":e["word"],"source":s,"line_count":s["last"]-s["first"]+1,"byte_count":len(chunk),
+                       "span_sha256":hashlib.sha256(chunk).hexdigest(),"parent_first":parent_first,
+                       "boundary_state":"SOURCE_ANCHOR_VERIFIED_NOT_AST_PROOF","output_class":e["output_class"]})
+    # All UI evidence files share the explicitly pinned source repo/commit.
+    require(len({(e["source"]["repo"],e["source"]["commit"]) for e in receipt["entries"]}) == 1, "mixed receipt sources")
+    source = receipt["entries"][0]["source"]
+    for evidence in receipt["source_activation_evidence"]:
+        for first,last in evidence["ranges"]:
+            load({"repo":source["repo"],"commit":source["commit"],"path":evidence["path"],"blob":evidence["blob"],"first":first,"last":last})
+    return {"schema":"vedic.candidate-verification.v1","candidate_count":len(result),
+            "verified_files_including_activation":len(cache),"entries":result,"runtime_verified":False}
 
 def terms(text):
     return set(TOKENS.findall(text.casefold())) - STOP
@@ -226,14 +301,19 @@ def main():
     p.add_argument("--translations", type=Path, default=root/"data/translation-geodesy.json")
     p.add_argument("--output", type=Path, required=True)
     p.add_argument("--query")
+    p.add_argument("--candidate-receipt", type=Path)
     p.add_argument("--no-parse", action="store_true")
     a = p.parse_args()
     manifest = compile_manifest(json.loads(a.dictionary.read_text()), json.loads(a.translations.read_text()), fetch, not a.no_parse)
+    if a.candidate_receipt is not None:
+        manifest["candidate_verification"] = verify_candidate_receipt(json.loads(a.candidate_receipt.read_text()), fetch)
     if a.query is not None:
         manifest["intent_candidates"] = search(manifest, a.query)
     with a.output.open("x", encoding="utf-8") as f:
         json.dump(manifest, f, sort_keys=True, indent=2); f.write("\n")
-    print(json.dumps({k:v for k,v in manifest.items() if k not in ("entries", "intent_candidates")}, sort_keys=True))
+    print(json.dumps({k:v for k,v in manifest.items() if k not in ("entries", "intent_candidates", "candidate_verification")}, sort_keys=True))
+    if "candidate_verification" in manifest:
+        print(json.dumps({k:v for k,v in manifest["candidate_verification"].items() if k != "entries"}, sort_keys=True))
 
 if __name__ == "__main__":
     main()
