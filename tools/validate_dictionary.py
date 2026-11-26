@@ -1,8 +1,10 @@
 """Validate the append-only VEDIC dictionary and its initial composition."""
 import json
 import hashlib
+from source_evidence import POLICY, POLICY_SCHEMA, POLICY_STATE, source_link, verify_exact_span
 from validate_translation import fetch
 import re
+from urllib.parse import quote
 from datetime import datetime
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +40,7 @@ def validate(d, translations, prior=None):
         require(e["vedic_class_candidate"] in {"Structure","Movement","Computation","Flow","Data"}, "unknown class")
         require(e["classification_state"] == "CURATED_CANDIDATE", "unproven classification")
         if e["kind"] == "FUNCTION":
+            policy = e.get("admission_policy") == POLICY
             if e["translation_ref"] not in source:
                 require(e["demo"] is None, "source-only function cannot claim a demo")
                 require(all(e.get(k) is None for k in ("family_id","element_id","tablet_id","line_ids","proof")), "unverified identity or proof")
@@ -47,9 +50,18 @@ def validate(d, translations, prior=None):
                 require(all(re.fullmatch(r"[0-9a-f]{40}", s[k]) for k in ("commit","blob")), "bad source pin")
                 require(not s["path"].startswith("/") and ".." not in s["path"].split("/") and bool(s["path"]), "bad source path")
                 require(type(s["first"]) is int and type(s["last"]) is int and 1 <= s["first"] <= s["last"], "bad source span")
-                require(e["receipt"].startswith("https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-"), "missing receipt")
+                if policy:
+                    receipt = e.get("policy_receipt")
+                    require(isinstance(receipt, dict) and receipt.get("schema") == POLICY_SCHEMA
+                            and receipt.get("policy") == POLICY, "invalid policy receipt")
+                    require(all(isinstance(receipt.get(k), str) and re.fullmatch(r"[0-9a-f]{64}", receipt[k])
+                                for k in ("source_sha256", "contract_sha256")), "invalid policy receipt digest")
+                    require(e["receipt"] == source_link(s), "invalid policy evidence link")
+                else:
+                    require(re.fullmatch(r"https://github\.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-[1-9][0-9]*",
+                                         e["receipt"]), "missing receipt")
             require(e["sense_key"] == "function:" + e["translation_ref"], "invalid function sense key")
-            require(e["state"] == "STATIC_SOURCE_REVIEW", "unsupported proof state")
+            require(e["state"] == (POLICY_STATE if policy else "STATIC_SOURCE_REVIEW"), "unsupported proof state")
         elif e["kind"] == "COMPOSITION":
             require(e["state"] == "DEMO_CANDIDATE", "unsupported composition status")
             require(e["composition_mode"] == "shared_inputs", "unsupported composition")
@@ -66,24 +78,35 @@ def validate(d, translations, prior=None):
             for key in ("number","word","kind","translation_ref","components","sense_key","created_utc","creation_evidence","composition_mode"):
                 require(old.get(key) == by_id[old["gg_id"]].get(key), "changed permanent identity")
     return len(entries)
-def verify_source_entries(d, reader=fetch):
-    cache = {}
+def verify_source_entries(d, reader=None):
+    raw_cache = {}
+    legacy_cache = {}
+    if reader is None:
+        def reader(repo, commit, path):
+            return fetch(repo, commit, quote(path, safe="/"))
+
     for e in d["entries"]:
         if e["demo"] is not None or "source" not in e:
             continue
         s = e["source"]
         key = (s["repo"],s["commit"],s["path"])
-        if key not in cache:
-            raw = reader(*key)
-            require(len(raw) <= 1_000_000, "source too large")
-            cache[key] = (hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest(),raw.decode("utf-8").splitlines())
-        blob, lines = cache[key]
+        if key not in raw_cache:
+            raw_cache[key] = reader(*key)
+        raw = raw_cache[key]
+        require(len(raw) <= 1_000_000, "source too large")
+        name = e["translation_ref"].rsplit(":",1)[-1]
+        if e.get("admission_policy") == POLICY:
+            verify_exact_span(s, name, raw)
+            continue
+        if key not in legacy_cache:
+            blob = hashlib.sha1(f"blob {len(raw)}\0".encode() + raw).hexdigest()
+            legacy_cache[key] = (blob, raw.decode("utf-8").splitlines())
+        blob, lines = legacy_cache[key]
         require(blob == s["blob"], f"source blob mismatch {key}: expected {s['blob']}, got {blob}")
         require(s["last"] <= len(lines), "source span outside file")
-        name = e["translation_ref"].rsplit(":",1)[-1]
         require(re.search(r"\b(?:function\s+"+re.escape(name)+r"\s*\(|"+re.escape(name)+r"\s*:)",lines[s["first"]-1]), f"source start mismatch {e['gg_id']} {name}")
         require(lines[s["last"]-1].strip() == "}", f"source end mismatch {e['gg_id']} {name}")
-    return len(cache)
+    return len(raw_cache)
 
 if __name__ == "__main__":
     import argparse
@@ -91,9 +114,9 @@ if __name__ == "__main__":
     p.add_argument("--prior", type=Path)
     p.add_argument("--online", action="store_true")
     args = p.parse_args()
-    d = json.loads((ROOT/"data/dictionary.json").read_text())
-    t = json.loads((ROOT/"data/translation-geodesy.json").read_text())
-    prior = json.loads(args.prior.read_text()) if args.prior else None
+    d = json.loads((ROOT/"data/dictionary.json").read_text(encoding="utf-8"))
+    t = json.loads((ROOT/"data/translation-geodesy.json").read_text(encoding="utf-8"))
+    prior = json.loads(args.prior.read_text(encoding="utf-8")) if args.prior else None
     print("Dictionary entries:", validate(d,t,prior))
     if args.online:
         print("Additional pinned source files:", verify_source_entries(d))

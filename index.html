@@ -106,7 +106,7 @@ function drawCommandRow(summary,records){
         el('p','Modular Star family IDs: '+(row.modular_family_refs?.join(', ')||translation?.family_id||row.family_id||'Not yet resolved'),'muted'),
         el('p','Periodic Table: '+row.periodic_category+' / '+row.periodic_block_candidate+' (candidate); VEDIC class: '+row.vedic_class_candidate,'muted')
       );
-      if(row.receipt)detail.append(link('Review evidence',row.receipt));
+      if(row.receipt)detail.append(link(row.policy_receipt?'Source evidence':'Review evidence',row.receipt));
       const source=translation?.source||row.source;
       if(source)detail.append(link('Exact source','https://github.com/'+source.repo+'/blob/'+source.commit+'/'+source.path.split('/').map(encodeURIComponent).join('/')+'#L'+source.first+'-L'+source.last));
       for(const id of row.components||[])detail.append(el('p',details.get(id).word+' / '+id));

@@ -34,7 +34,7 @@ jobs:
           fi
       - run: python tools/validate_v2_allocation.py --online
       - run: python tools/allocate_commands.py --check
-      - run: python tools/source_admissions.py --check
+      - run: python tools/source_admissions.py --check --online
       - run: python tools/stage_demo.py
       - run: python -m pip install playwright==1.56.0
       - run: python -m playwright install --with-deps chromium webkit
