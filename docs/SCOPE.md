@@ -63,4 +63,18 @@ The owner intends VEDIC to have layered meaning and remain open to discovery. Ex
 
 These principles supplement Sections 1–11. Keep public vocabulary plain English and welcoming to all backgrounds. Do not introduce religious nomenclature into classifications, UI, IDs or executable commands. Existing engineering provenance and exact source records remain intact. The dictionary permits repeated words with distinct permanent sense keys. Word labels are not unique identifiers. Every allocated meaning retains its GlobalGrid ID, original UTC creation timestamp and Git creation evidence permanently. Multiple entries allocated in one commit may share a timestamp; uniqueness belongs to the ID and canonical meaning key, not the clock. Preserve original source identities independently. Do not reset creation dates when revising a description or refreshing source evidence. A materially new meaning receives a new identity. Initial six allocations were recovered from commit 5ddc2e611dbcccb68cc4f7342637fddb912e5ef1 at 2026-11-26T01:35:15Z. The initial key scheme references canonical translation IDs or ordered composition IDs; exact semantic equivalence across distinct source references still requires evidence.
 
+### 13. Three identities — the foundation of composition
+
+The owner defines three complementary identity systems. Do not replace any with another:
+
+| Identity | Question | Canonical evidence |
+| --- | --- | --- |
+| Git SHA | Which exact revision and bytes? | Repository, commit SHA, path, blob SHA and exact source span; retain immutable history. |
+| Modular Star | Which numbered code constitutes this body, and where is it reused? | Existing permanent tablet, element, family and ordered line IDs, with verified occurrence and database snapshot. No new allocator; unresolved IDs remain null. |
+| VEDIC | What does this mean, and how may it be combined? | Permanent GG2050-VEDIC ID, immutable creation timestamp, unique meaning key, versioned contract and demonstration/evidence. |
+
+The three identities form an evidence-linked relationship, not a one-to-one mapping: one meaning can have several implementations; one body can support several meanings; a new Git revision need not imply a new meaning. Different words may reference a single meaning through aliases, and the same word may reference several distinct meanings. A materially new meaning or composition receives a new VEDIC ID; a refined description or proven implementation replacement does not erase history. Preserve all three provenance layers and their uncertainty. Kuiper's reproducible-key and openable-destination laws apply.
+
+Recursive compositions reference existing VEDIC IDs and pinned contract versions; each component resolves to its existing Modular Star and Git evidence. Record the composition's own Git source and existing Modular Star IDs when indexed, not fabricated numbers. A tested composition may become a reusable word in later compositions. This supports an open-ended space of systems rather than a guarantee of infinitely many valid executable programs. Use existing Chemistry, Maths Genome, Periodic Table, code generator and CVAA checks for compatibility and proof. All three identities must be separately discoverable in the register; do not invent missing associations or claim exact runtime identity without evidence. Python validates references, typed ports, units, cycles, version compatibility, provenance and immutable identity; show unknowns honestly. Keep prior producer systems unchanged.
+
 One architecture. Growing vocabulary. New combinations. Reproducible evidence. Live long and prosper. 🖖
