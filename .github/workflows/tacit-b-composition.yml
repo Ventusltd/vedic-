@@ -183,6 +183,13 @@ jobs:
             sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_bond_intake.py --factory "$PWD" --archive "$p" --ranking "$e/tacit-b-ranking.json" --review "$e/tacit-b-reviewed-intake.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-abc-bonds.json"
             sha256sum "$e/tacit-b-abc-bonds.json"
           fi
+      - name: Existing factory candidate admission validation (no registry write)
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          python tacit-b/tools/tacit_b_stage_factory.py "$PWD"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_admission.py --factory "$PWD" --a "$RUNNER_TEMP/tacit-a-candidate.zip" --c "$RUNNER_TEMP/tacit-c-review.zip" --nearest "$RUNNER_TEMP/nearest-source" --electrical "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-admission.json"
+          sha256sum "$e/tacit-b-admission.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
