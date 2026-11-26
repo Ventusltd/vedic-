@@ -74,6 +74,11 @@ class BridgeTests(unittest.TestCase):
         self.assertIsNone(kuiper_join(self.s,self.r)["key"])
         r.update(repo_on_wafer="gridatlas",quote_matches=False)
         self.assertIsNone(kuiper_join(self.s,self.r)["key"])
+    def test_kuiper_canonical_case_alias(self):
+        self.r["bodies"][0]["repo_on_wafer"]="GridAtlas"
+        self.assertEqual(kuiper_join(self.s,self.r)["key"],103)
+        self.r["bodies"][0]["blob_at_path"]="b"*40
+        self.assertIsNone(kuiper_join(self.s,self.r)["key"])
     def test_kuiper_zero_is_valid(self):
         self.r["bodies"][0].update(key=0,k0=0,lines_before=0)
         self.assertEqual(kuiper_join(self.s,self.r)["key"],0)
