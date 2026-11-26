@@ -1,0 +1,43 @@
+name: TACIT 4b solar shape development proof
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit4b/**'
+      - '.github/workflows/tacit4b-solar-shape.yml'
+permissions:
+  contents: read
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Acquire exact source and reviewed PR13 helpers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/tacit4b"
+          curl -fsSL --max-time 60 https://raw.githubusercontent.com/Ventusltd/globalgrid2050/2f4b7cb82ee154fa3c684cba634d45f2183c6e7d/energy-transition-simulator/202609282123/mod/engine/structures.mjs -o "$RUNNER_TEMP/tacit4b/structures.mjs"
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_builder.py?ref=2adc1fa9c52f1d242e601b1580927996e7cb31da' > "$RUNNER_TEMP/tacit4b/factory.py"
+          test "$(git hash-object "$RUNNER_TEMP/tacit4b/structures.mjs")" = 52619f60fea35e05d7634d760b7c19b6712f9b97
+          test "$(git hash-object "$RUNNER_TEMP/tacit4b/factory.py")" = 63849940adf32580e5c3aab4ea9dc2b36a35c319
+      - name: Offline clean consumer and deterministic archive proof
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit4b"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" tools/tacit4b/proof.py "$p/structures.mjs" "$p/factory.py" "$p/evidence"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit4b-solar-shape-evidence-only
+          path: ${{ runner.temp }}/tacit4b/evidence
+          if-no-files-found: error
+          retention-days: 30
