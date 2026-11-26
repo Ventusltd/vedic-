@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
-from stage_pages import stage, V1_ROUTE, V2_ROUTE, V3_ROUTE
+from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, V1_ROUTE, V2_ROUTE, V3_ROUTE
 import argparse
 
 
@@ -30,6 +30,11 @@ def exercise_pagination(site):
 
 
 def exercise_public(public):
+    manifest = json.loads((public / "release.json").read_bytes())
+    assert validate_publication({name: (public / name).read_bytes() for name in (CATALOGUE, PUBLICATION)}) == manifest["prose_count"]
+    for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE):
+        assert not (public / route / CATALOGUE).exists()
+        assert not (public / route / PUBLICATION).exists()
     for base in (public, public / V3_ROUTE):
         html = (base / 'index.html').read_text(encoding='utf-8')
         assert 'id="package-evidence"' in html and 'Package download unavailable' in html
