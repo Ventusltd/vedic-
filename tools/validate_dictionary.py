@@ -76,13 +76,13 @@ def verify_source_entries(d, reader=fetch):
         if key not in cache:
             raw = reader(*key)
             require(len(raw) <= 1_000_000, "source too large")
-            cache[key] = (hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\\0" + raw).hexdigest(),raw.decode("utf-8").splitlines())
+            cache[key] = (hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest(),raw.decode("utf-8").splitlines())
         blob, lines = cache[key]
-        require(blob == s["blob"], "source blob mismatch")
+        require(blob == s["blob"], f"source blob mismatch {key}: expected {s['blob']}, got {blob}")
         require(s["last"] <= len(lines), "source span outside file")
         name = e["translation_ref"].rsplit(":",1)[-1]
-        require(re.search(r"\\b(?:function\\s+"+re.escape(name)+r"\\s*\\(|"+re.escape(name)+r"\\s*:)",lines[s["first"]-1]), "source start mismatch")
-        require(lines[s["last"]-1].strip() == "}", "source end mismatch")
+        require(re.search(r"\b(?:function\s+"+re.escape(name)+r"\s*\(|"+re.escape(name)+r"\s*:)",lines[s["first"]-1]), f"source start mismatch {e['gg_id']} {name}")
+        require(lines[s["last"]-1].strip() == "}", f"source end mismatch {e['gg_id']} {name}")
     return len(cache)
 
 if __name__ == "__main__":
