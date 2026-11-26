@@ -18,7 +18,10 @@
       "state": "STATIC_SOURCE_REVIEW",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Mathematics / Spherical geometry",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation"
     },
     {
       "number": 2,
@@ -34,7 +37,10 @@
       "state": "STATIC_SOURCE_REVIEW",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Computer science / Geometry processing",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Data"
     },
     {
       "number": 3,
@@ -50,7 +56,10 @@
       "state": "STATIC_SOURCE_REVIEW",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Computer science / Data normalisation",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Data"
     },
     {
       "number": 4,
@@ -68,7 +77,10 @@
       "state": "STATIC_SOURCE_REVIEW",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Mathematics / Spherical geometry",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation"
     },
     {
       "number": 5,
@@ -85,7 +97,10 @@
       "state": "STATIC_SOURCE_REVIEW",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Mathematics / Trigonometry",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation"
     },
     {
       "number": 6,
@@ -108,7 +123,24 @@
       "limits": "Demonstration composition only; not navigation, access or an engineered route.",
       "estate_group": "GridAtlas / Geodesy",
       "discipline": "Mathematics / Functional composition",
-      "classification_state": "CURATED_CANDIDATE"
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation"
     }
-  ]
+  ],
+  "resources": {
+    "periodic_table": "https://ventusltd.github.io/ventus-grid-engine/?graph=periodic-table",
+    "spider_genome": "https://ventusltd.github.io/ventus-grid-engine/?graph=genome-spider",
+    "maths_genome": "https://ventusltd.github.io/ventus-grid-engine/?graph=engine-graph",
+    "classification": "https://ventusltd.github.io/ventus-grid-engine/?graph=vedic",
+    "kuiper": "https://github.com/Ventusltd/kuiper-belt",
+    "compatibility": "https://ventusltd.github.io/ventus-grid-engine/?graph=chemistry"
+  },
+  "classification_basis": {
+    "periodic_table": "https://github.com/Ventusltd/stars/blob/main/modular-star/blocks-catalogue.json",
+    "kuiper": "https://github.com/Ventusltd/kuiper-belt/blob/main/README.md",
+    "spider": "https://github.com/Ventusltd/ventus-grid-engine/blob/main/spider/manifest.json",
+    "note": "Existing category geodesy; Vg candidate, not exact family resolution. Additional discipline labels are curated cross-cutting tags."
+  }
 }
