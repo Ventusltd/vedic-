@@ -96,7 +96,12 @@ def main():
         manifest_path.write_bytes((json.dumps({"review_commit": commit, "baseline_commit": BASE,
                                               "new_commands": len(current["entries"])-len(base["entries"])}, indent=2)+"\n").encode())
     else:
-        require(json.loads(target.read_bytes()) == current, "Dictionary differs from reviewed replay")
+        from family_pulse import verify_extension
+        queue = json.loads((ROOT / "data/daily-command-queue.json").read_bytes())
+        published = json.loads(target.read_bytes())
+        verify_extension(current, published, queue)
+        validate(published, translations, current)
+        current = published
     print("Reviewed dictionary entries:", len(current["entries"]))
 
 
