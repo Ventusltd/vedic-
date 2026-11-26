@@ -76,7 +76,7 @@ def main():
     t = json.loads(a.translations.read_text(encoding="utf-8"))
     cr = curated_records(d,t)
     pr = load_library(a.library.read_bytes(), PRODUCER_BLOB, EXPECTED_COUNT)
-    c,p = Index(cr),Index(pr)
+    c,p = Index(cr, prefer_coverage=True),Index(pr)
     queries = a.query or [
         "distance and bearing between two points",
         "render selected Vicinity asset facts",
