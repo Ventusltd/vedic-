@@ -2,11 +2,13 @@ name: VEDIC Modular Star consumer
 on:
   workflow_dispatch:
   schedule:
-    - cron: '25 */6 * * *'
+    - cron: '37 3 * * *'
   pull_request:
     paths:
       - 'tools/modular_snapshot.py'
       - 'tools/test_modular_snapshot.py'
+      - 'tools/daily_intelligence.py'
+      - 'tools/test_daily_intelligence.py'
       - '.github/workflows/modular-consumer.yml'
 permissions:
   contents: read
@@ -16,20 +18,26 @@ concurrency:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
-      - name: Acquire and validate existing producer database
+      - run: python -m unittest discover -s tools -p 'test_daily_intelligence.py' -v
+      - name: Daily bounded intelligence review
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        run: python tools/daily_intelligence.py
+      - name: Acquire and validate existing producer database (manual only)
+        if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
       - uses: actions/upload-artifact@v4
+        if: github.event_name != 'pull_request'
         with:
-          name: modular-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
-          path: receipts/modular-snapshot.json
+          name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipts/*.json
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 14
