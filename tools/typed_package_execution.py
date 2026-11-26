@@ -71,12 +71,63 @@ console.log(JSON.stringify(orient(x)));
     return {"state":"EXECUTED_ADMITTED_ORIENT_ONLY","pattern":pattern,
             "pattern_sha256":f.sha(f.canonical(pattern)),"nearest_composition":"NOT_ADMITTED"}
 
+def from_peer_execution(peer):
+    """TACIT8 v1 plan receipt adapter. Never treats ranking as authorisation."""
+    f.need(peer.get("schema")=="vedic.execution-receipt.v1" and
+           peer.get("state")=="EXECUTED_GIT_SOURCE_TIER","PEER_EXECUTION_STATE")
+    intent=peer["intent"]
+    f.need(intent.get("state")=="PLAN_PROPOSED" and
+           intent.get("candidate_id")=="GG2050-VEDIC-000006" and
+           intent.get("execution_authorized_by_ranking") is False,"PEER_INTENT")
+    x=peer["inputs"]
+    q={"schema":SCHEMA,"family":"orient","export":"orient",
+       "descriptor_sha256":DESCRIPTOR,"archive_sha256":ARCHIVE,
+       "ports":dict(PORTS),"input":x}
+    request(q)
+    args=[x[p][k] for p in ("point_a","point_b") for k in ("longitude","latitude")]
+    source={"repo":"Ventusltd/ventus-grid-engine","commit":"487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+            "path":"engine/v9-geodesy.js","blob":"14023f06d4ef2ea806437863bd35dee954c46b11"}
+    order=["lon_a","lat_a","lon_b","lat_b"]
+    expected={"schema":"vedic.orient-dag.v1","composition":"GG2050-VEDIC-000006","args":args,
+              "inputs":{"crs":"WGS84","unit":"degrees","order":order},
+              "nodes":[{"id":mid,"export":export,"inputs":order,"output":out,
+                        "source":{**source,"first":first,"last":last}}
+                       for mid,export,out,first,last in [
+                           ("GG2050-VEDIC-000001","distanceKm","distance_km",29,47),
+                           ("GG2050-VEDIC-000005","initialBearingDeg","initial_bearing_deg",133,139)]],
+              "outputs":{"distance_km":"km","initial_bearing_deg":"degrees"},
+              "dependencies":["EARTH_RADIUS_KM","DEG","Math"],"effects":"pure reviewed module",
+              "tier":"GIT_SOURCE_VERIFIED_ONLY","permanent_identity_complete":False}
+    f.need(peer["plan"]==expected,"PEER_DAG_MISMATCH")
+    f.need(peer.get("source_sha256")=="af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb",
+           "PEER_SOURCE")
+    return q
+
+def execute_peer(peer_raw, raw, receipt):
+    peer=f.strict(peer_raw)
+    result=execute(from_peer_execution(peer),raw,receipt)
+    out=result["pattern"]["output"]
+    # Old Node22 source execution and current Node18 package may differ at
+    # floating-point roundoff; compare explicit quantities with tolerance.
+    f.keys(peer["outputs"],("distance_km","initial_bearing_deg"))
+    f.need(all(type(peer["outputs"][k]) in (int,float) and
+               abs(out[k]-peer["outputs"][k])<=1e-9 for k in out),"PEER_PARITY")
+    result["pattern"]["peer_receipt_sha256"]=f.sha(peer_raw)
+    result["pattern"]["peer_plan"]=peer["plan"]
+    result["pattern_sha256"]=f.sha(f.canonical(result["pattern"]))
+    result["peer_parity"]="MATCH_WITHIN_1E-9"
+    return result
+
 def main():
     p=argparse.ArgumentParser()
-    for k in ("archive","receipt","request"): p.add_argument("--"+k,type=Path,required=True)
+    for k in ("archive","receipt"): p.add_argument("--"+k,type=Path,required=True)
+    source=p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--request",type=Path);source.add_argument("--peer-execution",type=Path)
     a=p.parse_args()
     try:
-        print(f.canonical(execute(f.strict(a.request.read_bytes()),a.archive.read_bytes(),f.strict(a.receipt.read_bytes()))).decode(),end="")
+        raw=a.archive.read_bytes();receipt=f.strict(a.receipt.read_bytes())
+        result=execute_peer(a.peer_execution.read_bytes(),raw,receipt) if a.peer_execution else execute(f.strict(a.request.read_bytes()),raw,receipt)
+        print(f.canonical(result).decode(),end="")
     except (ValueError,KeyError,OSError) as e:
         print(json.dumps({"state":"REFUSED","reason":str(e)}));raise SystemExit(1)
 if __name__=="__main__":main()

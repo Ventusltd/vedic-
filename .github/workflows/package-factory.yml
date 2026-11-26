@@ -8,6 +8,7 @@ on:
       - 'tests/test_package_factory_second_family.py'
       - 'tools/typed_package_execution.py'
       - 'tests/test_typed_package_execution.py'
+      - 'tests/test_peer_plan_handoff.py'
       - '.github/workflows/package-factory.yml'
 permissions:
   contents: read
@@ -52,6 +53,14 @@ jobs:
           for pair in adapter.mjs:adapter.mjs test.mjs:test.mjs consumer.mjs:consumer.mjs README.md:electrical-readme.md; do
             curl -fsSL --max-time 120 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/vedic-/4bf9c297c0cec8452327254a297fb7bd0d48e4dd/packages/electrical/${pair%:*}" -o "$q/${pair#*:}"
           done
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126783600/zip > "$p/peer-execution.zip"
+          echo "0e2add04245fce64c55d906be0387cca87b2c77eec55c14312ee6d7074ef2172  $p/peer-execution.zip" | sha256sum -c -
+          python - "$p" <<'PY'
+          import pathlib,sys,zipfile
+          p=pathlib.Path(sys.argv[1]);z=zipfile.ZipFile(p/"peer-execution.zip")
+          assert z.namelist().count("orient.json")==1 and z.getinfo("orient.json").file_size<=2097152
+          (p/"peer-orient.json").write_bytes(z.read("orient.json"))
+          PY
       - name: Offline validation, negative tests, clean consumer and repeated builds
         run: |
           set -euo pipefail
@@ -76,6 +85,8 @@ jobs:
           offline tools/package_factory.py probe-pending-electrical --descriptor packages/factory/pending/electrical.json --inputs "$RUNNER_TEMP/factory-electrical" | tee "$e/electrical-pre-admission.json"
           offline tests/test_typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/typed-contracts.txt"
           offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --request packages/factory/orient-execution.json | tee "$e/typed-execution.json"
+          offline tests/test_peer_plan_handoff.py --peer "$p/peer-orient.json" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/peer-plan-tests.txt"
+          offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --peer-execution "$p/peer-orient.json" | tee "$e/peer-plan-execution.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit1b-factory-evidence-only

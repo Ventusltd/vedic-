@@ -187,6 +187,8 @@ def electrical_adapter(d, data):
     # Only a future exact reviewed admission may reach this handler.
     # Receipt schema/contents must be reviewed before lifting this gate.
     need("receipt" in data, "SOURCE_RECEIPT_PENDING")
+    if "closure" in data:
+        review_receipt("electrical",data["receipt"],{"voltage-drop.mjs":data["module"]},data["closure"])
     raise Refusal("ELECTRICAL_RECEIPT_REVIEW_REQUIRED")
 
 ELECTRICAL_INDEX = b"export {annualLossKwh, dropPercent, lossesWatts, voltageDropVolts} from './adapter.mjs';\n"
