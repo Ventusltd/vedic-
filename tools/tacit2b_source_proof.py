@@ -87,7 +87,17 @@ def main():
     for r in sanitized["bodies"]: r.pop("line_text",None)
     write(a.out/"kuiper-producer-redacted.json",sanitized)
     write(a.out/"parser.json",parsed)
-    result={"schema":"vedic.electrical-source-proof-candidate.v1","owner":"TACIT 2b","review_owner":"TACIT 10","dictionary_commit":VEDIC,"dictionary_sha256":DICT_SHA,"module_sha256":MODULE_SHA,"source_blob":BLOB,"source_bytes":len(raw),"kuiper_producer_commit":KUIPER,"kuiper_wafer_sha256":sha((producer/"cosmos/wafer.tsv").read_bytes()),"raw_producer_receipt_sha256":sha(receipt_raw),"redacted_producer_receipt_sha256":sha((a.out/"kuiper-producer-redacted.json").read_bytes()),"components":rows,"controls_passed":7,"formal_imports":[],"identity_complete":False,"independent_acceptance":False,"admission":"BLOCKED_TACIT10_REVIEW","rights":"BLOCKED_PRIVATE_UNLICENSED","execution_verified_by_this_receipt":False}
+    ports_raw=(Path(__file__).resolve().parents[1]/"packages/electrical/typed-ports.json").read_bytes()
+    ports=json.loads(ports_raw)
+    need(ports["schema"]=="vedic.electrical-typed-ports-candidate.v1" and set(ports["functions"])==set(FUNCTIONS),"typed ports export mismatch")
+    for row in rows:
+        typed=ports["functions"][row["export"]]
+        need(typed["meaning_id"]==row["meaning_id"],"typed meaning mismatch")
+        row["typed_ports"]=typed
+    need(ports["functions"]["lossesWatts"]["input"]["lengthM"]["quantity"]=="one_way_conductor_route_length","route quantity mismatch")
+    need(ports["functions"]["lossesWatts"]["output"]["value"]["unit"]=="W" and ports["functions"]["annualLossKwh"]["output"]["value"]["unit"]=="kWh","power/energy unit mismatch")
+    write(a.out/"typed-ports.json",ports)
+    result={"schema":"vedic.electrical-source-proof-candidate.v1","owner":"TACIT 2b","review_owner":"TACIT 10","dictionary_commit":VEDIC,"dictionary_sha256":DICT_SHA,"module_sha256":MODULE_SHA,"source_blob":BLOB,"source_bytes":len(raw),"kuiper_producer_commit":KUIPER,"kuiper_wafer_sha256":sha((producer/"cosmos/wafer.tsv").read_bytes()),"raw_producer_receipt_sha256":sha(receipt_raw),"redacted_producer_receipt_sha256":sha((a.out/"kuiper-producer-redacted.json").read_bytes()),"components":rows,"controls_passed":7,"typed_ports_source_sha256":sha(ports_raw),"formal_imports":[],"identity_complete":False,"independent_acceptance":False,"admission":"BLOCKED_TACIT10_REVIEW","rights":"BLOCKED_PRIVATE_UNLICENSED","execution_verified_by_this_receipt":False}
     write(a.out/"candidate-source-proof.json",result)
     print("Candidate proof SHA256:",sha((a.out/"candidate-source-proof.json").read_bytes()))
     for row in rows: print("Source address:",json.dumps({"meaning_id":row["meaning_id"],"export":row["export"],"kuiper":row["kuiper"],"span_sha256":row["physical_span_sha256"]},sort_keys=True))
