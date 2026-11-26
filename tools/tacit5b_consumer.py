@@ -72,8 +72,7 @@ def build(raw,app,factory_evidence=None):
 def check_tree(root,expected):
     actual={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob("*") if p.is_file()}
     require(actual==expected,"clean consumer tree mismatch")
-def browser_checks(root,expected,activation=None):
-    from playwright.sync_api import sync_playwright
+def server_for(root,activation=None,port=0):
     class Handler(http.server.SimpleHTTPRequestHandler):
         def do_POST(self):
             if self.path!="/activate" or activation is None:
@@ -89,7 +88,10 @@ def browser_checks(root,expected,activation=None):
                 body={"state":"REFUSED","reason":str(e),"rows":[]}
             raw=encode(body)
             self.send_response(200);self.send_header("Content-Type","application/json");self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
-    server=http.server.ThreadingHTTPServer(("127.0.0.1",0),partial(Handler,directory=str(root)))
+    return http.server.ThreadingHTTPServer(("127.0.0.1",port),partial(Handler,directory=str(root)))
+def browser_checks(root,expected,activation=None):
+    from playwright.sync_api import sync_playwright
+    server=server_for(root,activation)
     worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
     base=f"http://127.0.0.1:{server.server_port}"
     receipts=[]
@@ -142,6 +144,9 @@ def browser_checks(root,expected,activation=None):
                         expect(page.locator("#activation-state")).to_have_text("Inputs changed. Activate again.")
                         page.locator("#activate").click()
                         expect(page.locator("#activation-state")).to_contain_text("222.638981587 km")
+                        page.locator("#kuiper-key").fill("86415575118")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("EXECUTED_INTERNAL")
                         page.locator("#kuiper-key").fill("999")
                         page.locator("#activate").click()
                         expect(page.locator("#activation-state")).to_contain_text("UNKNOWN_KUIPER_KEY")
@@ -168,6 +173,7 @@ def main():
     p.add_argument("--package",type=Path,required=True);p.add_argument("--app",type=Path,required=True);p.add_argument("--evidence",type=Path,required=True)
     p.add_argument("--factory-evidence",type=Path)
     p.add_argument("--activation-input",type=Path)
+    p.add_argument("--serve",action="store_true",help="Run the verified app on loopback rather than automated browser tests")
     a=p.parse_args();raw=a.package.read_bytes()
     evidence=None
     if a.factory_evidence:
@@ -201,6 +207,12 @@ def main():
             except ValueError: pass
             else: raise AssertionError("wrong source digest accepted")
             activation=Activation(a.activation_input,package)
+        if a.serve:
+            with server_for(root,activation,8765) as server:
+                print("Internal application: http://127.0.0.1:8765/ (Ctrl+C to stop)",flush=True)
+                try: server.serve_forever()
+                except KeyboardInterrupt: pass
+            return
         cases=browser_checks(root,files,activation)
     a.evidence.mkdir(parents=True,exist_ok=True)
     (a.evidence/"catalogue.json").write_bytes(files["catalogue.json"])

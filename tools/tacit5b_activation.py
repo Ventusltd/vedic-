@@ -36,11 +36,11 @@ class Activation:
         self.rows=[]
         # Peer plan source_check uses its earlier receipt layout; validate exact new receipt
         # against the same source pins and span hashes, then pass the actual records to peer.plan.
-        lines=raw.splitlines(keepends=True)
+        parts=raw.split(b"\n"); lines=[part+b"\n" for part in parts[:-1]]+([parts[-1]] if parts[-1] else [])
         for e in sorted(identity["components"],key=lambda x:x["gg_id"]):
             mid=e["gg_id"];name,first,last,output=peer.SPECS[mid]
             s=e["source"];pin={"repo":peer.REPO,"commit":peer.COMMIT,"path":peer.PATH,"blob":peer.BLOB,"first":first,"last":last}
-            require(s==pin and e["export"]==name and e["span_sha256"]==sha(b"".join(lines[first-1:last])),"SOURCE_SPAN_MISMATCH")
+            require(all(s.get(k)==v for k,v in pin.items()) and e["export"]==name and e["span_sha256"]==sha(b"".join(lines[first-1:last])),"SOURCE_SPAN_MISMATCH")
             require(str(e["kuiper"]["key"])==KEYS[mid] and e["kuiper"]["state"]==TIER,"KUIPER_RECEIPT_MISMATCH")
             self.rows.append({"gg_id":mid,"export":name,"output":output,"source":s,"source_sha256":MODULE,"kuiper_reported":e["kuiper"],"stars_reported":e["stars"]})
         require([r["gg_id"] for r in self.rows]==sorted(KEYS),"IDENTITY_COMPONENTS")
