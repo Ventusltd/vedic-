@@ -40,8 +40,8 @@ jobs:
       - name: Daily bounded command discovery
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py
-      - name: Compressed family pulse and reviewed command proposal
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      - name: Compressed family pulse and reviewed command proposal (read-only PR rehearsal)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -53,14 +53,16 @@ jobs:
             receipt=$(find "$RUNNER_TEMP/previous" -name family-research.json -print -quit)
             if [ -n "$receipt" ]; then cursor=$(jq -er '.next_cursor' "$receipt"); fi
           fi
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then cursor=0; fi
           python tools/family_pulse.py --cursor "$cursor"
+          cat receipts/family-research.json
       - name: Acquire and validate existing producer database (manual only)
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name != 'pull_request'
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
           path: receipts/

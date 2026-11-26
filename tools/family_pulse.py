@@ -168,6 +168,6 @@ def main():
               "producer_family_count":total,"scanned_families":len(rows),"next_cursor":cursor,
               "dictionary_count":len(d["entries"]),"added":added,"held":held,
               "execution_claim":False,"coverage":"family candidates, not semantic or executable coverage"})
-        print(json.dumps({"added":added,"next_cursor":cursor,"family_count":total}))
+        print(json.dumps({"added":added,"next_cursor":cursor,"family_count":total,"scanned_families":len(rows),"possible_existing":sum(r[4]=="POSSIBLE_EXISTING_COMMAND" for r in rows),"review_required":sum(r[4]=="REVIEW_REQUIRED" for r in rows),"parquet_bytes":(out/"family-pulse.parquet").stat().st_size}))
 if __name__ == "__main__":
     main()
