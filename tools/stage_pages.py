@@ -40,17 +40,18 @@ def write_bundle(destination, payload, version, ref):
         print(f"{h}  {destination/name}",flush=True)
 def stage(destination):
     head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
-    current={name:git_bytes(V3_COMMIT,name) for name in PUBLIC_FILES}
+    current={name:git_bytes(head,name) for name in PUBLIC_FILES}
+    v3={name:git_bytes(V3_COMMIT,name) for name in PUBLIC_FILES}
     v2={name:git_bytes(V2_COMMIT,name) for name in PUBLIC_FILES}
     for name,data in current.items():
         if git_bytes(head,name)!=data or (ROOT/name).read_bytes()!=data:
             raise ValueError("working tree differs from committed bytes: "+name)
     prior={name:git_bytes(V1_COMMIT,name) for name in PUBLIC_FILES}
     destination.mkdir(parents=True,exist_ok=False)
-    write_bundle(destination,current,"20261126-v3",V3_COMMIT)
+    write_bundle(destination,current,"20261126-prose-reader",head)
     write_bundle(destination/V1_ROUTE,prior,"202611260135-v1",V1_COMMIT)
     write_bundle(destination/V2_ROUTE,v2,"202611261351",V2_COMMIT)
-    write_bundle(destination/V3_ROUTE,current,"20261126-v3",V3_COMMIT)
+    write_bundle(destination/V3_ROUTE,v3,"20261126-v3",V3_COMMIT)
     (destination/".nojekyll").touch()
     expected={".nojekyll"}|{prefix+name for prefix in ("",V1_ROUTE+"/",V2_ROUTE+"/",V3_ROUTE+"/") for name in (*PUBLIC_FILES,"release.json")}
     actual={p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()}
