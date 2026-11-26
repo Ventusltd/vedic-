@@ -1,0 +1,7 @@
+# TACIT 5b — internal ORIENT consumer
+
+Development only. Not production, not a released package. The app imports the exact existing PR13 package; no geometry is implemented here. The Python assembly/test script accepts only the exact 32,666-byte archive digest from PR13. Its catalogue is provisional until TACIT 1b supplies a shared descriptor; it distinguishes build, browser evidence, independent acceptance, rights and publication. No second package or conversational bridge claimed.
+
+Replay the PR-only workflow .github/workflows/tacit5b-consumer.yml. It acquires the pinned builder and source receipt, builds the package offline, then tests a deterministic app ZIP in a clean temporary directory over loopback HTTP, blocking external browser requests. Only JSON receipts are uploaded. For permitted internal local use the assembled directory needs a local HTTP server (python -m http.server --bind 127.0.0.1 from that directory); file:// is not supported. The source directory alone is not runnable because package files and catalogue are generated. Software archive is intentionally ephemeral pending rights clearance. Physical phone testing is not claimed. Independent review by TACIT 9 and publication by TACIT 15 remain separate.
+
+Recovery: inspect exact PR workflow run, fix any failures on this branch only, then integrate TACIT 1b descriptor and a genuinely admitted second package. Do not copy calculations or publish archives.

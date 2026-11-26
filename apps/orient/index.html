@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VEDIC | Distance and bearing</title>
+<style>
+*{box-sizing:border-box}body{background:#10151d;color:#eef4fa;font:16px system-ui;margin:0 auto;max-width:680px;padding:20px}fieldset{border:1px solid #64748b;border-radius:8px;margin:12px 0;padding:12px;min-width:0}label{display:block;margin:8px 0}input,button{font:inherit;min-height:44px;width:100%;padding:10px;border-radius:6px;border:1px solid #64748b}input{background:#192331;color:white}button{background:#a5f3fc;color:#10202a;font-weight:bold}output{display:block;margin:16px 0;font-size:1.2rem;white-space:pre-line}small{display:block;overflow-wrap:anywhere;color:#cbd5e1}a{color:#a5f3fc}:focus-visible{outline:3px solid #fbbf24}
+</style>
+<main><h1>Distance and bearing</h1><p>WGS84 coordinates in degrees. Spherical straight-line distance, not a road or cable route.</p>
+<form id="coords" novalidate>
+<fieldset><legend>Point A</legend><label>Longitude (degrees)<input id="a-lon" type="number" step="any" value="0" required></label><label>Latitude (degrees)<input id="a-lat" type="number" step="any" value="0" required></label></fieldset>
+<fieldset><legend>Point B</legend><label>Longitude (degrees)<input id="b-lon" type="number" step="any" value="1" required></label><label>Latitude (degrees)<input id="b-lat" type="number" step="any" value="0" required></label></fieldset>
+<button id="calculate" disabled>Calculate</button></form>
+<output id="result" aria-live="polite">Loading verified package…</output>
+<small id="evidence"></small><p><small>Internal development only. Independent package acceptance and redistribution clearance pending.</small></p>
+<p><a href="./catalogue.json">Capability catalogue (JSON)</a></p></main>
+<script type="module" src="./app.mjs"></script></html>
