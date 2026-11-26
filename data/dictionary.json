@@ -15,7 +15,10 @@
       ],
       "output": "distance_km",
       "demo": "distance",
-      "state": "STATIC_SOURCE_REVIEW"
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Spherical geometry",
+      "classification_state": "CURATED_CANDIDATE"
     },
     {
       "number": 2,
@@ -28,7 +31,10 @@
       ],
       "output": "coordinate_pair_or_null",
       "demo": "point",
-      "state": "STATIC_SOURCE_REVIEW"
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Computer science / Geometry processing",
+      "classification_state": "CURATED_CANDIDATE"
     },
     {
       "number": 3,
@@ -41,7 +47,10 @@
       ],
       "output": "kilovolt_list",
       "demo": "voltage",
-      "state": "STATIC_SOURCE_REVIEW"
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Computer science / Data normalisation",
+      "classification_state": "CURATED_CANDIDATE"
     },
     {
       "number": 4,
@@ -56,7 +65,10 @@
       ],
       "output": "coordinate_pair",
       "demo": "destination",
-      "state": "STATIC_SOURCE_REVIEW"
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Spherical geometry",
+      "classification_state": "CURATED_CANDIDATE"
     },
     {
       "number": 5,
@@ -70,7 +82,10 @@
       ],
       "output": "bearing_deg",
       "demo": "bearing",
-      "state": "STATIC_SOURCE_REVIEW"
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Trigonometry",
+      "classification_state": "CURATED_CANDIDATE"
     },
     {
       "number": 6,
@@ -90,7 +105,10 @@
       "output": "distance_and_bearing",
       "demo": "orient",
       "state": "DEMO_CANDIDATE",
-      "limits": "Demonstration composition only; not navigation, access or an engineered route."
+      "limits": "Demonstration composition only; not navigation, access or an engineered route.",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Functional composition",
+      "classification_state": "CURATED_CANDIDATE"
     }
   ]
 }
