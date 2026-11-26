@@ -25,6 +25,19 @@ jobs:
           set -euo pipefail
           node --version
           sudo unshare --net -- env -i PATH="$PATH" HOME="$RUNNER_TEMP" node --test "$RUNNER_TEMP/tacit2b-input/test.mjs" | tee "$RUNNER_TEMP/tacit2b-tests.txt"
+      - name: Clean consumer import (development layout, not a factory archive)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/tacit2b-consumer"
+          PKG="$ROOT/node_modules/@ventus-internal/vedic-electrical"
+          mkdir -p "$PKG"
+          cp "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" "$PKG/"
+          cp packages/electrical/adapter.mjs "$PKG/index.mjs"
+          cp packages/electrical/consumer.mjs "$ROOT/"
+          printf '%s\n' '{"name":"@ventus-internal/vedic-electrical","private":true,"type":"module","exports":{".":"./index.mjs"}}' > "$PKG/package.json"
+          cd "$ROOT"
+          sudo unshare --net -- env -i PATH="$PATH" HOME="$RUNNER_TEMP" node consumer.mjs | tee "$RUNNER_TEMP/tacit2b-consumer.json"
       - name: Evidence only (no source or archive)
         uses: actions/upload-artifact@v4
         with:
@@ -32,4 +45,5 @@ jobs:
           path: |
             ${{ runner.temp }}/tacit2b-input/acquisition.json
             ${{ runner.temp }}/tacit2b-tests.txt
+            ${{ runner.temp }}/tacit2b-consumer.json
           retention-days: 30

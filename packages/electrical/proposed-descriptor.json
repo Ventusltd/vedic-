@@ -1,0 +1,116 @@
+{
+  "schema": "vedic.package-descriptor.v1",
+  "candidate": "local:electrical:voltage-drop",
+  "name": "@ventus-internal/vedic-electrical",
+  "version": "0.1.0",
+  "runtime": "node-esm-18",
+  "family": "electrical",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "identity_tier": "GIT_SOURCE_VERIFIED_STARS_INCOMPLETE",
+  "licence": "BLOCKED_PRIVATE_UNLICENSED",
+  "exports": [
+    "voltageDropVolts",
+    "dropPercent",
+    "lossesWatts",
+    "annualLossKwh"
+  ],
+  "ports": {
+    "input": {
+      "voltageDropVolts": "mode ac-rms; phases three|single; currentA RMS A; lengthM one-way m; resistanceOhmPerKm, reactanceOhmPerKm per conductor; resistanceBasis caller-specified-operating-resistance; powerFactor (0,1]; powerFactorBasis lagging-or-unity",
+      "dropPercent": "mode ac-rms; phases three|single; nominalVoltageBasis line-to-line|across-supply as appropriate; positive dropVolts and nominalVolts in V",
+      "lossesWatts": "mode ac-rms; phases three|single; currentA RMS A; lengthM one-way m; resistanceOhmPerKm per conductor; resistanceBasis caller-specified-operating-resistance",
+      "annualLossKwh": "peakLossWatts W >0; lossLoadFactor (0,1]; hours (0,8784]; factorBasis loss-load-factor"
+    },
+    "output": {
+      "voltageDropVolts": "value V, resistiveVolts V, reactiveVolts V; original quantity, unit, from and basis",
+      "dropPercent": "value percent; original quantity, unit, from and basis",
+      "lossesWatts": "value W, conductors count; original quantity, unit, from and basis",
+      "annualLossKwh": "value kWh; original quantity, unit, from and basis"
+    }
+  },
+  "dependencies": [],
+  "inputs": [
+    {
+      "role": "module",
+      "filename": "module.mjs",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/voltage-drop.js",
+      "algorithm": "sha256",
+      "digest": "8c3d99ca10b0d02722b54c6da21ebf1acb77936fe440cbd413b457266a994287",
+      "output": "voltage-drop.mjs"
+    },
+    {
+      "role": "receipt",
+      "filename": "receipt.json",
+      "repo": "Ventusltd/vedic-",
+      "commit": "4bf9c297c0cec8452327254a297fb7bd0d48e4dd",
+      "path": "packages/electrical/provisional-receipt.json",
+      "algorithm": "git-blob-sha1",
+      "digest": "7187520894ace63d28e30619bef93b0d89d6d3f0",
+      "output": "source-receipt.json"
+    },
+    {
+      "role": "licence",
+      "filename": "LICENSE",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "LICENSE",
+      "algorithm": "git-blob-sha1",
+      "digest": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "output": "UPSTREAM-LICENSE"
+    },
+    {
+      "role": "adapter",
+      "filename": "adapter.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "4bf9c297c0cec8452327254a297fb7bd0d48e4dd",
+      "path": "packages/electrical/adapter.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "e554f03e6b1d1e7ab2d522e0d3bd4cc43da2bbc6",
+      "output": null
+    },
+    {
+      "role": "consumer",
+      "filename": "consumer.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "4bf9c297c0cec8452327254a297fb7bd0d48e4dd",
+      "path": "packages/electrical/consumer.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "f3160bd5005db1a6134d15652c5db05e6df618cd",
+      "output": null
+    },
+    {
+      "role": "tests",
+      "filename": "test.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "4bf9c297c0cec8452327254a297fb7bd0d48e4dd",
+      "path": "packages/electrical/test.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "032c3c4c3a57fc6f61e2071ac6578f6e48b8eb39",
+      "output": null
+    },
+    {
+      "role": "documentation",
+      "filename": "electrical-readme.md",
+      "repo": "Ventusltd/vedic-",
+      "commit": "4bf9c297c0cec8452327254a297fb7bd0d48e4dd",
+      "path": "packages/electrical/README.md",
+      "algorithm": "git-blob-sha1",
+      "digest": "4c3218f740385fa41aadde048517832444fadafe",
+      "output": null
+    }
+  ],
+  "evidence": [
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846624339",
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846624339/artifacts/15131422587"
+  ],
+  "obligations": [
+    "BLOCK ADMISSION: receipt is provisional acquisition, replace with exact TACIT10 source receipt; do not treat as identity proof",
+    "TACIT13 independent import closure confirmation",
+    "TACIT9 independent mathematical and exact package acceptance",
+    "TACIT1b reviewed factory handler and explicit admission",
+    "licence clearance and exact Stars occurrence"
+  ],
+  "build": "reviewed-family-adapter-v1"
+}
