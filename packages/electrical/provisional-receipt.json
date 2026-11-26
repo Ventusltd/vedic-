@@ -1,0 +1,16 @@
+{
+  "schema": "tacit2b.provisional-acquisition.v1",
+  "repo": "Ventusltd/ventus-grid-engine",
+  "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+  "path": "engine/voltage-drop.js",
+  "git_blob_sha1": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+  "sha256": "8c3d99ca10b0d02722b54c6da21ebf1acb77936fe440cbd413b457266a994287",
+  "identity_status": "TACIT10_RECEIPT_PENDING",
+  "rights": "BLOCKED_PRIVATE_UNLICENSED",
+  "dependencies": [],
+  "observed_run": 45846624339,
+  "observed_job": 140001864351,
+  "artifact_id": 15131422587,
+  "artifact_sha256": "581a9c825e48af03865e595f704db7ff5936e7ee5494858d665dbec8ebcd5444",
+  "note": "Transcribed from actual acquisition log; not TACIT10 independent identity receipt. Must not admit as such."
+}

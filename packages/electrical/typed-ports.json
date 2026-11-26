@@ -1,0 +1,234 @@
+{
+  "schema": "vedic.electrical-typed-ports-candidate.v1",
+  "state": "PROPOSED_NOT_EXECUTION_AUTHORITY",
+  "functions": {
+    "voltageDropVolts": {
+      "meaning_id": "GG2050-VEDIC-000024",
+      "input": {
+        "mode": {
+          "kind": "enum",
+          "values": [
+            "ac-rms"
+          ]
+        },
+        "phases": {
+          "kind": "enum",
+          "values": [
+            "three",
+            "single"
+          ]
+        },
+        "currentA": {
+          "quantity": "conductor_current_rms",
+          "unit": "A",
+          "domain": "positive"
+        },
+        "lengthM": {
+          "quantity": "one_way_conductor_route_length",
+          "unit": "m",
+          "domain": "positive",
+          "origin": "explicit_caller_input_only"
+        },
+        "resistanceOhmPerKm": {
+          "quantity": "operating_resistance_per_conductor_per_length",
+          "unit": "ohm/km",
+          "domain": "positive"
+        },
+        "resistanceBasis": {
+          "kind": "enum",
+          "values": [
+            "caller-specified-operating-resistance"
+          ]
+        },
+        "reactanceOhmPerKm": {
+          "quantity": "reactance_per_conductor_per_length",
+          "unit": "ohm/km",
+          "domain": "nonnegative"
+        },
+        "powerFactor": {
+          "quantity": "lagging_or_unity_power_factor",
+          "unit": "1",
+          "domain": "(0,1]"
+        },
+        "powerFactorBasis": {
+          "kind": "enum",
+          "values": [
+            "lagging-or-unity"
+          ]
+        }
+      },
+      "output": {
+        "value": {
+          "quantity": "ac_voltage_drop",
+          "unit": "V"
+        },
+        "resistiveVolts": {
+          "quantity": "resistive_voltage_drop_component",
+          "unit": "V"
+        },
+        "reactiveVolts": {
+          "quantity": "reactive_voltage_drop_component",
+          "unit": "V"
+        }
+      }
+    },
+    "dropPercent": {
+      "meaning_id": "GG2050-VEDIC-000025",
+      "input": {
+        "mode": {
+          "kind": "enum",
+          "values": [
+            "ac-rms"
+          ]
+        },
+        "phases": {
+          "kind": "enum",
+          "values": [
+            "three",
+            "single"
+          ]
+        },
+        "nominalVoltageBasis": {
+          "kind": "enum",
+          "values": [
+            "line-to-line",
+            "across-supply"
+          ],
+          "constraint": "three=>line-to-line;single=>across-supply"
+        },
+        "dropVolts": {
+          "quantity": "ac_voltage_drop",
+          "unit": "V",
+          "domain": "positive"
+        },
+        "nominalVolts": {
+          "quantity": "nominal_ac_voltage",
+          "unit": "V",
+          "domain": "positive"
+        }
+      },
+      "output": {
+        "value": {
+          "quantity": "relative_voltage_drop",
+          "unit": "%"
+        }
+      }
+    },
+    "lossesWatts": {
+      "meaning_id": "GG2050-VEDIC-000026",
+      "input": {
+        "mode": {
+          "kind": "enum",
+          "values": [
+            "ac-rms"
+          ]
+        },
+        "phases": {
+          "kind": "enum",
+          "values": [
+            "three",
+            "single"
+          ]
+        },
+        "currentA": {
+          "quantity": "conductor_current_rms",
+          "unit": "A",
+          "domain": "positive"
+        },
+        "lengthM": {
+          "quantity": "one_way_conductor_route_length",
+          "unit": "m",
+          "domain": "positive",
+          "origin": "explicit_caller_input_only"
+        },
+        "resistanceOhmPerKm": {
+          "quantity": "operating_resistance_per_conductor_per_length",
+          "unit": "ohm/km",
+          "domain": "positive"
+        },
+        "resistanceBasis": {
+          "kind": "enum",
+          "values": [
+            "caller-specified-operating-resistance"
+          ]
+        }
+      },
+      "output": {
+        "value": {
+          "quantity": "resistive_conductor_power_loss",
+          "unit": "W"
+        }
+      }
+    },
+    "annualLossKwh": {
+      "meaning_id": "GG2050-VEDIC-000027",
+      "input": {
+        "peakLossWatts": {
+          "quantity": "peak_resistive_conductor_power_loss",
+          "unit": "W",
+          "domain": "positive",
+          "origin": "explicit_peak_load_confirmation_required"
+        },
+        "lossLoadFactor": {
+          "quantity": "loss_load_factor",
+          "unit": "1",
+          "domain": "(0,1]"
+        },
+        "hours": {
+          "quantity": "annual_model_duration",
+          "unit": "h",
+          "domain": "(0,8784]"
+        },
+        "factorBasis": {
+          "kind": "enum",
+          "values": [
+            "loss-load-factor"
+          ]
+        }
+      },
+      "output": {
+        "value": {
+          "quantity": "annual_resistive_energy_loss",
+          "unit": "kWh"
+        }
+      }
+    }
+  },
+  "relationships": [
+    {
+      "from": "voltageDropVolts.value",
+      "to": "dropPercent.dropVolts",
+      "state": "CONDITIONAL_CANDIDATE",
+      "condition": "positive result; same AC phase and voltage basis; explicit nominal voltage"
+    },
+    {
+      "from": "lossesWatts.value",
+      "to": "annualLossKwh.peakLossWatts",
+      "state": "CONDITIONAL_CANDIDATE",
+      "condition": "explicit caller confirmation current is peak model current; not inferred from arbitrary current"
+    }
+  ],
+  "refusals": [
+    {
+      "from_quantity": "geographical_distance",
+      "to_quantity": "one_way_conductor_route_length",
+      "reason": "NOT_ROUTE_LENGTH"
+    },
+    {
+      "from_quantity": "annual_resistive_energy_loss",
+      "to_quantity": "peak_resistive_conductor_power_loss",
+      "reason": "ENERGY_NOT_POWER"
+    },
+    {
+      "from_quantity": "ordinary_load_factor",
+      "to_quantity": "loss_load_factor",
+      "reason": "FACTOR_BASIS_MISMATCH"
+    },
+    {
+      "from_quantity": "resistive_conductor_power_loss",
+      "to_quantity": "peak_resistive_conductor_power_loss",
+      "reason": "PEAK_CONTEXT_REQUIRED"
+    }
+  ],
+  "notes": "Metadata only, not an execution engine or approved Spider vocabulary. All conditional bonds require reviewed typed execution contract and independent acceptance."
+}

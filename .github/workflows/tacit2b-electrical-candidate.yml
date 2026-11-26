@@ -1,0 +1,63 @@
+name: TACIT 2b electrical development evidence
+on:
+  pull_request:
+    paths:
+      - 'packages/electrical/**'
+      - 'tools/tacit2b_electrical_acquire.py'
+      - 'tools/tacit2b_source_proof.py'
+      - '.github/workflows/tacit2b-electrical-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Acquire exact source
+        run: |
+          python3 tools/tacit2b_electrical_acquire.py "$RUNNER_TEMP/tacit2b-input"
+          cp packages/electrical/{adapter,test}.mjs "$RUNNER_TEMP/tacit2b-input/"
+      - name: Offline numerical and contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          sudo unshare --net -- env -i PATH="$PATH" HOME="$RUNNER_TEMP" node --test "$RUNNER_TEMP/tacit2b-input/test.mjs" | tee "$RUNNER_TEMP/tacit2b-tests.txt"
+      - name: Clean consumer import (development layout, not a factory archive)
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$RUNNER_TEMP/tacit2b-consumer"
+          PKG="$ROOT/node_modules/@ventus-internal/vedic-electrical"
+          mkdir -p "$PKG"
+          cp "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" "$PKG/"
+          cp packages/electrical/adapter.mjs "$PKG/index.mjs"
+          cp packages/electrical/consumer.mjs "$ROOT/"
+          printf '%s\n' '{"name":"@ventus-internal/vedic-electrical","private":true,"type":"module","exports":{".":"./index.mjs"}}' > "$PKG/package.json"
+          cd "$ROOT"
+          sudo unshare --net -- env -i PATH="$PATH" HOME="$RUNNER_TEMP" node consumer.mjs | tee "$RUNNER_TEMP/tacit2b-consumer.json"
+      - name: Evidence only (no source or archive)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tacit2b-electrical-evidence
+          path: |
+            ${{ runner.temp }}/tacit2b-input/acquisition.json
+            ${{ runner.temp }}/tacit2b-tests.txt
+            ${{ runner.temp }}/tacit2b-consumer.json
+          retention-days: 30
+      - name: Exact source and Kuiper candidate evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0
+          node packages/electrical/source-parse.mjs "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" "$RUNNER_TEMP/electrical-parser.json"
+          python3 tools/tacit2b_source_proof.py --module "$RUNNER_TEMP/tacit2b-input/voltage-drop.mjs" --dictionary data/dictionary.json --parser "$RUNNER_TEMP/electrical-parser.json" --work "$RUNNER_TEMP/electrical-proof-work" --out "$RUNNER_TEMP/electrical-proof"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit2b-electrical-source-proof-candidate
+          path: ${{ runner.temp }}/electrical-proof/
+          if-no-files-found: error
+          retention-days: 30
