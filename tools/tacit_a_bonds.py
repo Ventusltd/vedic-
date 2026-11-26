@@ -21,6 +21,9 @@ def acquire(root):
     fetch(VEDIC,"2ccc717933f97e7d191dae85360559a12de7ed21","packages/factory/orient-execution.json",ORIENT_PIN,root/"orient.json")
 def identity(row):
     return (row["meaning_id"],tuple(row["source"][k] for k in ("repo","commit","path","blob","first","last")),row["kuiper"]["key"])
+def factory_canonical(x):
+    # Factory canonical JSON includes one LF; A evidence canonical JSON does not.
+    return canonical(x)+b"\n"
 def typed(quantity,unit,**meta):return {"quantity":quantity,"unit":unit,**meta}
 def compatible(a,b):
     need(a.get("quantity")==b.get("quantity"),"QUANTITY_MISMATCH")
@@ -53,8 +56,8 @@ def verify(root,out):
         path="engine/"+name
         target=next(r for r in rows.values() if r["source"]["path"]==path)
         test(name+" B execution source pin",pin["repo"]==GRID and pin["commit"]==COMMIT and pin["path"]==path and pin["git_blob"]==MODULES[path] and pin["sha256"]==target["module_sha256"])
-    test("B request digest",sha(canonical(rank["request"]))==rank["request_sha256"])
-    test("B receipt digest",sha(canonical({k:v for k,v in rank.items() if k!="receipt_sha256"}))==rank["receipt_sha256"])
+    test("B request digest",sha(factory_canonical(rank["request"]))==rank["request_sha256"])
+    test("B receipt digest",sha(factory_canonical({k:v for k,v in rank.items() if k!="receipt_sha256"}))==rank["receipt_sha256"])
     test("actual typed state",rank["request"]["crs"]=="EPSG:4326" and rank["distance_unit"]=="km" and rank["threshold_unit"]=="kV" and o["ports"]=={"crs":"WGS84","unit":"degrees","distance":"km","bearing":"degrees"})
     point=typed("named_geographic_point","degrees",crs="WGS84",fields=["longitude","latitude"])
     nearest={"inputs":{"origin":typed("named_geographic_point","degrees",crs="EPSG:4326"),"records":typed("ordered_caller_substation_dataset","record",crs="EPSG:4326"),"minimumKv":typed("declared_voltage_threshold","kV")},
