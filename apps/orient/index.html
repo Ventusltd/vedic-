@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VEDIC | Distance and bearing</title><link rel="icon" href="data:,">
+<style>
+*{box-sizing:border-box}body{background:#10151d;color:#eef4fa;font:16px system-ui;margin:0 auto;max-width:680px;padding:20px}fieldset{border:1px solid #64748b;border-radius:8px;margin:12px 0;padding:12px;min-width:0}label{display:block;margin:8px 0}input,button{font:inherit;min-height:44px;width:100%;padding:10px;border-radius:6px;border:1px solid #64748b}input{background:#192331;color:white}button{background:#a5f3fc;color:#10202a;font-weight:bold}output{display:block;margin:16px 0;font-size:1.2rem;white-space:pre-line}small{display:block;overflow-wrap:anywhere;color:#cbd5e1}a{color:#a5f3fc}:focus-visible{outline:3px solid #fbbf24}
+/* Contain intrinsic widths without hiding content or suppressing overflow. */
+body{width:100%;overflow-wrap:anywhere}
+main,section,form,fieldset,label,output,pre{min-width:0;max-width:100%}
+legend{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+input,button,select{min-width:0;max-width:100%;width:100%}
+button,output{white-space:normal;overflow-wrap:anywhere}
+output{white-space:pre-line}
+#activation-evidence{display:block;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;min-width:0}
+</style>
+<main><h1>Distance and bearing</h1><p>WGS84 coordinates in degrees. Spherical straight-line distance, not a road or cable route.</p>
+<form id="coords" novalidate>
+<fieldset><legend>Point A</legend><label>Longitude (degrees)<input id="a-lon" type="number" step="any" value="0" required></label><label>Latitude (degrees)<input id="a-lat" type="number" step="any" value="0" required></label></fieldset>
+<fieldset><legend>Point B</legend><label>Longitude (degrees)<input id="b-lon" type="number" step="any" value="1" required></label><label>Latitude (degrees)<input id="b-lat" type="number" step="any" value="0" required></label></fieldset>
+<button id="calculate" disabled>Calculate</button></form>
+<output id="result" aria-live="polite">Loading verified package…</output>
+<small id="evidence"></small><section aria-labelledby="activation-title"><h2 id="activation-title">VEDIC–Kuiper semantic activation</h2>
+<p>Live bounded TACIT 8 interpretation via local Python bridge. Uses the coordinates above. No arbitrary code execution; no full Kuiper wafer replay.</p>
+<label>Instruction<input id="instruction" value="Calculate the distance and initial bearing between two points"></label>
+<label>Optional known Kuiper key<input id="kuiper-key" inputmode="numeric"></label>
+<button id="activate" type="button">Activate instruction</button>
+<output id="activation-state" aria-live="polite">Not activated.</output>
+<pre id="activation-evidence" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>
+<p>Nearest substation → location lookup → ORIENT: unavailable until nearest package and typed bond are admitted.</p></section><p><small>Internal development only. Independent package acceptance and redistribution clearance pending.</small></p>
+<section aria-labelledby="electrical-title"><h2 id="electrical-title">Electrical calculations</h2>
+<p>Unavailable — awaiting admitted package. Candidate inputs only. No calculation or automatic transfer of geodesic distance.</p>
+<form id="electrical" novalidate>
+<fieldset disabled><legend>AC RMS · lagging or unity power factor</legend>
+<label>Phase <select name="phases"><option value="three">Balanced three-phase</option><option value="single">Single-phase</option></select></label>
+<label>Current (A)<input name="currentA" type="number" value="100"></label>
+<label>One-way route length (m)<input name="lengthM" type="number" value="1000"></label>
+<label>Operating resistance per conductor (Ω/km)<input name="resistanceOhmPerKm" type="number" step="any" value="0.2"></label>
+<label>Reactance per conductor (Ω/km)<input name="reactanceOhmPerKm" type="number" step="any" value="0"></label>
+<label>Power factor (0–1, lagging/unity)<input name="powerFactor" type="number" step="any" value="1"></label>
+<label>Nominal supply voltage (V; line-to-line for three-phase, across supply for single-phase)<input name="nominalVolts" type="number" value="400"></label>
+<label>Loss load factor (not ordinary load factor)<input name="lossLoadFactor" type="number" step="any" value="0.5"></label>
+<label>Hours (h)<input name="hours" type="number" value="8760"></label>
+<button id="electrical-calculate" disabled>Calculate electrical — unavailable</button></fieldset>
+<output id="electrical-result" aria-live="polite">Unavailable: no admitted electrical package.</output></form></section>
+<section><h2>Other capabilities</h2><p>Nearest substation — unavailable pending admitted package.</p><p>Solar geometry — unavailable pending admitted package.</p></section>
+<p><a href="./catalogue.json">Capability catalogue (JSON)</a></p></main>
+<script type="module" src="./app.mjs"></script></html>
