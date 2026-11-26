@@ -67,9 +67,10 @@ def load_library(raw, expected_blob, expected_count):
 
 
 class Index:
-    def __init__(self, records):
+    def __init__(self, records, *, prefer_coverage=False):
         require(bool(records), "empty corpus")
         self.records = records
+        self.prefer_coverage = prefer_coverage
         self.postings = {v: collections.defaultdict(dict) for v in WEIGHTS}
         self.lengths, self.averages = {}, {}
         for v in WEIGHTS:
@@ -98,19 +99,21 @@ class Index:
                     norm = 1.2*(0.25+0.75*self.lengths[v][i]/self.averages[v])
                     scores[i][v] += weight * idf * tf * 2.2 / (tf+norm)
                     matched[i].add(t)
-        ranked = sorted(scores, key=lambda i: (-sum(scores[i].values()), self.records[i].get("gg_id", self.records[i].get("family_id"))))
+        ranked = sorted(scores, key=lambda i: (-len(matched[i]) if self.prefer_coverage else 0,
+                                              -sum(scores[i].values()), self.records[i].get("gg_id", self.records[i].get("family_id"))))
         rows = []
         for i in ranked[:limit]:
             r = self.records[i]
             rows.append({k: v for k,v in r.items() if k != "features"} |
                         {"score": sum(scores[i].values()), "score_by_view": dict(scores[i]),
-                         "matched_terms": sorted(matched[i]),
+                         "matched_terms": sorted(matched[i]), "matched_term_count": len(matched[i]),
                          "source_state": r.get("source_state", "PRODUCER_DECLARED_ORIGINAL_SOURCE_NOT_REPLAYED")})
         # Deliberately conservative: discovery may rank a candidate, never auto-select or execute.
         margin = (sum(scores[ranked[0]].values()) - sum(scores[ranked[1]].values())
-                  if len(ranked) > 1 else None)
+                  if len(ranked) > 1 and (not self.prefer_coverage or len(matched[ranked[0]]) == len(matched[ranked[1]])) else None)
         state = "NO_MATCH" if not rows else "REVIEW_REQUIRED_UNCALIBRATED"
         return {"query": query, "state": state, "unknown_terms": sorted(set(terms)-known),
+                "ranking_policy": "QUERY_TERM_COVERAGE_THEN_BM25" if self.prefer_coverage else "BM25",
                 "top_score_margin": margin, "auto_selection": None, "results": rows}
 
 
