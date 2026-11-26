@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'tools/tacit_a1_properties.py'
+      - 'tools/tacit_a1_invalidation.py'
       - '.github/workflows/tacit-a1-properties.yml'
 permissions:
   contents: read
@@ -21,7 +22,7 @@ jobs:
       - name: Acquire exact predecessor evidence
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tools/tacit_a1_properties.py acquire --root "$RUNNER_TEMP/a1"
+        run: python tools/tacit_a1_invalidation.py acquire --root "$RUNNER_TEMP/a1"
       - name: Verify bounded selections and peer reverse impact twice offline
         run: |
           mkdir evidence
@@ -32,6 +33,15 @@ jobs:
           mv evidence/first.json evidence/property-impact.json
           rm evidence/second.json
           sha256sum evidence/property-impact.json
+      - name: Bind B1/E1 actual receipts and exercise applicability transitions twice offline
+        run: |
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a1_invalidation.py verify --root "$RUNNER_TEMP/a1" --out "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/invalidation.json
+          rm evidence/second.json
+          sha256sum evidence/invalidation.json
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-a1-property-impact
