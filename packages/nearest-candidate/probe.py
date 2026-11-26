@@ -21,7 +21,7 @@ def main():
             data,receipt=acquire(path,blob)
             receipts[path]=receipt
             if path.startswith('engine/'):
-                dest=package/path;dest.parent.mkdir(exist_ok=True);dest.write_bytes(data)
+                dest=package/pathlib.Path(path).name;dest.write_bytes(data)
         (package/'package.json').write_text(json.dumps({'name':D['package_name'],'private':True,'type':'module','exports':'./index.mjs','engines':{'node':'>=18'}},sort_keys=True))
         shutil.copyfile(HERE/'index.mjs',package/'index.mjs')
         shutil.copyfile(HERE/'consumer.test.mjs',root/'consumer.test.mjs')
@@ -32,8 +32,10 @@ def main():
         if not node: raise RuntimeError('Node unavailable')
         cmd=['sudo','unshare','--net','--','setpriv','--reuid',str(os.getuid()),'--regid',str(os.getgid()),'--clear-groups',node,str(root/'consumer.test.mjs')]
         proc=subprocess.run(cmd,cwd=root,check=True,text=True,capture_output=True,timeout=30)
+        print(proc.stderr,end='')
         print(proc.stdout)
-        result=json.loads(proc.stdout.strip().splitlines()[-1])
+        result=json.loads(proc.stdout)
+        assert result['state']=='PACKAGE_DEVELOPMENT_CHECKS_PASS'
     out=pathlib.Path('receipts/tacit3b-nearest.json');out.parent.mkdir(exist_ok=True)
-    out.write_text(json.dumps({'status':'DEVELOPMENT_TESTS_ONLY','source_commit':P['commit'],'source_files':receipts,'observed':result,'network_namespace':'isolated','distribution':'none','shared_factory':'pending','independent_acceptance':'pending'},sort_keys=True,indent=2)+'\n')
+    out.write_text(json.dumps({'status':'DEVELOPMENT_TESTS_ONLY','source_commit':P['commit'],'source_files':receipts,'layout':'flat portable filenames','observed':result,'network_namespace':'isolated','distribution':'none','shared_factory':'pending','independent_acceptance':'pending'},sort_keys=True,indent=2)+'\n')
 if __name__=='__main__': main()

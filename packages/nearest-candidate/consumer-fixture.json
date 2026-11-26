@@ -1,0 +1,52 @@
+{
+  "provenance": "synthetic",
+  "input": {
+    "crs": "EPSG:4326",
+    "query": {
+      "longitude": 0,
+      "latitude": 0
+    },
+    "minimumKv": 132,
+    "records": [
+      {
+        "id": "low",
+        "name": "Synthetic low",
+        "location": {
+          "longitude": 0.1,
+          "latitude": 0
+        },
+        "voltages_kv": [
+          33
+        ]
+      },
+      {
+        "id": "eligible",
+        "name": "Synthetic eligible",
+        "location": {
+          "longitude": 1,
+          "latitude": 0
+        },
+        "voltages_kv": [
+          132
+        ]
+      },
+      {
+        "id": "far",
+        "name": "Synthetic far",
+        "location": {
+          "longitude": 2,
+          "latitude": 0
+        },
+        "voltages_kv": [
+          275
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "id": "eligible",
+    "distance_km": 111.31949079327356
+  },
+  "tolerance_km": 1e-8,
+  "warning": "Geometric proximity only; no grid connection availability or route implication."
+}

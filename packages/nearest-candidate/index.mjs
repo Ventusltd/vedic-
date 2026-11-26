@@ -1,5 +1,5 @@
 // Thin adapter; all ranking and distance calculations remain in pinned producer code.
-import { index } from './engine/v9-nearest-search.js';
+import { index } from './v9-nearest-search.js';
 function fail(message) { throw new TypeError(message); }
 function keys(obj, required, optional=[]) {
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) fail('object required');
