@@ -108,8 +108,12 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         wait_dictionary()
                         assert page.locator("#dictRows tr").count() == 1
                         if paged:
-                            page.locator("#dictRows .code-cell button").click()
-                            page.locator("#dictRows .code-cell a.code-source").first.wait_for()
+                            code_button = page.locator("#dictRows .code-cell button")
+                            code_button.focus()
+                            code_button.press("Enter")
+                            code_link = page.locator("#dictRows .code-cell a.code-source").first
+                            code_link.wait_for()
+                            assert code_link.evaluate("(element) => element === document.activeElement")
                         assert page.locator("#dictRows .code-cell a.code-source").count() == 2
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()

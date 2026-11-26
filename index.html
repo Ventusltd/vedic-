@@ -123,7 +123,9 @@ function drawCommandRow(summary,records){
         detail.append(list);
       }
       const sourceCell=codeCell(row,records,details);
+      const returnFocus=document.activeElement===evidence;
       code.replaceChildren(...sourceCell.childNodes);
+      if(returnFocus)(code.querySelector('a.code-source')||detail.querySelector('summary')).focus();
       loaded=true;
     }catch(error){
       status.textContent='Command details unavailable: '+error.message;
