@@ -1,25 +1,69 @@
 {
   "schema": "vedic.prose.publication-batch.v1",
-  "batch": "gridatlas-stage-1-v1",
+  "batch": "gridatlas-stage-1-plus-runtime-v1",
   "catalogue": {
     "path": "prose-catalogue.json",
-    "sha256": "95f63df3cfc63cc36fcb75e5a2b2a5016f8ccf1ff450b3093783a1db6757b6b2",
-    "rows": 6
+    "rows": 8,
+    "sha256": "527414c0115a17570cd2693731bf5677781aeff6fe7ab5ca2f3ae2acd7b4ddeb"
   },
-  "input": {
-    "version": 2,
-    "sha256": "74d7654d7cd4d27222f59506af5d74be6fa8fdb21bbd7816532ba9fa55638fbb",
-    "transformation": "Extracted Markdown section bodies into JSON strings; retained all paragraph content and source order."
-  },
-  "scope": {
-    "source_commit": "afffa9781f6130529ae93052604cd3d98d172a35",
-    "passages": 6,
-    "application_coverage": "bounded Stage 1; estate denominator not reconciled"
-  },
-  "verification": {
-    "public_receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7201375567",
-    "classification": "controlled prose-guided reconstruction"
-  },
+  "batches": [
+    {
+      "batch": "gridatlas-stage-1-v1",
+      "source_commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+      "records": [
+        {
+          "id": "gridatlas-stage-1-p-001",
+          "sha256": "53fa329c1bc084258c069d23af771c1d9d45f8b974d39a086c007e75c6f4c1c2"
+        },
+        {
+          "id": "gridatlas-stage-1-p-002",
+          "sha256": "a7226e069ee470c35d0fd17412930bf0a53d5c4b5817b4f6925a64bb40ab4ed2"
+        },
+        {
+          "id": "gridatlas-stage-1-p-006",
+          "sha256": "288e1b5952b372971ec6f4a549cbec5e563ce3145770a95e6e345ea5b043cc26"
+        },
+        {
+          "id": "gridatlas-stage-1-p-003",
+          "sha256": "cea992fc1f3271806627fc480732872e3255d4b85dc330c70bb08c8bf9ed831b"
+        },
+        {
+          "id": "gridatlas-stage-1-p-004",
+          "sha256": "0f2aed4c087ae8c2c74b6d9b436ba0f4464989b653669964eef3ca6603189fbb"
+        },
+        {
+          "id": "gridatlas-stage-1-p-005",
+          "sha256": "ad0541c06572e0b8ccdab54c626d14d0b67c827225543dd27a6aa5e7da54cc95"
+        }
+      ],
+      "input": {
+        "version": 2,
+        "sha256": "74d7654d7cd4d27222f59506af5d74be6fa8fdb21bbd7816532ba9fa55638fbb",
+        "transformation": "Extracted Markdown section bodies into JSON strings; retained all paragraph content and source order."
+      },
+      "verification": {
+        "public_receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7201375567",
+        "classification": "controlled prose-guided reconstruction"
+      }
+    },
+    {
+      "batch": "gridatlas-teleprinter-runtime-v1",
+      "source_commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+      "records": [
+        {
+          "id": "gridatlas-runtime-p-201",
+          "sha256": "861c7a41e04a6dca522b49ebd5eaa0b92cf759896cb9654ecc9dec00a264885f"
+        },
+        {
+          "id": "gridatlas-runtime-p-202",
+          "sha256": "e7636c0bd17023a05e40d687f01e996897f94c2d8d2d057411bf561502be3bd4"
+        }
+      ],
+      "candidate_catalogue_sha256": "fc5e1b5e63a437e592036c3a1e5413137e3c115ba89277c5b7ecdc3f4ddf702e",
+      "source_locations": 254,
+      "review": "Independent source and capture-to-Git review. Branch execution and reconstruction parity unmeasured."
+    }
+  ],
   "records": [
     {
       "id": "gridatlas-stage-1-p-001",
@@ -44,6 +88,14 @@
     {
       "id": "gridatlas-stage-1-p-005",
       "sha256": "ad0541c06572e0b8ccdab54c626d14d0b67c827225543dd27a6aa5e7da54cc95"
+    },
+    {
+      "id": "gridatlas-runtime-p-201",
+      "sha256": "861c7a41e04a6dca522b49ebd5eaa0b92cf759896cb9654ecc9dec00a264885f"
+    },
+    {
+      "id": "gridatlas-runtime-p-202",
+      "sha256": "e7636c0bd17023a05e40d687f01e996897f94c2d8d2d057411bf561502be3bd4"
     }
   ]
 }
