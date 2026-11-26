@@ -15,7 +15,9 @@ import zipfile
 LIMIT = 2 * 1024 * 1024
 ROOT = Path(__file__).resolve().parents[1]
 ADMISSIONS = {"orient": ROOT / "packages/factory/admissions/orient.json"}
-PENDING = {"electrical": ROOT / "packages/factory/pending/electrical.json"}
+PENDING = {"electrical": ROOT / "packages/factory/pending/electrical.json",
+           "nearest-substation": ROOT / "packages/factory/pending/nearest-substation.json",
+           "solar-shape": ROOT / "packages/factory/pending/solar-shape.json"}
 TOP = "schema candidate name version runtime family edition identity_tier licence exports ports dependencies inputs evidence obligations build".split()
 INPUT = "role filename repo commit path algorithm digest output".split()
 RESERVED = {"package.json", "manifest.json", "index.mjs", "README.md"}
@@ -189,7 +191,7 @@ def electrical_adapter(d, data):
 
 ELECTRICAL_INDEX = b"export {annualLossKwh, dropPercent, lossesWatts, voltageDropVolts} from './adapter.mjs';\n"
 
-def electrical_runtime(d, package, root, test_script):
+def electrical_runtime(d, package, root, test_script, peer_consumer=None):
     """Run pinned peer tests unmodified plus both consumer import surfaces."""
     test_path = package / "factory-peer-test.mjs"
     need(not test_path.exists(), "TEST_PATH_COLLISION")
@@ -201,7 +203,7 @@ def electrical_runtime(d, package, root, test_script):
     passed = re.search(r"(?m)^# pass (\d+)$",tap)
     failed = re.search(r"(?m)^# fail (\d+)$",tap)
     need(total and passed and failed and total.group(1)==passed.group(1)
-         and int(total.group(1))>=30 and failed.group(1)=="0", "ELECTRICAL_TEST_COUNT")
+         and int(total.group(1))>=51 and failed.group(1)=="0", "ELECTRICAL_TEST_COUNT")
     script = """import assert from 'node:assert/strict';
 import * as api from '@ventus-internal/vedic-electrical';
 import * as direct from './node_modules/@ventus-internal/vedic-electrical/index.mjs';
@@ -220,7 +222,12 @@ console.log(JSON.stringify({voltage_drop_V:drop.value,loss_W:loss.value,annual_l
     (root/"consumer.mjs").write_text(script,encoding="utf-8")
     result = strict(subprocess.check_output(["node","--no-addons","consumer.mjs"],
                     cwd=root,text=True,timeout=20,env=env).encode())
-    return {"state":"PACKAGE_DEVELOPMENT_CHECKS_PASS","peer_tests":int(total.group(1)),
+    peer = None
+    if peer_consumer is not None:
+        (root/"peer-consumer.mjs").write_bytes(peer_consumer)
+        peer = strict(subprocess.check_output(["node","--no-addons","peer-consumer.mjs"],cwd=root,text=True,timeout=20,env=env).encode())
+        need(peer.get("state")=="PACKAGE_DEVELOPMENT_CHECKS_PASS" and peer.get("invalid_cases")==3,"PEER_CONSUMER")
+    return {"state":"PACKAGE_DEVELOPMENT_CHECKS_PASS","peer_consumer":peer,"peer_tests":int(total.group(1)),
             "clean_imports":["direct","package-name"],"known_answer":result}
 
 def pending_electrical_probe(root):
@@ -245,12 +252,39 @@ def pending_electrical_probe(root):
                          "package.json":canonical({"name":d["name"],"type":"module","private":True,
                                      "exports":{".":"./index.mjs"},"license":"UNLICENSED"})}.items():
             (package/name).write_bytes(raw)
-        checks=electrical_runtime(d,package,clean,data["consumer"].decode("utf-8"))
+        checks=electrical_runtime(d,package,clean,data["tests"].decode("utf-8"),data["consumer"])
     return {"state":"PRE_ADMISSION_DEVELOPMENT_PROOF_ONLY","archive_produced":False,
             "admission":"SOURCE_RECEIPT_PENDING","independent_acceptance":False,
             "redistribution":"BLOCKED","input_pins":pins,"consumer_checks":checks}
 
 ADAPTERS = {"orient": orient_adapter, "electrical": electrical_adapter}
+
+# No real electrical/nearest receipt pins are yet authorised. A structurally
+# valid receipt, even from a peer branch, cannot add itself to this registry.
+REVIEWED_RECEIPTS = {}
+
+def review_receipt(family, raw, source_files, closure_raw):
+    need(family in REVIEWED_RECEIPTS, "REVIEWED_RECEIPT_NOT_PINNED")
+    pin=REVIEWED_RECEIPTS[family]
+    need(sha(raw)==pin["receipt_sha256"],"RECEIPT_DIGEST")
+    need(sha(closure_raw)==pin["closure_sha256"],"CLOSURE_DIGEST")
+    receipt=strict(raw); closure=strict(closure_raw)
+    # No guessed general producer schema: exact reviewed schema/validator
+    # must be registered together with independent pins.
+    need(receipt.get("schema")==pin["schema"],"RECEIPT_SCHEMA")
+    need({k:sha(v) for k,v in source_files.items()}==pin["source_sha256"],"RECEIPT_SOURCE")
+    need(closure.get("schema")==pin["closure_schema"],"CLOSURE_SCHEMA")
+    need(pin["validate"](receipt,closure) is True,"RECEIPT_CONTRACT")
+    return receipt
+
+def nearest_adapter(d,data):
+    need("receipt" in data and "closure" in data,"NEAREST_RECEIPTS_PENDING")
+    review_receipt("nearest-substation",data["receipt"],
+                   {"v9-nearest-search.js":data["module"],"v9-geodesy.js":data["local_dependency"]},
+                   data["closure"])
+    raise Refusal("NEAREST_ADMISSION_REVIEW_REQUIRED")
+
+ADAPTERS["nearest-substation"]=nearest_adapter
 
 def assemble(d, root):
     admit(d)
