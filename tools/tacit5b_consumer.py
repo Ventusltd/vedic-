@@ -72,9 +72,24 @@ def build(raw,app,factory_evidence=None):
 def check_tree(root,expected):
     actual={p.relative_to(root).as_posix():p.read_bytes() for p in root.rglob("*") if p.is_file()}
     require(actual==expected,"clean consumer tree mismatch")
-def browser_checks(root,expected):
+def browser_checks(root,expected,activation=None):
     from playwright.sync_api import sync_playwright
-    server=http.server.ThreadingHTTPServer(("127.0.0.1",0),partial(http.server.SimpleHTTPRequestHandler,directory=str(root)))
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def do_POST(self):
+            if self.path!="/activate" or activation is None:
+                self.send_error(404);return
+            if self.headers.get("Origin")!=f"http://127.0.0.1:{self.server.server_port}":
+                self.send_error(403);return
+            try:
+                n=int(self.headers.get("Content-Length","0"))
+                require(0<n<=8192,"REQUEST_SIZE")
+                require(self.headers.get("Content-Type")=="application/json","REQUEST_TYPE")
+                body=activation.resolve(json.loads(self.rfile.read(n)))
+            except (ValueError,KeyError,TypeError) as e:
+                body={"state":"REFUSED","reason":str(e),"rows":[]}
+            raw=encode(body)
+            self.send_response(200);self.send_header("Content-Type","application/json");self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
+    server=http.server.ThreadingHTTPServer(("127.0.0.1",0),partial(Handler,directory=str(root)))
     worker=threading.Thread(target=server.serve_forever,daemon=True);worker.start()
     base=f"http://127.0.0.1:{server.server_port}"
     receipts=[]
@@ -116,12 +131,33 @@ def browser_checks(root,expected):
                         require(" km" not in result.inner_text(),"stale result")
                     page.locator("#b-lon").fill("0");button.click()
                     expect(result).to_have_text("111.319490793 km\n270.000000° initial bearing",use_inner_text=True)
+                    if activation is not None:
+                        page.locator("#instruction").fill("Calculate the distance and initial bearing between two points")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("EXECUTED_INTERNAL")
+                        expect(page.locator("#activation-state")).to_contain_text("270.000000°")
+                        expect(page.locator("#activation-evidence")).to_contain_text("86415575118")
+                        expect(page.locator("#activation-evidence")).to_contain_text("86415575222")
+                        page.locator("#b-lon").fill("-1")
+                        expect(page.locator("#activation-state")).to_have_text("Inputs changed. Activate again.")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("222.638981587 km")
+                        page.locator("#kuiper-key").fill("999")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("UNKNOWN_KUIPER_KEY")
+                        page.locator("#kuiper-key").fill("")
+                        page.locator("#instruction").fill("Find the nearest candidate substation at or above 132 kV, then calculate geographical distance and initial bearing")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("UNSUPPORTED_INTENT_OR_UNADMITTED_FAMILY")
+                        expect(page.locator("#activation-state")).not_to_contain_text(" km")
+                        bad=page.evaluate("""async()=>await (await fetch('/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({instruction:'Calculate the distance and initial bearing between two points',key:'',inputs:{crs:'WGS84',unit:'radians',point_a:{longitude:0,latitude:0},point_b:{longitude:1,latitude:0}}})})).json()""")
+                        require(bad["state"]=="REFUSED" and "unit" in bad["reason"],"incompatible units accepted")
                     require(page.evaluate("document.documentElement.scrollWidth <= innerWidth"),"horizontal overflow")
                     require(set(imports)=={"package/index.mjs","package/v9-geodesy.mjs"},"missing actual module request")
                     observed={k:digest(r.body()) for k,r in imports.items()}
                     require(observed=={k:digest(expected[k]) for k in imports},"served import hash mismatch")
                     require(not errors and not denied,f"errors={errors} external_requests={denied}")
-                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3,"electrical_refusal":True})
+                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3,"electrical_refusal":True,"semantic_activation_tested":activation is not None})
                     context.close()
                 browser.close()
     finally:
@@ -131,6 +167,7 @@ def main():
     p=argparse.ArgumentParser()
     p.add_argument("--package",type=Path,required=True);p.add_argument("--app",type=Path,required=True);p.add_argument("--evidence",type=Path,required=True)
     p.add_argument("--factory-evidence",type=Path)
+    p.add_argument("--activation-input",type=Path)
     a=p.parse_args();raw=a.package.read_bytes()
     evidence=None
     if a.factory_evidence:
@@ -156,7 +193,15 @@ def main():
         except ValueError: pass
         else: raise AssertionError("tampered app accepted")
         target.write_bytes(original);check_tree(root,files)
-        cases=browser_checks(root,files)
+        activation=None
+        if a.activation_input:
+            from tacit5b_activation import Activation
+            package,_=verified(raw,evidence)
+            try: Activation(a.activation_input,{**package,"v9-geodesy.mjs":b"tampered"})
+            except ValueError: pass
+            else: raise AssertionError("wrong source digest accepted")
+            activation=Activation(a.activation_input,package)
+        cases=browser_checks(root,files,activation)
     a.evidence.mkdir(parents=True,exist_ok=True)
     (a.evidence/"catalogue.json").write_bytes(files["catalogue.json"])
     (a.evidence/"asset-manifest.json").write_bytes(files["asset-manifest.json"])

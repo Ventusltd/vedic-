@@ -4,6 +4,7 @@ on:
     paths:
       - 'apps/orient/**'
       - 'tools/tacit5b_consumer.py'
+      - 'tools/tacit5b_activation.py'
       - '.github/workflows/tacit5b-consumer.yml'
 permissions:
   contents: read
@@ -48,6 +49,12 @@ jobs:
           test "$(git hash-object "$p/factory/packages/factory/admissions/orient.json")" = ba59702d4540126a9229f19e521207301afd6692
           gh api repos/Ventusltd/vedic-/actions/artifacts/15130218779/zip > "$p/factory-evidence.zip"
           echo "c4d8de96f83e431ec1f678581b579a1de24524bb57f29ea019db755860607e2e  $p/factory-evidence.zip" | sha256sum -c -
+          mkdir -p "$p/activation"
+          pin=9330897d89214602077806a3915054b4afc301c5
+          for file in tools/conversational_execution.py tools/semantic_retrieval.py tools/stars_retrieval.py data/dictionary.json data/translation-geodesy.json; do
+            gh api -H 'Accept: application/vnd.github.raw+json' "repos/Ventusltd/vedic-/contents/$file?ref=$pin" > "$p/activation/$(basename "$file")"
+          done
+          curl -fsSL --max-time 60 https://raw.githubusercontent.com/Ventusltd/stars/ed657689ca187d8cd237f8f4bd3307a020a5eb8a/library/standalone.mjs -o "$p/activation/standalone.mjs"
       - name: Replay exact private package and verify browser consumer
         run: |
           set -euo pipefail
@@ -57,7 +64,7 @@ jobs:
           python tools/tacit5b_consumer.py --package "$p/package.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence/legacy"
           mkdir "$p/factory-out"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$p/factory/tools/package_factory.py" build --descriptor "$p/factory/packages/factory/admissions/orient.json" --inputs "$p" --out "$p/factory-out/package.zip"
-          python tools/tacit5b_consumer.py --package "$p/factory-out/package.zip" --factory-evidence "$p/factory-evidence.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence/shared"
+          python tools/tacit5b_consumer.py --package "$p/factory-out/package.zip" --factory-evidence "$p/factory-evidence.zip" --app apps/orient --activation-input "$p/activation" --evidence "$RUNNER_TEMP/tacit5b-evidence/shared"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: tacit5b-consumer-evidence
