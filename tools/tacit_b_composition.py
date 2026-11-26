@@ -29,6 +29,27 @@ def load_bond(path):
     spec.loader.exec_module(mod)
     return mod
 
+def validate_selected_contract(bond, request, result, request_digest, execute_orient):
+    """Defence in depth only: not a nearest runtime or an admission decision.
+    Reuse existing unique-ID lookup and actual ORIENT distance, not a new formula.
+    A verified nearest runtime receipt remains mandatory before any real bond.
+    """
+    import math
+    inputs = bond.selected_location(request, result, request_digest)
+    threshold = request.get("minimumKv")
+    need(type(threshold) in (int,float) and math.isfinite(threshold) and threshold>=0,
+         "INVALID_VOLTAGE_THRESHOLD")
+    selected = next(r for r in request["records"] if r["id"]==result["id"])
+    voltages = selected.get("voltages_kv")
+    need(isinstance(voltages,list) and len(voltages)<=32 and
+         all(type(v) in (int,float) and math.isfinite(v) and v>0 for v in voltages),
+         "INVALID_VOLTAGE_METADATA")
+    need(any(v>=threshold for v in voltages),"SELECTED_BELOW_THRESHOLD_OR_UNKNOWN")
+    actual = execute_orient(inputs)
+    need(abs(actual["distance_km"]-result["distance_km"])<=1e-8,
+         "SELECTED_DISTANCE_MISMATCH")
+    return inputs
+
 def main():
     p = argparse.ArgumentParser()
     for key in ("factory", "app", "nearest", "activation", "archive", "receipt", "out"):
@@ -80,6 +101,10 @@ def main():
     # No candidate runtime is called and no nearest ID is emitted as a result.
     expected = fixture["expected"]
     need(bond.selected_location(request,expected,request_digest)==inputs,"BOND_FIXTURE_CONTRACT")
+    def actual_orient(points):
+        return t.execute({**q,"input":points},raw,receipt)["pattern"]["output"]
+    need(validate_selected_contract(bond,request,expected,request_digest,actual_orient)==inputs,
+         "HARDENED_SYNTHETIC_BOND_CONTRACT")
     tests = {}
     def check(name,fn,reason):
         got=refusal(fn)
@@ -97,11 +122,22 @@ def main():
     check("missing_receipt",lambda:t.execute(q,raw,{}),"BUILD_RECEIPT")
     check("forged_receipt",lambda:t.execute(q,raw,{**receipt,"archive_sha256":"0"*64}),"BUILD_RECEIPT")
     check("unknown_key",lambda:activation.resolve({"instruction":ORIENT_INSTRUCTION,"inputs":inputs,"key":"999"}),"UNKNOWN_KUIPER_KEY")
+    # C's falsification: membership alone accepts a low-voltage ID and bogus distance.
+    check("c_below_threshold",lambda:validate_selected_contract(bond,request,{"id":"low","distance_km":0},request_digest,actual_orient),"SELECTED_BELOW_THRESHOLD_OR_UNKNOWN")
+    check("c_forged_distance",lambda:validate_selected_contract(bond,request,{"id":"eligible","distance_km":0},request_digest,actual_orient),"SELECTED_DISTANCE_MISMATCH")
+    unknown=copy.deepcopy(request);unknown["records"][1]["voltages_kv"]=[]
+    check("c_unknown_voltage",lambda:validate_selected_contract(bond,unknown,expected,bond.sha(bond.canonical(unknown)),actual_orient),"SELECTED_BELOW_THRESHOLD_OR_UNKNOWN")
+    invalid=copy.deepcopy(request);invalid["minimumKv"]=-1
+    check("c_invalid_threshold",lambda:validate_selected_contract(bond,invalid,expected,bond.sha(bond.canonical(invalid)),actual_orient),"INVALID_VOLTAGE_THRESHOLD")
+    invalid=copy.deepcopy(request);invalid["records"][1]["voltages_kv"]=["132"]
+    check("c_invalid_voltage_metadata",lambda:validate_selected_contract(bond,invalid,expected,bond.sha(bond.canonical(invalid)),actual_orient),"INVALID_VOLTAGE_METADATA")
     # Distinct input contract for engineering: no geodesic output consumed.
-    report = {"schema":"tacit-b.composition-receipt.v1","fixture_sha256":f.sha(fixture_raw),
+    report = {"schema":"tacit-b.composition-receipt.v2","fixture_sha256":f.sha(fixture_raw),
               "caller_dataset_sha256":request_digest,"nearest":{"state":"REFUSED","reason":nearest_gate,
               "semantic_reason":full["reason"],"selected_id":None,"output":None},
-              "bond_contract":"SYNTHETIC_EXPECTED_RESULT_ONLY_NOT_EXECUTED",
+              "bond_contract":"SYNTHETIC_SELECTED_POINT_CHECK_ONLY_NEAREST_NOT_EXECUTED",
+              "bond_validation":{"eligibility_checked":True,"distance_recomputed_by_admitted_orient":True,
+              "nearest_ranking_verified":False,"admitted_nearest_runtime_receipt":None},
               "orient_fallback":{"input_provenance":"explicit independent synthetic coordinates",
               "semantic_plan":graph,"source_records":semantic["rows"],"execution":actual,
               "build_receipt_sha256":f.sha(receipt_raw)},
