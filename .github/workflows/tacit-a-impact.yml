@@ -1,0 +1,38 @@
+name: TACIT A ninth-turn provenance and reverse impact
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_impact.py'
+      - '.github/workflows/tacit-a-impact.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  impact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact A B C D evidence and consumer contracts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_impact.py acquire --root "$RUNNER_TEMP/impact"
+      - name: Original consumers and impact replay twice offline
+        run: |
+          mkdir evidence
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_impact.py verify --root "$RUNNER_TEMP/impact" --out "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/impact.json
+          rm evidence/second.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-bond-impact
+          path: evidence/
+          if-no-files-found: error
