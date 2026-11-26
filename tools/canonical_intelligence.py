@@ -10,7 +10,7 @@ from time import perf_counter
 import pyarrow.parquet as pq
 
 from canonical_sources import blob, output_table
-from extract import atomic_write
+from modular_features import atomic_write
 
 
 def build(t1, engine, grid, acorn_root):

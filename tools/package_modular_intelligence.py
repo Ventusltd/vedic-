@@ -11,7 +11,7 @@ import duckdb
 import pyarrow.parquet as pq
 
 from canonical_sources import blob, digest, output_table
-from extract import atomic_write
+from modular_features import atomic_write
 
 STARS = "1cf9c7530c7d287ccf9b3cffd70f693fb83c8402"
 

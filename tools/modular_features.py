@@ -11,13 +11,13 @@ from pathlib import Path
 import re
 import sqlite3
 import struct
+import tempfile
 import textwrap
 from time import perf_counter, process_time
 
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from extract import atomic_write
 
 VERSION = "modular-feature-v1"
 TOKEN = re.compile(
@@ -37,6 +37,17 @@ SCHEMA = pa.schema([(name, pa.int64()) for name in NUMBERS]
                       ("refusal_markers", pa.list_(pa.string())), ("constants", pa.list_(pa.string())),
                       ("standalone_candidate", pa.bool_()), ("tokens_truncated", pa.bool_())])
 DB = None
+
+
+def atomic_write(path, write):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=path.parent, delete=False) as handle:
+        temporary = Path(handle.name)
+    try:
+        write(temporary)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def connect(db):

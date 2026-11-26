@@ -12,7 +12,7 @@ import subprocess
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from extract import atomic_write
+from modular_features import atomic_write
 
 
 def git(repo, *arguments):
