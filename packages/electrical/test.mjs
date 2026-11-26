@@ -48,3 +48,36 @@ for(const [name,fn,input] of [
  ['wrong voltage basis',adapter.dropPercent,{...percent,nominalVoltageBasis:'across-supply'}],
  ['overflow',adapter.lossesWatts,{...wire,currentA:1e200}]
 ]) test('refuse '+name,()=>assert.throws(()=>fn(input),/INVALID_INPUT|NONFINITE_RESULT/));
+
+test('unity PF excludes reactance even when X is large',()=>close(adapter.voltageDropVolts({...drop,reactanceOhmPerKm:20}).value,20*Math.sqrt(3)));
+test('lagging PF split of resistive and reactive terms',()=>{
+ const r=adapter.voltageDropVolts({...drop,powerFactor:0.8,reactanceOhmPerKm:0.1});
+ close(r.resistiveVolts,16*Math.sqrt(3)); close(r.reactiveVolts,6*Math.sqrt(3)); assert.equal(r.unit,'V');
+});
+test('single phase lagging PF uses both conductors',()=>close(adapter.voltageDropVolts({...drop,phases:'single',powerFactor:0.8,reactanceOhmPerKm:0.1}).value,44));
+test('one-way length and per-conductor R: 250m at 0.32 ohm/km',()=>{
+ const w={...wire,currentA:120,lengthM:250,resistanceOhmPerKm:0.32};
+ close(adapter.lossesWatts(w).value,3456); close(adapter.lossesWatts({...w,phases:'single'}).value,2304);
+});
+test('R scaling at fixed load',()=>close(adapter.lossesWatts({...wire,resistanceOhmPerKm:0.4}).value,12000));
+test('nominal voltage basis single phase',()=>close(adapter.dropPercent({...percent,phases:'single',nominalVoltageBasis:'across-supply',nominalVolts:230,dropVolts:11.5}).value,5));
+test('annual loss factor uses supplied squared-current factor',()=>{
+ const r=adapter.annualLossKwh({...annual,lossLoadFactor:0.25});
+ close(r.value,13140); assert.equal(r.unit,'kWh');
+});
+test('leap year explicit hours',()=>close(adapter.annualLossKwh({...annual,hours:8784}).value,26352));
+for(const [name,fn,input] of [
+ ['zero drop current',adapter.voltageDropVolts,{...drop,currentA:0}],
+ ['zero one-way length',adapter.lossesWatts,{...wire,lengthM:0}],
+ ['zero resistance',adapter.lossesWatts,{...wire,resistanceOhmPerKm:0}],
+ ['zero drop',adapter.dropPercent,{...percent,dropVolts:0}],
+ ['zero peak loss',adapter.annualLossKwh,{...annual,peakLossWatts:0}],
+ ['zero loss factor',adapter.annualLossKwh,{...annual,lossLoadFactor:0}],
+ ['zero PF',adapter.voltageDropVolts,{...drop,powerFactor:0}],
+ ['zero hours',adapter.annualLossKwh,{...annual,hours:0}],
+ ['loop resistance basis',adapter.lossesWatts,{...wire,resistanceBasis:'total-loop-resistance'}],
+ ['line-neutral nominal basis',adapter.dropPercent,{...percent,nominalVoltageBasis:'line-to-neutral'}],
+ ['loss factor over unity',adapter.annualLossKwh,{...annual,lossLoadFactor:1.001}],
+ ['no explicit X',adapter.voltageDropVolts,(({reactanceOhmPerKm,...rest})=>rest)(drop)],
+ ['no explicit hours',adapter.annualLossKwh,(({hours,...rest})=>rest)(annual)]
+]) test('source-domain refusal '+name,()=>assert.throws(()=>fn(input),/INVALID_INPUT/));

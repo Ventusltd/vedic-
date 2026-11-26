@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import * as electrical from '@ventus-internal/vedic-electrical';
+import * as direct from './node_modules/@ventus-internal/vedic-electrical/index.mjs';
+const exportsExpected=['annualLossKwh','dropPercent','lossesWatts','voltageDropVolts'];
+assert.deepEqual(Object.keys(electrical).sort(),exportsExpected);
+assert.deepEqual(Object.keys(direct).sort(),exportsExpected);
+const w={mode:'ac-rms',phases:'three',currentA:100,lengthM:1000,resistanceOhmPerKm:0.2,resistanceBasis:'caller-specified-operating-resistance'};
+const d={...w,reactanceOhmPerKm:0,powerFactor:1,powerFactorBasis:'lagging-or-unity'};
+const v=electrical.voltageDropVolts(d), loss=electrical.lossesWatts(w);
+const pct=electrical.dropPercent({mode:'ac-rms',phases:'three',nominalVoltageBasis:'line-to-line',dropVolts:v.value,nominalVolts:400});
+const annual=electrical.annualLossKwh({peakLossWatts:loss.value,lossLoadFactor:0.5,hours:8760,factorBasis:'loss-load-factor'});
+const near=(a,b)=>assert.ok(Math.abs(a-b)<1e-9);
+near(v.value,34.64101615137755); near(loss.value,6000); near(pct.value,8.660254037844386); near(annual.value,26280);
+assert.deepEqual(direct.voltageDropVolts(d),v);
+assert.throws(()=>electrical.lossesWatts({...w,mode:'dc'}),/INVALID_INPUT/);
+assert.throws(()=>electrical.lossesWatts({...w,currentA:0}),/INVALID_INPUT/);
+assert.throws(()=>electrical.annualLossKwh({peakLossWatts:6000,lossLoadFactor:0.5,hours:8760,factorBasis:'load-factor'}),/INVALID_INPUT/);
+console.log(JSON.stringify({state:'PACKAGE_DEVELOPMENT_CHECKS_PASS',exports:exportsExpected,voltage_drop_volts:v.value,losses_watts:loss.value,drop_percent:pct.value,annual_loss_kwh:annual.value,invalid_cases:3,direct_import:true,name_import:true}));
