@@ -1,0 +1,120 @@
+{
+  "schema": "tacit9.heldout.v1",
+  "split": "Independently authored after frozen PR5 checkpoint and before inspection of next ranking implementation. Public evaluation only; never training data. Single curated geodesy family scope; no claim of estate-wide family-disjoint calibration.",
+  "cases": [
+    {
+      "id": "Q01",
+      "query": "How far apart are these locations and which compass direction should I face at the first?",
+      "expect": "ORIENT",
+      "top": [
+        "GG2050-VEDIC-000006"
+      ]
+    },
+    {
+      "id": "Q02",
+      "query": "Give me the separation in kilometres plus the starting azimuth",
+      "expect": "ORIENT",
+      "top": [
+        "GG2050-VEDIC-000006"
+      ]
+    },
+    {
+      "id": "Q03",
+      "query": "For a pair of map positions, return both the initial heading and great-circle length",
+      "expect": "ORIENT",
+      "top": [
+        "GG2050-VEDIC-000006"
+      ]
+    },
+    {
+      "id": "Q04",
+      "query": "What is the straight-line separation of those coordinates?",
+      "expect": "MEASURE",
+      "top": [
+        "GG2050-VEDIC-000001"
+      ]
+    },
+    {
+      "id": "Q05",
+      "query": "How many kilometres lie between these two points on the globe?",
+      "expect": "MEASURE",
+      "top": [
+        "GG2050-VEDIC-000001"
+      ]
+    },
+    {
+      "id": "Q06",
+      "query": "Which direction from true north is the second point as seen from the first?",
+      "expect": "BEARING",
+      "top": [
+        "GG2050-VEDIC-000005"
+      ]
+    },
+    {
+      "id": "Q07",
+      "query": "Return only the initial azimuth, not the distance",
+      "expect": "BEARING",
+      "top": [
+        "GG2050-VEDIC-000005"
+      ]
+    },
+    {
+      "id": "Q08",
+      "query": "Work out the driving distance along roads between the sites",
+      "expect": "NO_GEODESY_EXECUTION"
+    },
+    {
+      "id": "Q09",
+      "query": "How much spare grid connection capacity is available at the closest substation?",
+      "expect": "NO_GEODESY_EXECUTION"
+    },
+    {
+      "id": "Q10",
+      "query": "Find the discount rate for a discounted cash flow model",
+      "expect": "NO_GEODESY_EXECUTION"
+    },
+    {
+      "id": "Q11",
+      "query": "Tell me how far and how long the cable route must be",
+      "expect": "NO_GEODESY_EXECUTION"
+    },
+    {
+      "id": "Q12",
+      "query": "What is the area?",
+      "expect": "AMBIGUOUS",
+      "top": [
+        "GG2050-VEDIC-000017",
+        "GG2050-VEDIC-000019"
+      ]
+    },
+    {
+      "id": "Q13",
+      "query": "Area enclosed by a geographic polygon",
+      "expect": "OTHER_SENSE",
+      "top": [
+        "GG2050-VEDIC-000017"
+      ]
+    },
+    {
+      "id": "Q14",
+      "query": "Area of a circular cap around a geographic point",
+      "expect": "OTHER_SENSE",
+      "top": [
+        "GG2050-VEDIC-000019"
+      ]
+    },
+    {
+      "id": "Q15",
+      "query": "zzq xlvq nonmeaning",
+      "expect": "NO_GEODESY_EXECUTION"
+    },
+    {
+      "id": "Q16",
+      "query": "Show both kilometres between the markers and the compass bearing leaving the first",
+      "expect": "ORIENT",
+      "top": [
+        "GG2050-VEDIC-000006"
+      ]
+    }
+  ]
+}
