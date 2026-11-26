@@ -64,10 +64,13 @@ def graph_summary(data, repo):
         raise ValueError("Genome vs render edge multiset differs")
     if (len(gn), sum(indexed.values())) != (r["counts"]["nodes"], r["counts"]["edges"]):
         raise ValueError("Receipt counts differ")
+    missing_snippets = Counter()
     for edge in g["edges"]:
         ev = edge.get("evidence", {})
-        if not ev.get("file") or not ev.get("pattern") or not ev.get("snippet"):
-            raise ValueError("Missing dependency evidence")
+        if not ev.get("file") or not ev.get("pattern"):
+            raise ValueError("Missing producer-required dependency evidence")
+        if not ev.get("snippet"):
+            missing_snippets[edge["type"]] += 1
     validate_named(l["nodes"], l["edges"])
     pn = validate_named(p["nodes"], p["edges"])
     if any(edge["type"] != "reference" for edge in p["edges"]):
@@ -90,6 +93,8 @@ def graph_summary(data, repo):
             "node_count": len(gn), "edge_count": sum(indexed.values()),
             "focus_present": bool(related), "focus_node_ids": sorted(related),
             "edge_types": dict(sorted(Counter(x["type"] for x in neighborhood).items())),
+            "missing_snippets_by_type": dict(sorted(missing_snippets.items())),
+            "source_line_replay": "UNVERIFIED",
             "evidence_edges": neighborhood,
         },
         "spider": {"format": e["edge_format"], "node_count": len(n["features"]),
@@ -146,6 +151,7 @@ def main():
         "focus_edges": len(result["genome"]["evidence_edges"]),
         "printer_nodes": result["printer"]["node_count"], "printer_edges": result["printer"]["edge_count"],
         "printer_refs": len(result["printer"]["references"]), "execution_edges": 0,
+        "missing_snippets_by_type": result["genome"]["missing_snippets_by_type"],
     }, sort_keys=True))
 
 
