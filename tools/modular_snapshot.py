@@ -7,6 +7,7 @@ import json
 import sqlite3
 import subprocess
 import tempfile
+from contextlib import closing
 from pathlib import Path
 
 PRODUCER = "Ventusltd/stars"
@@ -52,7 +53,7 @@ def unpack_snapshot(compressed, database, before, after):
 
 def inventory(database):
     uri = database.resolve().as_uri() + "?mode=ro"
-    with sqlite3.connect(uri, uri=True) as db:
+    with closing(sqlite3.connect(uri, uri=True)) as db:
         db.execute("PRAGMA query_only=ON")
         require(db.execute("PRAGMA quick_check").fetchall() == [("ok",)], "SQLite integrity check failed")
         names = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}

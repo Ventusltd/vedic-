@@ -10,13 +10,13 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def main():
-    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(ROOT)))
+def main(root=ROOT, *, run_demos=True, offline=False):
+    server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     url = f"http://127.0.0.1:{server.server_port}/"
-    entries = json.loads((ROOT / 'data/dictionary.json').read_text())['entries']
-    translations = {r["id"]: r for r in json.loads((ROOT / "data/translation-geodesy.json").read_text())["records"]}
+    entries = json.loads((root / 'data/dictionary.json').read_text(encoding='utf-8'))['entries']
+    translations = {r["id"]: r for r in json.loads((root / "data/translation-geodesy.json").read_text(encoding="utf-8"))["records"]}
     identities = {e["gg_id"]: e for e in entries}
     def source_records(entry, seen=None):
         if seen is None:
@@ -49,6 +49,9 @@ def main():
                         page = browser.new_page(viewport={"width": width, "height": height})
                         errors = []
                         page.on("pageerror", lambda err: errors.append(str(err)))
+                        if offline:
+                            page.route("**/*", lambda route: route.continue_()
+                                       if route.request.url.startswith(url) else route.abort())
                         page.goto(url)
                         page.locator("#anatomy > summary").click()
                         page.get_by_text("9 recorded cartridges", exact=False).wait_for()
@@ -98,8 +101,7 @@ def main():
                         page.locator("#dictSearch").fill("AREA")
                         assert page.locator("#dictRows tr").count() >= 2
                         page.get_by_role("button",name="CLEAR FILTERS").click()
-                        links = [url + "demo.html?id=GG2050-VEDIC-" + str(i).zfill(6) for i in range(1,7)]
-                        assert len(links) == 6 and len(set(links)) == 6
+                        links = [url + "demo.html?id=GG2050-VEDIC-" + str(i).zfill(6) for i in range(1,7)] if run_demos else []
                         for demo_url in links:
                             demo = browser.new_page(viewport={"width":width,"height":height})
                             demo.goto(demo_url)
