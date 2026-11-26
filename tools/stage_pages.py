@@ -22,6 +22,8 @@ V2_ROUTE = "releases/202611261351"
 V2_COMMIT = "55ff568b378acff4adae02fb5c758b4f4f8c6bcd"
 V3_ROUTE = "releases/20261126-v3"
 V3_COMMIT = "9d6a3a35b12fc4709f4b65965ca1f17a87277a2d"
+FIRST_PROSE_ROUTE = "releases/20261126-prose-reader"
+FIRST_PROSE_COMMIT = "7ca32d66e96ce8f453a99363ffaf04de265f2f6a"
 def git_bytes(ref, name):
     return subprocess.check_output(["git","show",f"{ref}:{name}"],cwd=ROOT)
 def digest(data):
@@ -67,7 +69,7 @@ def write_bundle(destination, payload, version, ref):
         "files":{name:digest(data) for name,data in payload.items()}}
     if prose_count is not None:
         manifest["prose_count"] = prose_count
-    (destination/"release.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n",encoding="utf-8")
+    (destination/"release.json").write_bytes((json.dumps(manifest,sort_keys=True,indent=2)+"\n").encode("utf-8"))
     for name,h in manifest["files"].items():
         if digest((destination/name).read_bytes())!=h:
             raise ValueError("digest mismatch "+name)
@@ -82,7 +84,9 @@ def stage(destination):
             raise ValueError("working tree differs from committed bytes: "+name)
     prior={name:git_bytes(V1_COMMIT,name) for name in LEGACY_PUBLIC_FILES}
     destination.mkdir(parents=True,exist_ok=False)
-    write_bundle(destination,current,"20261126-prose-reader",head)
+    first_prose = {name:git_bytes(FIRST_PROSE_COMMIT,name) for name in CURRENT_PUBLIC_FILES}
+    write_bundle(destination,current,"20261126-prose-teleprinter",head)
+    write_bundle(destination/FIRST_PROSE_ROUTE,first_prose,"20261126-prose-reader",FIRST_PROSE_COMMIT)
     write_bundle(destination/V1_ROUTE,prior,"202611260135-v1",V1_COMMIT)
     write_bundle(destination/V2_ROUTE,v2,"202611261351",V2_COMMIT)
     write_bundle(destination/V3_ROUTE,v3,"20261126-v3",V3_COMMIT)
@@ -91,6 +95,7 @@ def stage(destination):
     expected.update(f"{route}/{name}" for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE)
                     for name in (*LEGACY_PUBLIC_FILES, "release.json"))
     actual={p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()}
+    expected.update(f"{FIRST_PROSE_ROUTE}/{name}" for name in (*CURRENT_PUBLIC_FILES, "release.json"))
     if actual!=expected:
         raise ValueError("public file-set mismatch")
 if __name__=="__main__":

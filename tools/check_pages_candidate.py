@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
-from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, V1_ROUTE, V2_ROUTE, V3_ROUTE
+from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, FIRST_PROSE_ROUTE, V1_ROUTE, V2_ROUTE, V3_ROUTE
 import argparse
 
 
@@ -35,6 +35,12 @@ def exercise_public(public):
     for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE):
         assert not (public / route / CATALOGUE).exists()
         assert not (public / route / PUBLICATION).exists()
+    prior = public / FIRST_PROSE_ROUTE
+    prior_manifest = json.loads((prior / "release.json").read_bytes())
+    assert validate_publication({name: (prior / name).read_bytes() for name in (CATALOGUE, PUBLICATION)}) == prior_manifest["prose_count"]
+    prior_rows = json.loads((prior / CATALOGUE).read_bytes())["records"]
+    current_rows = json.loads((public / CATALOGUE).read_bytes())["records"]
+    assert current_rows[:len(prior_rows)] == prior_rows
     for base in (public, public / V3_ROUTE):
         html = (base / 'index.html').read_text(encoding='utf-8')
         assert 'id="package-evidence"' in html and 'Package download unavailable' in html
@@ -42,7 +48,7 @@ def exercise_public(public):
         assert 'id="package-evidence"' not in (public / route / 'index.html').read_text(encoding='utf-8')
     assert (public / 'data/dictionary.json').read_bytes() == (public / V2_ROUTE / 'data/dictionary.json').read_bytes()
     browser_smoke(public, run_demos=False, offline=True)
-    for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE):
+    for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE,FIRST_PROSE_ROUTE):
         browser_smoke(public, run_demos=False, offline=True, base_path=route)
 
 def main():
