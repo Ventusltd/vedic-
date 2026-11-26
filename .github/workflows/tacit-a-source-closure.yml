@@ -37,6 +37,7 @@ jobs:
           set -euo pipefail
           R="$RUNNER_TEMP/tacit-a"
           mkdir evidence
+          sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_closure.py replay --root "$R"
           for suffix in first second; do
             sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_closure.py verify --root "$R" --out "evidence/$suffix.json"
           done
