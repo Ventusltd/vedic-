@@ -1,0 +1,60 @@
+name: TACIT 7 bt internal package builder
+on:
+  pull_request:
+    paths:
+      - 'tools/package_builder.py'
+      - '.github/workflows/package-builder.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Acquire pinned receipt and upstream licence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/package-input" "$RUNNER_TEMP/package-results"
+          cd "$RUNNER_TEMP/package-input"
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126683549/zip > producer.zip
+          unzip -p producer.zip source-receipt/receipt.json > receipt.json
+          unzip -p producer.zip source-receipt/v9-geodesy.mjs > module.mjs
+          echo '83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19  receipt.json' | sha256sum -c -
+          echo 'af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb  module.mjs' | sha256sum -c -
+          curl -fsSL --retry 2 --max-time 120 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o LICENSE
+          test "$(git hash-object LICENSE)" = d645695673349e3947e8e5ae42332d0ac3164cd7
+      - name: Build twice and test from clean directories with networking disabled
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/package-input"
+          out="$RUNNER_TEMP/package-results"
+          build () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" \
+              "$(command -v python)" tools/package_builder.py --module "$p/module.mjs" \
+              --receipt "$p/receipt.json" --licence "$p/LICENSE" --out "$1"
+          }
+          build "$out/vedic-geodesy-0.1.0.zip" | tee "$out/build-receipt.json"
+          build "$p/repeat.zip" > "$p/repeat.json"
+          cmp "$out/vedic-geodesy-0.1.0.zip" "$p/repeat.zip"
+          cmp "$out/build-receipt.json" "$p/repeat.json"
+          # Do not upload software while upstream redistribution remains unresolved.
+          unzip -p "$out/vedic-geodesy-0.1.0.zip" manifest.json > "$out/manifest.json"
+          sha256sum "$out/vedic-geodesy-0.1.0.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: private-package-build-evidence
+          path: |
+            ${{ runner.temp }}/package-results/build-receipt.json
+            ${{ runner.temp }}/package-results/manifest.json
+          if-no-files-found: error
+          retention-days: 30
