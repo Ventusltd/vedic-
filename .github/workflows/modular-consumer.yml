@@ -41,6 +41,7 @@ jobs:
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py
       - name: Compressed family pulse and reviewed proposal artifact
+        shell: bash
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
