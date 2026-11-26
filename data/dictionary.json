@@ -183,7 +183,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 8,
@@ -222,7 +223,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 9,
@@ -261,7 +263,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 10,
@@ -302,7 +305,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 11,
@@ -335,14 +339,15 @@
         "path": "prototype/mod/lidar-stream.js",
         "blob": "8679b98c6ecc9a5f5056469a6d4d53991cb5d419",
         "first": 90,
-        "last": 100
+        "last": 99
       },
       "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181074720",
       "family_id": null,
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 12,
@@ -381,7 +386,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 13,
@@ -422,7 +428,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 14,
@@ -461,7 +468,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 15,
@@ -500,7 +508,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 16,
@@ -541,7 +550,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 17,
@@ -581,7 +591,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 18,
@@ -622,7 +633,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     },
     {
       "number": 19,
@@ -662,7 +674,8 @@
       "element_id": null,
       "tablet_id": null,
       "line_ids": null,
-      "proof": null
+      "proof": null,
+      "demo_unavailable_reason": "Source reviewed; interactive execution not yet approved."
     }
   ],
   "resources": {
