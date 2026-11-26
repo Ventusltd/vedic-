@@ -1,0 +1,47 @@
+name: VEDIC Stars retrieval experiment
+on:
+  pull_request:
+    paths:
+      - 'tools/stars_retrieval.py'
+      - 'tools/test_stars_retrieval.py'
+      - '.github/workflows/stars-retrieval.yml'
+permissions:
+  contents: read
+jobs:
+  pinned-library:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run deterministic regression
+        run: python -m unittest discover -s tools -p test_stars_retrieval.py -v
+      - name: Fetch pinned producer library and measure
+        run: |
+          curl --fail --silent --show-error --location --retry 2 --max-time 90 \
+            'https://raw.githubusercontent.com/Ventusltd/stars/ed657689ca187d8cd237f8f4bd3307a020a5eb8a/library/standalone.mjs' \
+            --output "${RUNNER_TEMP}/standalone.mjs"
+          /usr/bin/time -v python tools/stars_retrieval.py --library "${RUNNER_TEMP}/standalone.mjs" --output "${RUNNER_TEMP}/retrieval.json"
+          python tools/stars_retrieval.py --library "${RUNNER_TEMP}/standalone.mjs" --output "${RUNNER_TEMP}/retrieval-repeat.json"
+          cmp "${RUNNER_TEMP}/retrieval.json" "${RUNNER_TEMP}/retrieval-repeat.json"
+      - name: Verify real census and abstention
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report=json.loads((Path(os.environ["RUNNER_TEMP"])/"retrieval.json").read_text())
+          assert report["candidate_count"] == 766
+          assert report["probabilities_estimated"] is False
+          assert report["accepted_new_meanings"] == 0
+          assert report["results"][-1]["state"] == "NO_MATCH"
+          assert all(r["auto_selection"] is None for r in report["results"])
+          for q in report["results"]:
+              print(q["query"], q["state"], [(r["family_id"],r["symbol"]) for r in q["results"][:3]])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stars-retrieval-receipt
+          path: ${{ runner.temp }}/retrieval.json
+          if-no-files-found: error
