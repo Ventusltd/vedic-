@@ -21,7 +21,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Computation"
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:distanceKm",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     },
     {
       "number": 2,
@@ -40,7 +43,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Data"
+      "vedic_class_candidate": "Data",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:representativePoint",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     },
     {
       "number": 3,
@@ -59,7 +65,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Data"
+      "vedic_class_candidate": "Data",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:voltagesKv",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     },
     {
       "number": 4,
@@ -80,7 +89,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Computation"
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:destinationPoint",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     },
     {
       "number": 5,
@@ -100,7 +112,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Computation"
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:initialBearingDeg",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     },
     {
       "number": 6,
@@ -126,7 +141,10 @@
       "classification_state": "CURATED_CANDIDATE",
       "periodic_category": "geodesy",
       "periodic_block_candidate": "Vg",
-      "vedic_class_candidate": "Computation"
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "composition:shared_inputs:GG2050-VEDIC-000001,GG2050-VEDIC-000005",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
     }
   ],
   "resources": {
@@ -142,5 +160,11 @@
     "kuiper": "https://github.com/Ventusltd/kuiper-belt/blob/main/README.md",
     "spider": "https://github.com/Ventusltd/ventus-grid-engine/blob/main/spider/manifest.json",
     "note": "Existing category geodesy; Vg candidate, not exact family resolution. Additional discipline labels are curated cross-cutting tags."
+  },
+  "identity_policy": {
+    "word": "Non-unique search label; multiple distinct senses are allowed.",
+    "created_utc": "Immutable first recorded dictionary allocation, ISO 8601 UTC; not source-code creation or latest update.",
+    "sense_key": "Unique canonical meaning reference; function translation ref or ordered composition of permanent IDs and mode. Not a Stars ID.",
+    "genesis_commit": "5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
   }
 }
