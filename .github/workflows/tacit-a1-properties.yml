@@ -1,0 +1,77 @@
+name: TACIT A1 properties impact and cold replay
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a1_properties.py'
+      - '.github/workflows/tacit-a1-properties.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  property-impact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact predecessor evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a1_properties.py acquire --root "$RUNNER_TEMP/a1"
+      - name: Verify bounded selections and peer reverse impact twice offline
+        run: |
+          mkdir evidence
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a1_properties.py verify --root "$RUNNER_TEMP/a1" --out "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/property-impact.json
+          rm evidence/second.json
+          sha256sum evidence/property-impact.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a1-property-impact
+          path: evidence/
+          if-no-files-found: error
+  historical-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Acquire original pinned namespace for disposable rehearsal
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_repair.py --root "$RUNNER_TEMP/repair"
+      - name: Existing parser and read-only diagnosis
+        run: |
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0 acorn-loose@8.5.2 acorn-walk@8.3.4
+          cp "$RUNNER_TEMP/repair/producer-lib.mjs" .
+          node tools/tacit_a_producer_ast.mjs "$RUNNER_TEMP/repair" > "$RUNNER_TEMP/repair/producer-ast.json"
+          sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_index_grain.py verify --root "$RUNNER_TEMP/repair" --out "$RUNNER_TEMP/repair/grain.json"
+      - name: Rehearse original ingest twice on disposable rolled-back copies
+        run: |
+          mkdir evidence
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v node)" tools/tacit_a_repair.mjs "$RUNNER_TEMP/repair" "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/repair.json
+          rm evidence/second.json
+          sha256sum evidence/repair.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a1-disposable-repair
+          path: evidence/
+          if-no-files-found: error
