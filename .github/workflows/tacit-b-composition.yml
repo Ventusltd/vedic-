@@ -129,6 +129,22 @@ jobs:
           set -euo pipefail
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_candidate_intake.py --factory "$PWD" --archive "$RUNNER_TEMP/tacit-a-candidate.zip" --out "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
           sha256sum "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
+      - name: Acquire exact nearest candidate source for isolated development
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/nearest-source"
+          mkdir "$p"
+          for file in v9-nearest-search.js v9-geodesy.js; do
+            curl -fsSL --max-time 60 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/$file" -o "$p/$file"
+          done
+          cp tacit-b-nearest/packages/nearest-candidate/index.mjs "$p/adapter.mjs"
+      - name: Actual offline ranking, replay and ORIENT composition (pre-admission)
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          e="$RUNNER_TEMP/factory-evidence"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_ranking.py --factory "$PWD" --nearest "$PWD/tacit-b-nearest" --sources "$RUNNER_TEMP/nearest-source" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --out "$e/tacit-b-ranking.json"
+          sha256sum "$e/tacit-b-ranking.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
