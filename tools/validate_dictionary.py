@@ -1,5 +1,7 @@
 """Validate the append-only VEDIC dictionary and its initial composition."""
 import json
+import hashlib
+from validate_translation import fetch
 import re
 from datetime import datetime
 from pathlib import Path
@@ -26,7 +28,7 @@ def validate(d, translations, prior=None):
     source = {r["id"]: r for r in translations["records"]}
     for e in entries:
         require(e["gg_id"] == f'GG2050-VEDIC-{e["number"]:06d}', "invalid GlobalGrid ID")
-        require(e["demo"] in DEMO_KEYS, "unregistered demo")
+        require(e["demo"] in DEMO_KEYS or (e["demo"] is None and e["kind"] == "FUNCTION" and e["number"] > len(GENESIS) and bool(e.get("demo_unavailable_reason"))), "unregistered demo")
         require(isinstance(e["word"], str) and bool(e["word"].strip()), "empty word")
         require(bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", e["created_utc"])), "timestamp must be UTC")
         datetime.fromisoformat(e["created_utc"].replace("Z", "+00:00"))
@@ -36,7 +38,16 @@ def validate(d, translations, prior=None):
         require(e["vedic_class_candidate"] in {"Structure","Movement","Computation","Flow","Data"}, "unknown class")
         require(e["classification_state"] == "CURATED_CANDIDATE", "unproven classification")
         if e["kind"] == "FUNCTION":
-            require(e["translation_ref"] in source, "missing source translation")
+            if e["translation_ref"] not in source:
+                require(e["demo"] is None, "source-only function cannot claim a demo")
+                require(all(e.get(k) is None for k in ("family_id","element_id","tablet_id","line_ids","proof")), "unverified identity or proof")
+                require(all(isinstance(e.get(k), str) and e[k].strip() for k in ("purpose","limits","receipt")), "missing source description")
+                s = e["source"]
+                require(bool(re.fullmatch(r"Ventusltd/[A-Za-z0-9_.-]+", s["repo"])), "bad source repo")
+                require(all(re.fullmatch(r"[0-9a-f]{40}", s[k]) for k in ("commit","blob")), "bad source pin")
+                require(not s["path"].startswith("/") and ".." not in s["path"].split("/") and bool(s["path"]), "bad source path")
+                require(type(s["first"]) is int and type(s["last"]) is int and 1 <= s["first"] <= s["last"], "bad source span")
+                require(e["receipt"].startswith("https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-"), "missing receipt")
             require(e["sense_key"] == "function:" + e["translation_ref"], "invalid function sense key")
             require(e["state"] == "STATIC_SOURCE_REVIEW", "unsupported proof state")
         elif e["kind"] == "COMPOSITION":
@@ -55,12 +66,34 @@ def validate(d, translations, prior=None):
             for key in ("number","word","kind","translation_ref","components","sense_key","created_utc","creation_evidence","composition_mode"):
                 require(old.get(key) == by_id[old["gg_id"]].get(key), "changed permanent identity")
     return len(entries)
+def verify_source_entries(d, reader=fetch):
+    cache = {}
+    for e in d["entries"]:
+        if e["demo"] is not None or "source" not in e:
+            continue
+        s = e["source"]
+        key = (s["repo"],s["commit"],s["path"])
+        if key not in cache:
+            raw = reader(*key)
+            require(len(raw) <= 1_000_000, "source too large")
+            cache[key] = (hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest(),raw.decode("utf-8").splitlines())
+        blob, lines = cache[key]
+        require(blob == s["blob"], f"source blob mismatch {key}: expected {s['blob']}, got {blob}")
+        require(s["last"] <= len(lines), "source span outside file")
+        name = e["translation_ref"].rsplit(":",1)[-1]
+        require(re.search(r"\b(?:function\s+"+re.escape(name)+r"\s*\(|"+re.escape(name)+r"\s*:)",lines[s["first"]-1]), f"source start mismatch {e['gg_id']} {name}")
+        require(lines[s["last"]-1].strip() == "}", f"source end mismatch {e['gg_id']} {name}")
+    return len(cache)
+
 if __name__ == "__main__":
     import argparse
     p = argparse.ArgumentParser()
     p.add_argument("--prior", type=Path)
+    p.add_argument("--online", action="store_true")
     args = p.parse_args()
     d = json.loads((ROOT/"data/dictionary.json").read_text())
     t = json.loads((ROOT/"data/translation-geodesy.json").read_text())
     prior = json.loads(args.prior.read_text()) if args.prior else None
     print("Dictionary entries:", validate(d,t,prior))
+    if args.online:
+        print("Additional pinned source files:", verify_source_entries(d))

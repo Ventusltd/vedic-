@@ -26,9 +26,9 @@ jobs:
         run: |
           if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA:data/dictionary.json" 2>/dev/null; then
             git show "$BASE_SHA:data/dictionary.json" > "$RUNNER_TEMP/vedic-prior.json"
-            python tools/validate_dictionary.py --prior "$RUNNER_TEMP/vedic-prior.json"
+            python tools/validate_dictionary.py --online --prior "$RUNNER_TEMP/vedic-prior.json"
           else
-            python tools/validate_dictionary.py
+            python tools/validate_dictionary.py --online
           fi
       - run: python tools/stage_demo.py
       - run: python -m pip install playwright==1.56.0
@@ -54,13 +54,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: python tools/stage_demo.py
       - uses: actions/configure-pages@v5
       - name: Stage public dashboard only
         run: |
           mkdir -p _site/data
-          cp index.html demo.html _site/
-          cp -r demo-engine _site/
+          cp index.html _site/
           cp data/anatomy.json data/translation-geodesy.json data/nearest-spider.json data/dictionary.json _site/data/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3

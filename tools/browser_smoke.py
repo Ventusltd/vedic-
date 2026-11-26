@@ -15,6 +15,9 @@ def main():
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     url = f"http://127.0.0.1:{server.server_port}/"
+    entries = json.loads((ROOT / 'data/dictionary.json').read_text())['entries']
+    expected_count = min(100, len(entries))
+    expected_pages = max(1, math.ceil(len(entries) / 100))
     passed = 0
     try:
         with sync_playwright() as p:
@@ -45,17 +48,34 @@ def main():
                         page.get_by_role("button", name="GridAtlas", exact=True).click()
                         assert page.get_by_role("button", name="Find a place", exact=True).count() == 1
                         page.locator("#dictRows tr").first.wait_for()
-                        assert page.locator("#dictRows tr").count() == 6
-                        assert page.locator("#dictPage").inner_text() == "Page 1 / 1"
-                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "BEARING"
+                        assert page.locator("#dictRows tr").count() == expected_count
+                        assert page.locator("#dictPage").inner_text() == f"Page 1 / {expected_pages}"
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == min(entries, key=lambda e: (e.get("priority", 9), e["number"]))["word"]
                         page.locator("#dictSort").select_option("number")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
                         page.locator("#dictSearch").fill("ORIENT")
                         assert page.locator("#dictRows tr").count() == 1
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
-                        assert page.locator("#dictRows tr").count() == 6
-                        links = page.locator('#dictRows a[href^="./demo.html?id="]').evaluate_all("(els) => els.map(e => e.href)")
+                        assert page.locator("#dictRows tr").count() == expected_count
+                        page.locator("#dictSort").select_option("priority")
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "LINK"
+                        assert page.locator("#dictRows tr td:nth-child(2) a").count() == expected_count
+                        assert page.locator("#dictRows a[href^='./demo.html']").count() == 0
+                        assert page.locator("#dictRows tr").first.get_by_text("How to see it:", exact=False).count() == 1
+                        expected = {e["gg_id"]: e["application"]["url"] for e in entries}
+                        for i in range(expected_pages):
+                            rows = page.locator("#dictRows tr").evaluate_all("(rs) => rs.map(r => [r.cells[5].textContent, r.cells[1].querySelector('a').getAttribute('href')])")
+                            assert len(rows) == min(100, len(entries) - 100*i)
+                            for identity, href in rows:
+                                assert expected.pop(identity) == href
+                            if i+1 < expected_pages:
+                                page.locator("#dictNext").click()
+                        assert not expected
+                        page.locator("#dictSearch").fill("AREA")
+                        assert page.locator("#dictRows tr").count() >= 2
+                        page.get_by_role("button",name="CLEAR FILTERS").click()
+                        links = [url + "demo.html?id=GG2050-VEDIC-" + str(i).zfill(6) for i in range(1,7)]
                         assert len(links) == 6 and len(set(links)) == 6
                         for demo_url in links:
                             demo = browser.new_page(viewport={"width":width,"height":height})

@@ -1,0 +1,678 @@
+{
+  "schema": "vedic.source-allocations.v1",
+  "records": [
+    {
+      "word": "REACTIVE",
+      "name": "reactivePowerKvar",
+      "purpose": "Calculate reactive power drawn at a stated power factor",
+      "inputs": [
+        "real_power_kw",
+        "power_factor"
+      ],
+      "output": "reactive_power_kvar",
+      "limits": "Arithmetic only; not equipment design.",
+      "id": "engine:power-factor:reactivePowerKvar",
+      "estate_group": "Ventus Grid Engine / power-factor",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/power-factor.js",
+        "blob": "84ca845b75979df96f5069287b00de421b50b22b",
+        "first": 77,
+        "last": 91
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/power-factor.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 20,
+      "gg_id": "GG2050-VEDIC-000020"
+    },
+    {
+      "word": "APPARENT",
+      "name": "apparentPowerKva",
+      "purpose": "Calculate apparent power from real power and power factor",
+      "inputs": [
+        "real_power_kw",
+        "power_factor"
+      ],
+      "output": "apparent_power_kva",
+      "limits": "Does not establish actual plant rating.",
+      "id": "engine:power-factor:apparentPowerKva",
+      "estate_group": "Ventus Grid Engine / power-factor",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/power-factor.js",
+        "blob": "84ca845b75979df96f5069287b00de421b50b22b",
+        "first": 96,
+        "last": 109
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/power-factor.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 21,
+      "gg_id": "GG2050-VEDIC-000021"
+    },
+    {
+      "word": "CORRECT",
+      "name": "correctionKvar",
+      "purpose": "Calculate compensation and capacity released by improving power factor",
+      "inputs": [
+        "real_power_kw",
+        "initial_pf",
+        "target_pf"
+      ],
+      "output": "correction_and_capacity_record",
+      "limits": "Does not design correction equipment.",
+      "id": "engine:power-factor:correctionKvar",
+      "estate_group": "Ventus Grid Engine / power-factor",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/power-factor.js",
+        "blob": "84ca845b75979df96f5069287b00de421b50b22b",
+        "first": 118,
+        "last": 152
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/power-factor.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 22,
+      "gg_id": "GG2050-VEDIC-000022"
+    },
+    {
+      "word": "UTILISE",
+      "name": "againstAgreedCapacity",
+      "purpose": "Compare apparent demand against stated agreed capacity",
+      "inputs": [
+        "real_power_kw",
+        "power_factor",
+        "agreed_kva"
+      ],
+      "output": "capacity_ratio_record",
+      "limits": "Not a connection assessment.",
+      "id": "engine:power-factor:againstAgreedCapacity",
+      "estate_group": "Ventus Grid Engine / power-factor",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/power-factor.js",
+        "blob": "84ca845b75979df96f5069287b00de421b50b22b",
+        "first": 158,
+        "last": 180
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/power-factor.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 23,
+      "gg_id": "GG2050-VEDIC-000023"
+    },
+    {
+      "word": "DROP",
+      "name": "voltageDropVolts",
+      "purpose": "Calculate conductor voltage drop using resistance, reactance and power factor",
+      "inputs": [
+        "current_a",
+        "length_m",
+        "resistance_ohm_per_km",
+        "reactance_ohm_per_km",
+        "power_factor",
+        "phases"
+      ],
+      "output": "voltage_drop_record",
+      "limits": "Stated-parameter arithmetic; not cable selection.",
+      "id": "engine:voltage-drop:voltageDropVolts",
+      "estate_group": "Ventus Grid Engine / voltage-drop",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/voltage-drop.js",
+        "blob": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+        "first": 95,
+        "last": 129
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/voltage-drop.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 24,
+      "gg_id": "GG2050-VEDIC-000024"
+    },
+    {
+      "word": "PERCENT",
+      "name": "dropPercent",
+      "purpose": "Express a positive voltage drop as a percentage of nominal voltage",
+      "inputs": [
+        "drop_volts",
+        "nominal_volts"
+      ],
+      "output": "drop_percent",
+      "limits": "Does not establish permissible drop.",
+      "id": "engine:voltage-drop:dropPercent",
+      "estate_group": "Ventus Grid Engine / voltage-drop",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/voltage-drop.js",
+        "blob": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+        "first": 135,
+        "last": 150
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/voltage-drop.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 25,
+      "gg_id": "GG2050-VEDIC-000025"
+    },
+    {
+      "word": "LOSS",
+      "name": "lossesWatts",
+      "purpose": "Calculate resistive heat losses in conductors",
+      "inputs": [
+        "current_a",
+        "length_m",
+        "resistance_ohm_per_km",
+        "phases"
+      ],
+      "output": "losses_watts",
+      "limits": "Only resistive heat; not all system losses.",
+      "id": "engine:voltage-drop:lossesWatts",
+      "estate_group": "Ventus Grid Engine / voltage-drop",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/voltage-drop.js",
+        "blob": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+        "first": 158,
+        "last": 181
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/voltage-drop.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 26,
+      "gg_id": "GG2050-VEDIC-000026"
+    },
+    {
+      "word": "ENERGY",
+      "name": "annualLossKwh",
+      "purpose": "Estimate annual energy lost from peak heat loss and loss load factor",
+      "inputs": [
+        "peak_loss_watts",
+        "loss_load_factor",
+        "hours"
+      ],
+      "output": "annual_loss_kwh",
+      "limits": "Loss load factor is not ordinary load factor.",
+      "id": "engine:voltage-drop:annualLossKwh",
+      "estate_group": "Ventus Grid Engine / voltage-drop",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/voltage-drop.js",
+        "blob": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+        "first": 190,
+        "last": 206
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/voltage-drop.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 27,
+      "gg_id": "GG2050-VEDIC-000027"
+    },
+    {
+      "word": "DIVERSIFY",
+      "name": "diversifiedDemandKw",
+      "purpose": "Calculate group maximum demand using a supplied coincidence factor",
+      "inputs": [
+        "unit_count",
+        "per_unit_kw",
+        "coincidence_factor"
+      ],
+      "output": "diversified_demand_kw",
+      "limits": "Requires a justified factor; not a capacity claim.",
+      "id": "engine:diversified-demand:diversifiedDemandKw",
+      "estate_group": "Ventus Grid Engine / diversified-demand",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/diversified-demand.js",
+        "blob": "0c316d234984a1363d8a27ce28a8a5653784b7b6",
+        "first": 79,
+        "last": 99
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/diversified-demand.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 28,
+      "gg_id": "GG2050-VEDIC-000028"
+    },
+    {
+      "word": "COINCIDE",
+      "name": "impliedCoincidence",
+      "purpose": "Derive coincidence factor from measured group peak and unrestricted demand",
+      "inputs": [
+        "unit_count",
+        "per_unit_kw",
+        "measured_group_peak_kw"
+      ],
+      "output": "coincidence_factor",
+      "limits": "Rejects peaks exceeding summed stated unit ratings.",
+      "id": "engine:diversified-demand:impliedCoincidence",
+      "estate_group": "Ventus Grid Engine / diversified-demand",
+      "discipline": "Electrical engineering / Applied mathematics",
+      "periodic_category": "electrical engineering",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/diversified-demand.js",
+        "blob": "0c316d234984a1363d8a27ce28a8a5653784b7b6",
+        "first": 105,
+        "last": 126
+      },
+      "application": {
+        "name": "Ventus Grid Engine",
+        "url": "https://ventusltd.github.io/ventus-grid-engine/genome/",
+        "instructions": "Open Engine map and choose engine/diversified-demand.js in Focus. Inspect the module relationships. Execution controls are not verified; this map is not a calculator.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181251071",
+      "number": 29,
+      "gg_id": "GG2050-VEDIC-000029"
+    },
+    {
+      "word": "SEARCH",
+      "name": "doSearch",
+      "purpose": "Search substation names and highlight matching stars",
+      "inputs": [
+        "query",
+        "substation_names"
+      ],
+      "output": "match_count_and_indices",
+      "limits": "Substring matching; not a unique identifier.",
+      "id": "see-through:descent:doSearch",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 399,
+        "last": 413
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Type Drax into Substation name and inspect the matching count before GO.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 30,
+      "gg_id": "GG2050-VEDIC-000030"
+    },
+    {
+      "word": "CHOOSE",
+      "name": "bestMatch",
+      "purpose": "Select a matching site, preferring an exact name among retained matches",
+      "inputs": [
+        "query",
+        "match_list"
+      ],
+      "output": "selection_or_refusal",
+      "limits": "Duplicate names are not disambiguated.",
+      "id": "see-through:descent:bestMatch",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 414,
+        "last": 425
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Enter a substation name, then press GO or Enter; inspect the selected site.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 31,
+      "gg_id": "GG2050-VEDIC-000031"
+    },
+    {
+      "word": "FLY",
+      "name": "flyTo",
+      "purpose": "Animate a virtual descent towards a selected substation",
+      "inputs": [
+        "site_index",
+        "elapsed_time"
+      ],
+      "output": "animation_target_and_depth",
+      "limits": "Virtual animation, not physical navigation.",
+      "id": "see-through:descent:flyTo",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 427,
+        "last": 447
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Search Drax, press GO and watch the descent.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 32,
+      "gg_id": "GG2050-VEDIC-000032"
+    },
+    {
+      "word": "SWITCH",
+      "name": "setView",
+      "purpose": "Switch between Kuiper, map and satellite visual layers",
+      "inputs": [
+        "view",
+        "user_flag"
+      ],
+      "output": "selected_view",
+      "limits": "Map imagery may depend on network access.",
+      "id": "see-through:descent:setView",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 356,
+        "last": 369
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "After selecting a site, compare KUIPER, MAP and SAT.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 33,
+      "gg_id": "GG2050-VEDIC-000033"
+    },
+    {
+      "word": "RISE",
+      "name": "enter3d",
+      "purpose": "Enter an illustrative three-dimensional scene for a selected site",
+      "inputs": [
+        "site",
+        "map_state",
+        "scene_module"
+      ],
+      "output": "scene_or_refusal",
+      "limits": "Not a verified site model.",
+      "id": "see-through:descent:enter3d",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 372,
+        "last": 390
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Press GO, wait for the map, then tap 3D and drag to orbit.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 34,
+      "gg_id": "GG2050-VEDIC-000034"
+    },
+    {
+      "word": "REMAP",
+      "name": "linkKey",
+      "purpose": "Resolve a rule-generated star key from a documented address-space link",
+      "inputs": [
+        "key",
+        "address_space"
+      ],
+      "output": "key_resolution_or_refusal",
+      "limits": "Not arbitrary key equivalence or facility identity.",
+      "id": "see-through:descent:linkKey",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 930,
+        "last": 946
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#key=36064705400",
+        "instructions": "Open the documented key link; inspect the ring and status.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 35,
+      "gg_id": "GG2050-VEDIC-000035"
+    },
+    {
+      "word": "LIGHT",
+      "name": "linkRepo",
+      "purpose": "Highlight stars belonging to the matching repository key intervals",
+      "inputs": [
+        "repository_name",
+        "registry"
+      ],
+      "output": "highlighted_stars_and_count",
+      "limits": "Not a dependency or ownership determination.",
+      "id": "see-through:descent:linkRepo",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 947,
+        "last": 969
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo=gridatlas",
+        "instructions": "Open the repository-specific link for GridAtlas and inspect highlighted stars.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 36,
+      "gg_id": "GG2050-VEDIC-000036"
+    },
+    {
+      "word": "SKY",
+      "name": "readSky",
+      "purpose": "Adopt the current wafer address space or retain the frozen sky fallback",
+      "inputs": [
+        "wafer_metadata",
+        "scene_state"
+      ],
+      "output": "address_space",
+      "limits": "Internal initialisation; no new identity allocation.",
+      "id": "see-through:descent:readSky",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 989,
+        "last": 1004
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Open the versioned application and observe the initial stars; no separate control.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 37,
+      "gg_id": "GG2050-VEDIC-000037"
+    },
+    {
+      "word": "PICK",
+      "name": "pick",
+      "purpose": "Choose a displayed star near a screen-space tap",
+      "inputs": [
+        "screen_x",
+        "screen_y",
+        "display_state"
+      ],
+      "output": "star_index_or_no_hit",
+      "limits": "Not nearest geographical site.",
+      "id": "see-through:descent:pick",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 1026,
+        "last": 1034
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Tap an isolated star rather than dragging.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 38,
+      "gg_id": "GG2050-VEDIC-000038"
+    },
+    {
+      "word": "RETURN",
+      "name": "back",
+      "purpose": "Return from 3D to satellite or reset the selected scene",
+      "inputs": [
+        "scene_state",
+        "selection"
+      ],
+      "output": "previous_or_reset_view",
+      "limits": "Not a general browser history guarantee.",
+      "id": "see-through:descent:back",
+      "estate_group": "See Through / Kuiper",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "see-through/202611020012/descent.js",
+        "blob": "5a81bceb9387a56535a99a5111be7c08ea1e4795",
+        "first": 448,
+        "last": 460
+      },
+      "application": {
+        "name": "See Through",
+        "url": "https://ventusltd.github.io/kuiper-belt/see-through/202611020012/",
+        "instructions": "Select a site, then tap X and inspect the returned view.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181238072",
+      "number": 39,
+      "gg_id": "GG2050-VEDIC-000039"
+    }
+  ]
+}
