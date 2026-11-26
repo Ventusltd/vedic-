@@ -72,6 +72,7 @@ def exercise_local(page, url):
 
         page.route(CATALOGUE_URL, unavailable)
         page.goto(url)
+        page.wait_for_load_state("networkidle")
         expect(page.locator("#proseStatus")).to_contain_text("No published catalogue available")
         assert rows.count() == 0
         page.locator("#proseImport").set_input_files(fixture_file(records[:1]))
