@@ -1,0 +1,283 @@
+name: TACIT B fourth-turn integration
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_b_*.py'
+      - '.github/workflows/tacit-b-composition.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  factory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 2ccc717933f97e7d191dae85360559a12de7ed21
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: tacit-b
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 443312611ec1469fe2af173fc1c63e21bdf2e50f
+          path: tacit-b-app
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: dd13013c5944ba94115f62f0eeac67c34956eb2c
+          path: tacit-b-nearest
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 9330897d89214602077806a3915054b4afc301c5
+          path: tacit-b-semantic
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Acquire exact reviewed inputs (read only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          mkdir -p "$p" "$RUNNER_TEMP/factory-evidence"
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126683549/zip > "$p/producer.zip"
+          python - "$p" <<'PY'
+          import pathlib, sys, zipfile
+          p=pathlib.Path(sys.argv[1])
+          assert (p/'producer.zip').stat().st_size <= 8*1024*1024
+          with zipfile.ZipFile(p/'producer.zip') as z:
+              for src,dest in [('source-receipt/receipt.json','receipt.json'),('source-receipt/v9-geodesy.mjs','module.mjs')]:
+                  assert z.namelist().count(src)==1 and z.getinfo(src).file_size <= 2*1024*1024
+                  (p/dest).write_bytes(z.read(src))
+          PY
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o "$p/LICENSE"
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/vedic-/2adc1fa9c52f1d242e601b1580927996e7cb31da/tools/package_builder.py -o "$p/prototype.py"
+          q="$RUNNER_TEMP/factory-electrical"
+          mkdir -p "$q"
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/voltage-drop.js -o "$q/module.mjs"
+          cp "$p/LICENSE" "$q/LICENSE"
+          for pair in adapter.mjs:adapter.mjs test.mjs:test.mjs consumer.mjs:consumer.mjs README.md:electrical-readme.md; do
+            curl -fsSL --max-time 120 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/vedic-/4bf9c297c0cec8452327254a297fb7bd0d48e4dd/packages/electrical/${pair%:*}" -o "$q/${pair#*:}"
+          done
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126783600/zip > "$p/peer-execution.zip"
+          echo "0e2add04245fce64c55d906be0387cca87b2c77eec55c14312ee6d7074ef2172  $p/peer-execution.zip" | sha256sum -c -
+          python - "$p" <<'PY'
+          import pathlib,sys,zipfile
+          p=pathlib.Path(sys.argv[1]);z=zipfile.ZipFile(p/"peer-execution.zip")
+          assert z.namelist().count("orient.json")==1 and z.getinfo("orient.json").file_size<=2097152
+          (p/"peer-orient.json").write_bytes(z.read("orient.json"))
+          PY
+      - name: Offline validation, negative tests, clean consumer and repeated builds
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          offline tests/test_package_factory.py --real-inputs "$p" -v 2>&1 | tee "$e/contract-tests.txt"
+          offline tools/package_factory.py validate --descriptor packages/factory/admissions/orient.json
+          mkdir "$p/first"
+          offline tools/package_factory.py build --descriptor packages/factory/admissions/orient.json --inputs "$p" --out "$p/first/package.zip" | tee "$e/build-receipt.json"
+          cp "$p/first/package.zip" "$p/first-result.zip"
+          rm -r "$p/first"
+          mkdir "$p/second"
+          offline tools/package_factory.py build --descriptor packages/factory/admissions/orient.json --inputs "$p" --out "$p/second/package.zip" > "$p/repeat.json"
+          cmp "$p/first-result.zip" "$p/second/package.zip"
+          cmp "$e/build-receipt.json" "$p/repeat.json"
+          unzip -p "$p/second/package.zip" manifest.json > "$e/manifest.json"
+          echo "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787  $p/second/package.zip" | sha256sum -c -
+          offline tests/test_package_factory_second_family.py -v 2>&1 | tee "$e/second-family-contracts.txt"
+          offline tools/package_factory.py probe-pending-electrical --descriptor packages/factory/pending/electrical.json --inputs "$RUNNER_TEMP/factory-electrical" | tee "$e/electrical-pre-admission.json"
+          offline tests/test_typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/typed-contracts.txt"
+          offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --request packages/factory/orient-execution.json | tee "$e/typed-execution.json"
+          offline tests/test_peer_plan_handoff.py --peer "$p/peer-orient.json" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/peer-plan-tests.txt"
+          offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --peer-execution "$p/peer-orient.json" | tee "$e/peer-plan-execution.json"
+      - name: Stage exact TACIT8 semantic inputs
+        run: |
+          set -euo pipefail
+          a="$RUNNER_TEMP/tacit-b-activation"
+          mkdir "$a"
+          cp tacit-b-semantic/tools/{conversational_execution,semantic_retrieval,stars_retrieval}.py "$a/"
+          cp tacit-b-semantic/data/{dictionary,translation-geodesy}.json "$a/"
+          curl -fsSL --max-time 60 --max-filesize 10000000 https://raw.githubusercontent.com/Ventusltd/stars/ed657689ca187d8cd237f8f4bd3307a020a5eb8a/library/standalone.mjs -o "$a/standalone.mjs"
+      - name: Offline real ORIENT fallback and graph refusal
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          e="$RUNNER_TEMP/factory-evidence"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_composition.py --factory "$PWD" --app "$PWD/tacit-b-app" --nearest "$PWD/tacit-b-nearest" --activation "$RUNNER_TEMP/tacit-b-activation" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --out "$e/tacit-b-composition.json"
+          sha256sum "$e/tacit-b-composition.json"
+      - name: Acquire A candidate evidence (not admission)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15137841195/zip > "$RUNNER_TEMP/tacit-a-candidate.zip"
+          echo "c1ea563a7be0c1343d547d5678f46b86952a73bc8d5346d330a0faf8e7667772  $RUNNER_TEMP/tacit-a-candidate.zip" | sha256sum -c -
+      - name: Offline intake and actual factory refusal of unreviewed evidence
+        run: |
+          set -euo pipefail
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_candidate_intake.py --factory "$PWD" --archive "$RUNNER_TEMP/tacit-a-candidate.zip" --out "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
+          sha256sum "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
+      - name: Acquire exact nearest candidate source for isolated development
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/nearest-source"
+          mkdir "$p"
+          for file in v9-nearest-search.js v9-geodesy.js; do
+            curl -fsSL --max-time 60 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/$file" -o "$p/$file"
+          done
+          cp tacit-b-nearest/packages/nearest-candidate/index.mjs "$p/adapter.mjs"
+      - name: Actual offline ranking, replay and ORIENT composition (pre-admission)
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          e="$RUNNER_TEMP/factory-evidence"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_ranking.py --factory "$PWD" --nearest "$PWD/tacit-b-nearest" --sources "$RUNNER_TEMP/nearest-source" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --out "$e/tacit-b-ranking.json"
+          sha256sum "$e/tacit-b-ranking.json"
+      - name: Acquire exact C independent review evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit-c-review.zip"
+          if gh api repos/Ventusltd/neural-link-between-agents/actions/artifacts/15138980638/zip > "$p"; then
+            echo "8d48284a1ed870d16d99504707c81e0650a23c24693a1e491a787e809bb08ffa  $p" | sha256sum -c -
+          else
+            rm -f "$p"
+            printf '{"state":"C_REVIEW_ARTIFACT_ACQUISITION_BLOCKED","admission":false}\n' > "$RUNNER_TEMP/factory-evidence/tacit-b-review-blocker.json"
+          fi
+      - name: Offline independent review intake and electrical typed bond
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          if test -f "$RUNNER_TEMP/tacit-c-review.zip"; then
+            offline tacit-b/tools/tacit_b_candidate_intake.py --factory "$PWD" --archive "$RUNNER_TEMP/tacit-a-candidate.zip" --review "$RUNNER_TEMP/tacit-c-review.zip" --out "$e/tacit-b-reviewed-intake.json"
+            sha256sum "$e/tacit-b-reviewed-intake.json"
+          fi
+          offline tacit-b/tools/tacit_b_electrical.py --factory "$PWD" --inputs "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-electrical.json"
+          sha256sum "$e/tacit-b-electrical.json"
+      - name: Join actual A typed bond manifest to B and C evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit-a-bonds.zip"
+          e="$RUNNER_TEMP/factory-evidence"
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15138897783/zip > "$p"
+          echo "649209e8723af1efd4c73f85ebd90b524a2312907d8a5e24759c8bf72ad1f72a  $p" | sha256sum -c -
+          if test -f "$e/tacit-b-reviewed-intake.json"; then
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_bond_intake.py --factory "$PWD" --archive "$p" --ranking "$e/tacit-b-ranking.json" --review "$e/tacit-b-reviewed-intake.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-abc-bonds.json"
+            sha256sum "$e/tacit-b-abc-bonds.json"
+          fi
+      - name: Existing factory candidate admission validation (no registry write)
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          python tacit-b/tools/tacit_b_stage_factory.py "$PWD"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_admission.py --factory "$PWD" --a "$RUNNER_TEMP/tacit-a-candidate.zip" --c "$RUNNER_TEMP/tacit-c-review.zip" --nearest "$RUNNER_TEMP/nearest-source" --electrical "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-admission.json"
+          sha256sum "$e/tacit-b-admission.json"
+      - name: Acquire exact D selector and original placement law
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: Ventusltd/kuiper-belt
+          ref: 4859abbdd7166ecab566ecc86337b56e0bd75125
+          path: tacit-b-kuiper
+          persist-credentials: false
+          sparse-checkout: |
+            tools/kuiper_select.py
+            learn-the-kuiper/202610050609/kuiper-law.js
+          sparse-checkout-cone-mode: false
+      - name: Offline Kuiper selection to actual factory execution
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_kuiper.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-kuiper.json"
+          sha256sum "$e/tacit-b-kuiper.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-b-factory-composition-evidence
+          path: ${{ runner.temp }}/factory-evidence/
+          if-no-files-found: error
+          retention-days: 30
+  consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 443312611ec1469fe2af173fc1c63e21bdf2e50f
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: tacit-b
+          persist-credentials: false
+      - name: Extend isolated standalone application
+        run: python tacit-b/tools/tacit_b_stage_app.py "$PWD"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '18'
+      - name: Install existing pinned browser-test dependency
+        run: |
+          python -m pip install playwright==1.51.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Acquire exact reviewed development inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit5b-input"
+          mkdir -p "$p"
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_builder.py?ref=2adc1fa9c52f1d242e601b1580927996e7cb31da' > "$p/builder.py"
+          test "$(git hash-object "$p/builder.py")" = 63849940adf32580e5c3aab4ea9dc2b36a35c319
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126683549/zip > "$p/producer.zip"
+          unzip -p "$p/producer.zip" source-receipt/receipt.json > "$p/receipt.json"
+          unzip -p "$p/producer.zip" source-receipt/v9-geodesy.mjs > "$p/module.mjs"
+          curl -fsSL --retry 2 --max-time 60 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o "$p/LICENSE"
+          mkdir -p "$p/factory/tools" "$p/factory/packages/factory/admissions"
+          cp "$p/builder.py" "$p/prototype.py"
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_factory.py?ref=050aa53d553eff6a7990fc0ed5f00623788babdd' > "$p/factory/tools/package_factory.py"
+          test "$(git hash-object "$p/factory/tools/package_factory.py")" = 9512aa3c6db77ea32d54619ed484119d3cb08d7d
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/packages/factory/admissions/orient.json?ref=050aa53d553eff6a7990fc0ed5f00623788babdd' > "$p/factory/packages/factory/admissions/orient.json"
+          test "$(git hash-object "$p/factory/packages/factory/admissions/orient.json")" = ba59702d4540126a9229f19e521207301afd6692
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15130218779/zip > "$p/factory-evidence.zip"
+          echo "c4d8de96f83e431ec1f678581b579a1de24524bb57f29ea019db755860607e2e  $p/factory-evidence.zip" | sha256sum -c -
+          mkdir -p "$p/activation"
+          pin=9330897d89214602077806a3915054b4afc301c5
+          for file in tools/conversational_execution.py tools/semantic_retrieval.py tools/stars_retrieval.py data/dictionary.json data/translation-geodesy.json; do
+            gh api -H 'Accept: application/vnd.github.raw+json' "repos/Ventusltd/vedic-/contents/$file?ref=$pin" > "$p/activation/$(basename "$file")"
+          done
+          curl -fsSL --max-time 60 https://raw.githubusercontent.com/Ventusltd/stars/ed657689ca187d8cd237f8f4bd3307a020a5eb8a/library/standalone.mjs -o "$p/activation/standalone.mjs"
+      - name: Replay exact private package and verify browser consumer
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit5b-input"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" "$p/builder.py" --module "$p/module.mjs" --receipt "$p/receipt.json" --licence "$p/LICENSE" --out "$p/package.zip"
+          echo "ad4d0daa6cef5b30756184f44726b8a750e6a6d0eb31e2fea7fe6886a6b8669c  $p/package.zip" | sha256sum -c -
+          python tools/tacit5b_consumer.py --package "$p/package.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence/legacy"
+          mkdir "$p/factory-out"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$p/factory/tools/package_factory.py" build --descriptor "$p/factory/packages/factory/admissions/orient.json" --inputs "$p" --out "$p/factory-out/package.zip"
+          python tools/tacit5b_consumer.py --package "$p/factory-out/package.zip" --factory-evidence "$p/factory-evidence.zip" --app apps/orient --activation-input "$p/activation" --evidence "$RUNNER_TEMP/tacit5b-evidence/shared"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: tacit-b-standalone-evidence
+          path: ${{ runner.temp }}/tacit5b-evidence/**/*.json
+          if-no-files-found: error
+          retention-days: 30
