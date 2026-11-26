@@ -45,16 +45,22 @@ def main():
                         page.get_by_role("button", name="GridAtlas", exact=True).click()
                         assert page.get_by_role("button", name="Find a place", exact=True).count() == 1
                         page.locator("#dictRows tr").first.wait_for()
-                        assert page.locator("#dictRows tr").count() == 6
+                        assert page.locator("#dictRows tr").count() == 19
                         assert page.locator("#dictPage").inner_text() == "Page 1 / 1"
-                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "BEARING"
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "AREA"
                         page.locator("#dictSort").select_option("number")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
                         page.locator("#dictSearch").fill("ORIENT")
                         assert page.locator("#dictRows tr").count() == 1
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
-                        assert page.locator("#dictRows tr").count() == 6
+                        assert page.locator("#dictRows tr").count() == 19
+                        page.locator("#dictSort").select_option("priority")
+                        assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "LINK"
+                        assert page.locator("#dictRows").get_by_text("SOURCE ONLY", exact=True).count() == 13
+                        page.locator("#dictSearch").fill("AREA")
+                        assert page.locator("#dictRows tr").count() >= 2
+                        page.get_by_role("button",name="CLEAR FILTERS").click()
                         links = page.locator('#dictRows a[href^="./demo.html?id="]').evaluate_all("(els) => els.map(e => e.href)")
                         assert len(links) == 6 and len(set(links)) == 6
                         for demo_url in links:
