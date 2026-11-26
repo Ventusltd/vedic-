@@ -1,0 +1,41 @@
+name: TACIT A sparse Stars and Periodic Table crosswalk
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_stars.py'
+      - '.github/workflows/tacit-a-stars.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  crosswalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact existing producer asset and family lists
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_stars.py acquire --root "$RUNNER_TEMP/stars-a"
+      - name: Verify exact occurrence and family joins twice offline
+        run: |
+          set -euo pipefail
+          mkdir crosswalk
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_stars.py verify --root "$RUNNER_TEMP/stars-a" --out "crosswalk/$n.json"
+          done
+          cmp crosswalk/first.json crosswalk/second.json
+          mv crosswalk/first.json crosswalk/crosswalk.json
+          rm crosswalk/second.json
+          sha256sum crosswalk/crosswalk.json | tee crosswalk/crosswalk.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-stars-periodic-crosswalk
+          path: crosswalk/
+          retention-days: 30
+          if-no-files-found: error
