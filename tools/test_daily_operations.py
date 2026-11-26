@@ -60,6 +60,34 @@ class DailyOperationsTests(unittest.TestCase):
             command.assert_not_called()
         self.assertEqual(operations.read_json(output / "family-research.json"), initial["checkpoint"]["family"])
 
+    def test_accelerator_checkpoint_is_coupled_to_family_persistence(self):
+        initial = self.fixture_update(10, None, 0, 100)
+        operations.persist(self.repo, initial, self.base, 10)
+        base, _ = operations.load_state(self.repo)
+        progress = {"schema": operations.daily_accelerator.SCHEMA, "database_sha256": "a" * 64,
+                    "method_sha256": "b" * 64, "completed_rounds": 1,
+                    "probe_coverage": {"FIND EXAMPLE": {"tested": 16, "total": 20}}}
+        output = self.directory / "accelerated"
+
+        def mocked_family(root, *args):
+            operations.write_json(output / "family-research.json", family(100, 200))
+            return b""
+
+        with patch.object(operations, "command", side_effect=mocked_family), \
+                patch.object(operations.daily_accelerator, "research", return_value=progress) as accelerator:
+            operations.research(self.repo, output, self.base, 11, accelerator=True)
+            accelerator.assert_called_once_with(self.repo, output, None)
+        update = operations.read_json(output / "state-update.json")
+        self.assertEqual(update["base"], base)
+        operations.persist(self.repo, update, self.base, 11)
+        state_commit, state = operations.load_state(self.repo)
+        self.assertEqual(state["accelerator"], progress)
+        with patch.object(operations.daily_accelerator, "research") as accelerator:
+            operations.research(self.repo, self.directory / "retry", self.base, 11, accelerator=True)
+            accelerator.assert_not_called()
+        with self.assertRaisesRegex(ValueError, "Missing existing accelerator progress"):
+            operations.persist(self.repo, self.fixture_update(12, state_commit, 200, 300), self.base, 12)
+
     def test_stale_and_discontinuous_progress_is_refused(self):
         initial = self.fixture_update(10, None, 0, 100)
         operations.persist(self.repo, initial, self.base, 10)

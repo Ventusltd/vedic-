@@ -12,7 +12,15 @@ Run the separate consumer manually using GitHub CLI and public read access:
 
     python tools/modular_snapshot.py --output receipts/modular-snapshot.json
 
-Use a new filename; receipts are never overwritten. The independent GitHub Actions workflow runs every six hours once merged to the default branch and on demand, without an AI session. PR changes to the consumer exercise it as well. Successful receipts are Actions artifacts retained 30 days; source and tests remain in Git. The raw database is temporary and never published or modified. This first consumer inventories the producer; it does not yet translate the whole estate.
+Choose a new filename for each snapshot receipt. The database stays in runner scratch.
+
+## Nightly discovery
+
+The [Modular Star consumer](https://github.com/Ventusltd/vedic-/actions/workflows/modular-consumer.yml) runs once daily at 03:37 UTC. Python and NumPy score every indexed element and scan every unique line in the verified Stars snapshot for configured domain cues. The workflow shuffles each set of crib hypotheses deterministically, then takes the next slice. The current 4,683 hypotheses span 23 successful rounds. After that, the job keeps taking seeded samples against the latest snapshot.
+
+The existing `automation/vedic-daily-state` branch keeps the family cursor and probe-coverage checkpoint together. A Stars refresh records a new snapshot digest and continues the same hypothesis sweep. Changes to the scoring method or library start a fresh sweep. Cumulative counts track hypotheses tested across snapshots. Individual receipts identify the exact snapshot examined and preserve a small sample of leads by permanent ID. Dictionary admission still requires reviewed evidence.
+
+To rehearse the CPU run without advancing scheduled state, choose **Rehearse the nightly CPU accelerator** when dispatching the workflow. The run uploads `vedic-accelerator-<run>-<attempt>` for 14 days. SQLite, features and intermediate Parquet stay in runner scratch.
 
 ## Input and output
 

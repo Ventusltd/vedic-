@@ -10,6 +10,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
+import daily_accelerator
+
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_REF = "refs/heads/automation/vedic-daily-state"
@@ -98,6 +100,8 @@ def state_receipt(state):
     oid(state["source_commit"])
     require(type(state.get("run_id")) is int and state["run_id"] > 0, "invalid checkpoint run ID")
     family_receipt(state["family"])
+    if "accelerator" in state:
+        daily_accelerator.validate(state["accelerator"])
     return state
 
 
@@ -138,11 +142,15 @@ def legacy_checkpoint(root, run_id, scratch):
     return family_receipt(read_json(receipts[0]))
 
 
-def research(root, output, source_commit, run_id):
+def research(root, output, source_commit, run_id, accelerator=False):
     output.mkdir(parents=True, exist_ok=True)
     base, state = load_state(root) if run_id else (None, None)
     if state and state["run_id"] == run_id:
         write_json(output / "family-research.json", state["family"])
+        if "accelerator" in state:
+            write_json(output / daily_accelerator.RECEIPT, {
+                "status": "already_recorded", "checkpoint": state["accelerator"],
+            })
         write_json(output / "state-update.json", {"base": base, "checkpoint": state})
         print("Family progress was already recorded for this run.")
         return
@@ -159,8 +167,13 @@ def research(root, output, source_commit, run_id):
     receipt = family_receipt(read_json(output / "family-research.json"))
     require(receipt["previous_cursor"] == (checkpoint["next_cursor"] if checkpoint else 0),
             "family output does not advance the input cursor")
+    progress = state.get("accelerator") if state else None
+    if accelerator:
+        progress = daily_accelerator.research(root, output, progress)
     if run_id:
         result = {"schema": STATE_SCHEMA, "source_commit": oid(source_commit), "run_id": run_id, "family": receipt}
+        if progress is not None:
+            result["accelerator"] = progress
         write_json(output / "state-update.json", {"base": base, "checkpoint": result})
 
 
@@ -176,6 +189,7 @@ def persist(root, update, source_commit, run_id):
     require(not previous or previous["run_id"] < run_id, "scheduled run would replace newer family progress")
     require(not previous or checkpoint["family"]["previous_cursor"] == previous["family"]["next_cursor"],
             "checkpoint does not continue durable family progress")
+    daily_accelerator.verify_advance(previous.get("accelerator") if previous else None, checkpoint.get("accelerator"))
     blob = git(root, "hash-object", "-w", "--stdin", data=json_bytes(checkpoint)).decode().strip()
     tree = git(root, "mktree", data=f"100644 blob {blob}\tcheckpoint.json\n".encode()).decode().strip()
     parent = ("-p", base) if base else ()
@@ -287,12 +301,13 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--commit", default=os.environ.get("GITHUB_SHA"))
     parser.add_argument("--run-id", type=int)
+    parser.add_argument("--accelerator", action="store_true")
     parser.add_argument("--created-at")
     parser.add_argument("--repository", default=os.environ.get("GITHUB_REPOSITORY"))
     args = parser.parse_args()
     output = args.output.resolve()
     if args.stage == "research":
-        research(ROOT, output, args.commit, args.run_id)
+        research(ROOT, output, args.commit, args.run_id, args.accelerator)
     elif args.stage == "persist":
         require(args.run_id is not None, "missing scheduled run ID")
         persist(ROOT, read_json(output / "state-update.json"), args.commit, args.run_id)

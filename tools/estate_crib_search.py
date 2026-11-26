@@ -1,6 +1,7 @@
 """VEDIC Virtualised Particle Accelerator command-group search."""
 
 import argparse
+from contextlib import closing
 from collections import Counter, defaultdict
 import functools
 import hashlib
@@ -104,11 +105,24 @@ def feature_matrix(rows, vocabulary):
     return matrix
 
 
-def build_cribs(vocabulary, variants, seed, frequencies):
+def scheduled_cribs(choices, variants, seed, campaign_seed, round_index):
+    """Randomise order once, then test each choice before wrapping."""
+    permutation = choices.copy()
+    random.Random(campaign_seed).shuffle(permutation)
+    start = min(round_index * variants, len(permutation))
+    end = min(start + variants, len(permutation))
+    selected = permutation[start:end]
+    if len(selected) < variants:
+        selected.extend(seed.sample(permutation[:start], variants - len(selected)))
+    return selected, end
+
+
+def build_cribs(vocabulary, variants, seed, frequencies, campaign=None):
     rng = random.Random(seed)
     base_weights = np.zeros((len(vocabulary), len(GROUPS) * 2), dtype=np.float32)
     probe_weights = np.zeros((len(vocabulary), len(GROUPS) * variants), dtype=np.float32)
     menus = {}
+    coverage = {}
     for group, (name, action_text, object_text) in enumerate(GROUPS):
         actions = sorted(set(action_text.split()))
         objects = sorted(set(object_text.split()))
@@ -117,7 +131,12 @@ def build_cribs(vocabulary, variants, seed, frequencies):
                 base_weights[vocabulary[word], group * 2 + role] = 1
         # One action and two distinct domain terms per hypothesis.
         choices = list(itertools.product(actions, itertools.combinations(objects, 2)))
-        chosen = rng.sample(choices, variants)
+        if campaign is None:
+            chosen = rng.sample(choices, variants)
+        else:
+            campaign_seed, round_index = campaign
+            chosen, end = scheduled_cribs(choices, variants, rng, campaign_seed + group, round_index)
+            coverage[name] = {"tested": end, "total": len(choices)}
         menus[name] = [[verb, *nouns] for verb, nouns in chosen]
         for offset, words in enumerate(menus[name]):
             for word in set(words):
@@ -125,7 +144,7 @@ def build_cribs(vocabulary, variants, seed, frequencies):
                 probe_weights[vocabulary[word], group * variants + offset] = (
                     2 if rarity < 100 else 1
                 )
-    return base_weights, probe_weights, menus
+    return base_weights, probe_weights, menus, coverage
 
 
 def evaluate(xp, matrix, scores, roles, variants, multiply):
@@ -172,15 +191,19 @@ def select_groups(cp, matrix, base, probes, variants):
     gpu_seconds = perf_counter() - started
     gpu_kernel = cp.cuda.get_elapsed_time(start, stop) / 1000
     gpu_pool = cp.get_default_memory_pool().total_bytes()
-    started = perf_counter()
-    expected = np.concatenate([
-        evaluate(np, matrix[i:i + 2048], probes, base, variants, np.matmul)
-        for i in range(0, len(matrix), 2048)
-    ]).astype(np.int32)
-    cpu_seconds = perf_counter() - started
+    expected, cpu_seconds = select_groups_numpy(matrix, base, probes, variants)
     if not np.array_equal(result, expected):
         raise RuntimeError("CuPy and NumPy group attribution differ")
     return result, gpu_seconds, gpu_kernel, cpu_seconds, gpu_pool
+
+
+def select_groups_numpy(matrix, base, probes, variants):
+    started = perf_counter()
+    output = np.concatenate([
+        evaluate(np, matrix[i:i + 2048], probes, base, variants, np.matmul)
+        for i in range(0, len(matrix), 2048)
+    ]).astype(np.int32)
+    return output, perf_counter() - started
 
 
 def label(code):
@@ -280,24 +303,33 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--seed", type=int, default=193904)
     parser.add_argument("--compare", type=Path, help="prior elements Parquet for disagreement evidence")
+    parser.add_argument("--backend", choices=("numpy", "cupy"), default="cupy")
     args = parser.parse_args()
+    search(args.features, args.database, args.output, args.seed, args.compare, args.backend)
 
-    import cupy as cp
 
+def search(features, database, output, seed, compare=None, backend="cupy", campaign=None):
     source_columns = ("element_id", "family_id", "element_sha256", "repository", "commit", "blob", "path",
                       "symbol", "first_line", "last_line", "path_role", "signature", "docstring",
                       "tokens", "needs", "tokens_truncated")
     started = perf_counter()
-    rows = pq.read_table(args.features, columns=list(source_columns)).to_pylist()
+    rows = pq.read_table(features, columns=list(source_columns)).to_pylist()
     vocabulary = {word: index for index, word in enumerate(
         sorted({word for _, actions, objects in GROUPS for word in (actions + " " + objects).split()})
     )}
     matrix = feature_matrix(rows, vocabulary)
     variants = 16
-    base, probes, menus = build_cribs(vocabulary, variants, args.seed,
-                                     np.count_nonzero(matrix, axis=0))
+    base, probes, menus, coverage = build_cribs(vocabulary, variants, seed,
+                                               np.count_nonzero(matrix, axis=0), campaign)
     feature_seconds = perf_counter() - started
-    result, gpu_seconds, gpu_kernel, cpu_seconds, pool = select_groups(cp, matrix, base, probes, variants)
+    gpu_seconds = gpu_kernel = pool = parity = None
+    if backend == "cupy":
+        import cupy as cp
+
+        result, gpu_seconds, gpu_kernel, cpu_seconds, pool = select_groups(cp, matrix, base, probes, variants)
+        parity = True
+    else:
+        result, cpu_seconds = select_groups_numpy(matrix, base, probes, variants)
     matches = []
     codes = {}
     export_fields = tuple(key for key in source_columns if key not in {"tokens", "needs", "docstring"})
@@ -309,43 +341,45 @@ def main():
                         "score": int(score), "crib": menus[group][int(menu)] if code >= 0 else []})
     if len(codes) != len(rows):
         raise ValueError("Duplicate source element IDs")
-    with sqlite3.connect(args.database.resolve().as_uri() + "?mode=ro", uri=True) as db:
+    with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as db:
         if {r[0] for r in db.execute("SELECT n FROM element")} != codes.keys():
             raise ValueError("Element coverage differs from the pinned database")
         families = grouped_families(db, rows, result)
         lines = grouped_lines(db, codes)
-    args.output.mkdir(parents=True, exist_ok=False)
+    output.mkdir(parents=True, exist_ok=False)
     tables = {"elements": pa.Table.from_pylist(matches), "families": pa.Table.from_pylist(families), "lines": lines}
-    changed = disagreement_rows(args.compare, matches) if args.compare else []
+    changed = disagreement_rows(compare, matches) if compare else []
     if changed:
         tables["disagreements"] = pa.Table.from_pylist(changed)
     named = [row for row in matches if row["symbol"] not in {None, "", "(anonymous)"}]
     shots = {
-        "survivors": vogel_shots([row for row in named if row["command_group"] != "REVIEW REQUIRED"], args.seed + 1),
-        "unresolved": vogel_shots([row for row in named if row["command_group"] == "REVIEW REQUIRED"], args.seed + 2),
-        "disagreements": vogel_shots(changed, args.seed + 3),
+        "survivors": vogel_shots([row for row in named if row["command_group"] != "REVIEW REQUIRED"], seed + 1),
+        "unresolved": vogel_shots([row for row in named if row["command_group"] == "REVIEW REQUIRED"], seed + 2),
+        "disagreements": vogel_shots(changed, seed + 3),
     }
-    (args.output / "vogel-shots.json").write_text(json.dumps(shots, indent=2) + "\n", encoding="utf-8")
+    (output / "vogel-shots.json").write_text(json.dumps(shots, indent=2) + "\n", encoding="utf-8")
     receipts = {}
     for name, table in tables.items():
-        path = args.output / (name + ".parquet")
+        path = output / (name + ".parquet")
         pq.write_table(table, path, compression="zstd")
         receipts[name] = {"rows": len(table), "bytes": path.stat().st_size, "sha256": digest(path),
                           "counts": dict(Counter(table["command_group"].to_pylist()))}
-    manifest = {"schema": "vedic.estate-crib-search.v1", "seed": args.seed, "menus": menus,
+    manifest = {"schema": "vedic.estate-crib-search.v1", "seed": seed, "menus": menus,
                 "name": "Virtualised Particle Accelerator",
-                "feature_file_sha256": digest(args.features), "database_sha256": digest(args.database),
-                "comparison_sha256": digest(args.compare) if args.compare else None,
+                "feature_file_sha256": digest(features), "database_sha256": digest(database),
+                "comparison_sha256": digest(compare) if compare else None,
                 "vogel_shots": {key: len(value) for key, value in shots.items()},
                 "truncated_element_features": sum(bool(row["tokens_truncated"]) for row in rows),
                 "vocabulary_size": len(vocabulary), "hypotheses": probes.shape[1],
                 "element_hypothesis_pairs": len(rows) * probes.shape[1], "tables": receipts,
                 "feature_seconds": feature_seconds, "numpy_seconds": cpu_seconds,
                 "cupy_seconds_including_transfers": gpu_seconds, "cupy_kernel_batch_seconds": gpu_kernel,
-                "cupy_pool_bytes": pool, "cpu_gpu_classification_equal": True,
+                "backend": backend, "cupy_pool_bytes": pool, "cpu_gpu_classification_equal": parity,
+                "probe_coverage": coverage,
                 "scope": "Lexical and source-span leads. Semantic admission and execution require separate evidence."}
-    (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: value for key, value in manifest.items() if key != "menus"}, indent=2))
+    return manifest
 
 
 if __name__ == "__main__":
