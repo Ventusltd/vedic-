@@ -1,0 +1,9 @@
+# Daily family discovery and reviewed admission
+
+VEDIC schedules one read-only discovery run at 03:37 UTC, capped at ten minutes. The existing pinned-function check continues in the same workflow. Full producer database verification is available through manual dispatch.
+
+The family pulse resolves the latest producer catalogue to a specific release asset ID, byte length and SHA-256 before downloading it. It verifies those bytes and advances up to 100 permanent Modular Star family IDs per successful scheduled run. The Parquet artifact includes placement and lexical hints where available. The receipt records the producer digest, both family counts, the previous and next cursor, and the last family's content hash. Missing current placement is an explicit status.
+
+Scheduled runs resume only from the most recent earlier successful scheduled result. A missing, malformed or identity-mismatched prior checkpoint fails the run. PR and manual rehearsals do not advance scheduled progress. Exhausted snapshots produce a no-change receipt and retain their cursor so newer permanent IDs can be picked up on a later snapshot. The cursor follows new IDs; it does not rescan placements of already visited IDs. Receipts expire after 14 days, so resuming after an extended interruption requires a reviewed checkpoint.
+
+A reviewed queue row declares its source evidence, canonical inputs and outputs, limits, and associated permanent families. The workflow can produce a proposed dictionary artifact, without writing to a Git branch, opening a PR, or publishing. The canonical dictionary changes through a reviewed integration PR and the existing append-only allocation replay. Family placement, lexical similarity and local fixtures are evidence with different scopes. Faraday execution requires an admitted package and independent verification.

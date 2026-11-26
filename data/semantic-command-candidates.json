@@ -1,0 +1,124 @@
+{
+  "review_basis": "Existing VEDIC dictionary at 501bdee9f49672b3b8d6c1ce5f25dfd19a293809",
+  "candidates": [
+    {
+      "canonical": "CHECK FIRM CAPACITY",
+      "aliases": [
+        "CHECK TRANSFORMER FIRM CAPACITY"
+      ],
+      "sense": "N-1 transformer arithmetic on caller-supplied MVA ratings and positive demand",
+      "state": "SOURCE_REVIEWED_CANDIDATE",
+      "permanent_id": null,
+      "functional_family": "Power systems / transformer capacity",
+      "intent": "Check whether stated demand fits the transformer capacity left after losing the largest unit.",
+      "inputs": [
+        {
+          "name": "units",
+          "type": "nonempty array of finite positive numbers",
+          "unit": "MVA",
+          "meaning": "individual transformer ratings"
+        },
+        {
+          "name": "demandMva",
+          "type": "finite positive number",
+          "unit": "MVA"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "withinFirm",
+          "type": "boolean"
+        },
+        {
+          "name": "withinInstalled",
+          "type": "boolean"
+        },
+        {
+          "name": "firmMva",
+          "type": "finite number",
+          "unit": "MVA"
+        },
+        {
+          "name": "installedMva",
+          "type": "finite number",
+          "unit": "MVA"
+        },
+        {
+          "name": "shortfallMva",
+          "type": "finite number",
+          "unit": "MVA"
+        }
+      ],
+      "coordinate_convention": null,
+      "operations": [
+        {
+          "symbol": "firmCapacityMva",
+          "family_id": 80292,
+          "element_id": 80292,
+          "source": {
+            "repo": "Ventusltd/ventus-grid-engine",
+            "commit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+            "path": "engine/firm-capacity.js",
+            "blob": "8c87c71f29cc27970305c3109efeb22b66fbe568",
+            "first": 115,
+            "last": 135
+          },
+          "kuiper": {
+            "wafer_commit": "f7a4cb9e3a764a72b7133bb275bb5387ea083be2",
+            "first_key": 102132866035,
+            "last_key": 102132866055
+          },
+          "dependencies": [
+            "requireUnits",
+            "schema"
+          ]
+        },
+        {
+          "symbol": "assessAgainstFirm",
+          "family_id": 80294,
+          "element_id": 80294,
+          "source": {
+            "repo": "Ventusltd/ventus-grid-engine",
+            "commit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+            "path": "engine/firm-capacity.js",
+            "blob": "8c87c71f29cc27970305c3109efeb22b66fbe568",
+            "first": 171,
+            "last": 198
+          },
+          "kuiper": {
+            "wafer_commit": "f7a4cb9e3a764a72b7133bb275bb5387ea083be2",
+            "first_key": 102132866091,
+            "last_key": 102132866118
+          },
+          "dependencies": [
+            "firmCapacityMva",
+            "requirePositive",
+            "schema"
+          ]
+        }
+      ],
+      "refusals": [
+        "Require explicit transformer MVA ratings and demand in MVA. Leave power-factor conversion to an explicit command or separately reviewed typed composition.",
+        "Keep connection availability, spare capacity, network security compliance and cyclic ratings outside this contract.",
+        "The source returns Infinity for utilisationOfFirm at a single-transformer site with zero firm capacity. A typed adapter must handle that case explicitly and refuse nonfinite arithmetic."
+      ],
+      "compared_existing": [
+        {
+          "id": "GG2050-VEDIC-000023",
+          "reason": "UTILISE computes a ratio against a supplied rating. This assessment derives outage capacity from individual ratings."
+        },
+        {
+          "id": "GG2050-VEDIC-000051",
+          "reason": "CHECK POWER CAP compares a sampled time profile with an explicit cap."
+        }
+      ],
+      "verification": {
+        "original_engine_proof": "https://github.com/Ventusltd/ventus-grid-engine/blob/7c2a7b42905674fdcd3aa4bb50af14bc352a7747/proofs/firm-capacity.proof.mjs",
+        "original_check_count": 28,
+        "targeted_source_cases": 5
+      },
+      "readiness": "NO_REVIEWED_PACKAGE_BINDING",
+      "admission": "SUBMITTED_FOR_TERMINAL_4_REVIEW"
+    }
+  ]
+}

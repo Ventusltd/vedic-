@@ -4,6 +4,7 @@ import hashlib
 import json
 import subprocess
 from pathlib import Path
+from dictionary_shards import build as build_command_shards
 
 ROOT = Path(__file__).resolve().parents[1]
 LEGACY_PUBLIC_FILES = (
@@ -90,6 +91,8 @@ def stage(destination):
     destination.mkdir(parents=True,exist_ok=False)
     first_prose = {name:git_bytes(FIRST_PROSE_COMMIT,name) for name in PROSE_ARCHIVE_FILES}
     teleprinter_prose = {name:git_bytes(TELEPRINTER_PROSE_COMMIT,name) for name in PROSE_ARCHIVE_FILES}
+    generated = build_command_shards(json.loads(current["data/dictionary.json"]), json.loads(current["data/translation-geodesy.json"]))
+    current.update(generated)
     write_bundle(destination,current,"20261126-commands",head)
     write_bundle(destination/TELEPRINTER_PROSE_ROUTE,teleprinter_prose,"20261126-prose-teleprinter",TELEPRINTER_PROSE_COMMIT)
     write_bundle(destination/FIRST_PROSE_ROUTE,first_prose,"20261126-prose-reader",FIRST_PROSE_COMMIT)
@@ -97,7 +100,7 @@ def stage(destination):
     write_bundle(destination/V2_ROUTE,v2,"202611261351",V2_COMMIT)
     write_bundle(destination/V3_ROUTE,v3,"20261126-v3",V3_COMMIT)
     (destination/".nojekyll").touch()
-    expected = {".nojekyll", "release.json", *CURRENT_PUBLIC_FILES}
+    expected = {".nojekyll", "release.json", *CURRENT_PUBLIC_FILES, *generated}
     expected.update(f"{route}/{name}" for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE)
                     for name in (*LEGACY_PUBLIC_FILES, "release.json"))
     actual={p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()}

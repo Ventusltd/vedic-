@@ -1,0 +1,61 @@
+{
+  "schema": "vedic.daily-command-queue.v1",
+  "records": [
+    {
+      "decision": "REVIEWED_FOR_ADMISSION",
+      "family_refs": [
+        80294,
+        80292
+      ],
+      "entry": {
+        "word": "CHECK FIRM CAPACITY",
+        "purpose": "Check whether stated demand fits after losing the largest transformer.",
+        "limits": "Supply explicit positive finite ratings and demand in MVA. The calculation covers N-1 arithmetic only. Connection availability, limits elsewhere, and security compliance require separate evidence. One transformer has zero firm capacity and an infinite firm utilisation quotient.",
+        "inputs": [
+          "transformer_ratings_mva",
+          "stated_demand_mva"
+        ],
+        "output": "Firm and installed MVA, demand shortfall in MVA, and whether demand fits each capacity.",
+        "estate_group": "Ventus Grid Engine",
+        "discipline": "Energy and power calculation",
+        "periodic_category": "transformer capacity",
+        "vedic_class_candidate": "Computation",
+        "application": {
+          "name": "Ventus Grid Engine",
+          "url": "https://github.com/Ventusltd/ventus-grid-engine/tree/7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+          "instructions": "Inspect the pinned N-1 assessment and your explicit MVA assumptions.",
+          "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+        },
+        "source": {
+          "repo": "Ventusltd/ventus-grid-engine",
+          "commit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+          "path": "engine/firm-capacity.js",
+          "blob": "8c87c71f29cc27970305c3109efeb22b66fbe568",
+          "first": 171,
+          "last": 198
+        },
+        "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7202707297",
+        "kind": "FUNCTION",
+        "translation_ref": "msi-command:Ventusltd/ventus-grid-engine:assessAgainstFirm",
+        "sense_key": "function:msi-command:Ventusltd/ventus-grid-engine:assessAgainstFirm",
+        "aliases": [
+          "CHECK TRANSFORMER FIRM CAPACITY"
+        ],
+        "fixture_status": "pinned source exercised using independent synthetic fixtures",
+        "demo": null,
+        "demo_unavailable_reason": "No independently admitted executable package for this command.",
+        "state": "STATIC_SOURCE_REVIEW",
+        "classification_state": "CURATED_CANDIDATE",
+        "periodic_block_candidate": "Unresolved",
+        "created_utc": "2026-11-26T20:28:19Z",
+        "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/b9402b1da515bf82950e2bdb17e3fadb5142cdb4",
+        "priority": 2,
+        "family_id": null,
+        "element_id": null,
+        "tablet_id": null,
+        "line_ids": null,
+        "proof": null
+      }
+    }
+  ]
+}

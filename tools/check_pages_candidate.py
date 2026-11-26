@@ -5,6 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
+from dictionary_shards import build as build_command_shards, write_bundle as write_command_shards
 from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE, V1_ROUTE, V2_ROUTE, V3_ROUTE
 import argparse
 
@@ -26,6 +27,7 @@ def exercise_pagination(site):
                 "priority": number + index + 1,
             })
         dictionary.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    write_command_shards(site)
     print(f"Browser pagination fixture: {len(entries)} rows", flush=True)
     browser_smoke(site, run_demos=False, offline=True)
 
@@ -33,6 +35,8 @@ def exercise_pagination(site):
 def exercise_public(public):
     manifest = json.loads((public / "release.json").read_bytes())
     assert "prose_count" not in manifest
+    for name, raw in build_command_shards(json.loads((public/"data/dictionary.json").read_bytes()), json.loads((public/"data/translation-geodesy.json").read_bytes())).items():
+        assert (public/name).read_bytes()==raw
     assert manifest["row_count"] == len(json.loads((public / "data/dictionary.json").read_bytes())["entries"])
     for base in (public, *(public / r for r in (V1_ROUTE, V2_ROUTE, V3_ROUTE))):
         assert not (base / CATALOGUE).exists()

@@ -8,6 +8,10 @@ on:
       - 'tools/modular_snapshot.py'
       - 'tools/test_modular_snapshot.py'
       - 'tools/daily_intelligence.py'
+      - 'tools/family_pulse.py'
+      - 'tools/test_family_pulse.py'
+      - 'tools/dictionary_shards.py'
+      - 'data/daily-command-queue.json'
       - 'tools/test_daily_intelligence.py'
       - '.github/workflows/modular-consumer.yml'
 permissions:
@@ -19,6 +23,9 @@ jobs:
   snapshot:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,20 +33,47 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: python -m pip install duckdb==1.4.2
+      - run: python -m unittest discover -s tools -p 'test_family_pulse.py' -v
       - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
       - run: python -m unittest discover -s tools -p 'test_daily_intelligence.py' -v
       - name: Daily bounded command discovery
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py
+      - name: Compressed family pulse and reviewed proposal artifact
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          checkpoint=()
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
+            previous=$(gh run list --workflow modular-consumer.yml --event schedule --branch main --status success \
+              --created "2026-11-27..${started%%T*}" --limit 100 --json databaseId,createdAt |
+              jq -r --arg started "$started" '[.[] | select(.createdAt < $started)] | sort_by(.createdAt) | last | .databaseId // empty')
+            if [ -n "$previous" ]; then
+              mkdir -p "$RUNNER_TEMP/previous"
+              attempt=$(gh run view "$previous" --json attempt --jq .attempt)
+              gh run download "$previous" --name "vedic-research-$previous-$attempt" --dir "$RUNNER_TEMP/previous"
+              mapfile -t receipts < <(find "$RUNNER_TEMP/previous" -name family-research.json -type f)
+              if [ "${#receipts[@]}" -ne 1 ]; then
+                echo "Expected one prior scheduled checkpoint; refusing to restart discovery" >&2
+                exit 1
+              fi
+              checkpoint=(--checkpoint "${receipts[0]}")
+            fi
+          fi
+          python tools/family_pulse.py "${checkpoint[@]}"
+          cat receipts/family-research.json
       - name: Acquire and validate existing producer database (manual only)
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
       - uses: actions/upload-artifact@v4
-        if: always() && github.event_name != 'pull_request'
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
-          path: receipts/*.json
+          path: receipts/
           if-no-files-found: error
           retention-days: 14
