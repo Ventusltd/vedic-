@@ -31,3 +31,39 @@ insert("tools/tacit5b_consumer.py",anchor,anchor+'''
                         expect(page.locator("#activation-state")).to_contain_text("222.638981587 km")
                         layout.append(assert_layout(page,"explicit coordinate fallback"))
 ''')
+
+# Bind displayed execution evidence to actual immutable imported package and
+# current typed request. This is a local observation, not independent acceptance.
+insert("apps/orient/app.mjs","const evidence=document.querySelector('#evidence');",
+       "const evidence=document.querySelector('#evidence');\nlet packageMeta=null;")
+insert("apps/orient/app.mjs","  const {packages:[p]}=await response.json();",
+       "  const {packages:[p]}=await response.json();\n  packageMeta=p;")
+insert("apps/orient/app.mjs","    const graph=reply.graph;",
+       """    const graph=reply.graph;
+    if(!packageMeta || packageMeta.package_sha256!=='e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787'||packageMeta.descriptor_sha256!=='b45e61e955e0d0ddde15495f9be7c3fc4943c3193dd8f318a4249524f2fb5f53'||reply.receipt_sha256!=='83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19')throw Error('Package or source receipt mismatch');""")
+insert("apps/orient/app.mjs","activationEvidence.textContent=JSON.stringify({meaning:reply.selected_meaning,compiler:reply.compiler_commit,source_records:reply.rows,dependencies:graph.dependencies,ports:graph.outputs,key_tier:reply.key_tier,identity_complete:reply.identity_complete,rights:reply.rights},null,2);",
+       """activationEvidence.textContent=JSON.stringify({
+      state:'LOCAL_EXECUTION_OBSERVATION',family:'orient',meaning:reply.selected_meaning,
+      instruction:document.querySelector('#instruction').value,inputs,result:out,
+      package_sha256:packageMeta.package_sha256,descriptor_sha256:packageMeta.descriptor_sha256,
+      build_receipt_sha256:packageMeta.build_receipt_sha256,source_receipt_sha256:reply.receipt_sha256,
+      compiler:reply.compiler_commit,source_records:reply.rows,dependencies:graph.dependencies,
+      ports:graph.outputs,key_tier:reply.key_tier,identity_complete:reply.identity_complete,
+      independent_acceptance:false,rights:reply.rights,
+      limitations:'Spherical geography, not cable route; nearest/electrical unavailable until admitted.'
+    },null,2);""")
+insert("apps/orient/index.html","<pre id=\"activation-evidence\" style=\"white-space:pre-wrap;overflow-wrap:anywhere\"></pre>",
+       '<p><small>Execution observation: exact internal package, source receipt, input and actual output. Independent acceptance and public distribution are separate.</small></p><pre id="activation-evidence" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre>')
+insert("tools/tacit5b_consumer.py",'                        layout.append(assert_layout(page,"explicit coordinate fallback"))',
+       '''                        observed=json.loads(page.locator("#activation-evidence").inner_text())
+                        require(observed["state"]=="LOCAL_EXECUTION_OBSERVATION","execution observation")
+                        require(observed["family"]=="orient" and observed["package_sha256"]==FACTORY_PIN,"package observation pin")
+                        require(observed["descriptor_sha256"]==DESCRIPTOR_PIN and len(observed["build_receipt_sha256"])==64,"build receipt observation")
+                        require(observed["source_receipt_sha256"]=="83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19","source receipt observation")
+                        require(observed["inputs"]["point_b"]=={"longitude":-1,"latitude":0},"typed observation input")
+                        require(abs(observed["result"]["distance_km"]-222.63898158654712)<=1e-8 and observed["result"]["initial_bearing_deg"]==270,"actual output observation")
+                        require(observed["independent_acceptance"] is False and "cable route" in observed["limitations"],"observation limits")
+                        page.locator("#b-lon").fill("0")
+                        expect(page.locator("#activation-evidence")).to_have_text("")
+                        expect(page.locator("#activation-state")).to_have_text("Inputs changed. Activate again.")
+                        layout.append(assert_layout(page,"explicit coordinate fallback"))''')

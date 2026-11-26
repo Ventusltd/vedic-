@@ -21,3 +21,18 @@ The real pinned nearest producer and existing candidate adapter are staged in an
 ## Sixth turn — conditional electrical bond and C evidence
 
 C's exact 15138980638 review is independently hash-checked and binds all six A source/closure projections; formal acceptance stays OPEN. If cross-repository artifact acquisition is denied, the workflow records that blocker rather than fabricating a receipt. The existing factory registry remains unchanged. Electrical typed execution stages the factory's existing verified inputs and index, explicitly requires caller route metres and confirmed peak RMS current, then calls all four actual exports. No geographic route substitution, ordinary-load-factor or mean-current assumption. Only evidence uploaded; no new admitted archive.
+
+## Seventh turn — standalone consumer and cold recovery
+
+Existing TACIT5b application remains the only browser consumer. The staged change exposes a local execution observation from the actual imported ORIENT export: exact package/descriptor/build/source-receipt hashes, input and output, semantic graph metadata, limits and no independent acceptance claim. The browser refuses wrong package/source pins and clears evidence when inputs change. Nearest and electrical stay unavailable as user-facing operations; separate CI pre-admission results do not become admitted features.
+
+### Capability matrix
+
+| Capability | Internal status | Public distribution |
+|---|---|---|
+| ORIENT 0.2.0 | Existing admitted archive; semantic/browser execution | Blocked |
+| nearest + lookup + ORIENT | Actual pinned pre-admission producer run; replay required | Blocked |
+| electrical DROP/PERCENT/LOSS/ENERGY | Existing pre-admission source execution; explicit route and peak context | Blocked |
+| Full nearest English instruction | Existing semantic compiler abstains; no new NLP | Not applicable |
+
+Cold recovery: inspect PR21 head and the exact workflow .github/workflows/tacit-b-composition.yml. Its pinned peer checkouts acquire and verify the actual source and evidence, reconstruct ORIENT twice offline, run unchanged legacy suites, execute ranking and electrical typed bonds, then stage the existing browser application and test both browser engines at desktop/mobile widths. Read the latest job logs and evidence artifact; never infer success from a queued run. A PR20 and C Neural Link PR93 remain peer workspaces. C reviewed artifact 15138980638, A source/closure artifact 15137841195; fifth-turn A diagnosis artifact 15138598845. Preserve original ORIENT SHA and all historical failed/blocked states. No package source or binaries in the evidence artifacts.
