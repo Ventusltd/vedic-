@@ -145,6 +145,31 @@ jobs:
           e="$RUNNER_TEMP/factory-evidence"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_ranking.py --factory "$PWD" --nearest "$PWD/tacit-b-nearest" --sources "$RUNNER_TEMP/nearest-source" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --out "$e/tacit-b-ranking.json"
           sha256sum "$e/tacit-b-ranking.json"
+      - name: Acquire exact C independent review evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit-c-review.zip"
+          if gh api repos/Ventusltd/neural-link-between-agents/actions/artifacts/15138980638/zip > "$p"; then
+            echo "8d48284a1ed870d16d99504707c81e0650a23c24693a1e491a787e809bb08ffa  $p" | sha256sum -c -
+          else
+            rm -f "$p"
+            printf '{"state":"C_REVIEW_ARTIFACT_ACQUISITION_BLOCKED","admission":false}\n' > "$RUNNER_TEMP/factory-evidence/tacit-b-review-blocker.json"
+          fi
+      - name: Offline independent review intake and electrical typed bond
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          if test -f "$RUNNER_TEMP/tacit-c-review.zip"; then
+            offline tacit-b/tools/tacit_b_candidate_intake.py --factory "$PWD" --archive "$RUNNER_TEMP/tacit-a-candidate.zip" --review "$RUNNER_TEMP/tacit-c-review.zip" --out "$e/tacit-b-reviewed-intake.json"
+            sha256sum "$e/tacit-b-reviewed-intake.json"
+          fi
+          offline tacit-b/tools/tacit_b_electrical.py --factory "$PWD" --inputs "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-electrical.json"
+          sha256sum "$e/tacit-b-electrical.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence

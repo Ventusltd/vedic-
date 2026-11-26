@@ -17,3 +17,7 @@ A's final artifact 15137841195 is acquired and hash-checked in CI; the two famil
 ## Fifth turn — ranking proof
 
 The real pinned nearest producer and existing candidate adapter are staged in an offline temporary ESM package. Every ranking receipt binds the exact ordered request, source pins, threshold, units, selected ID and coordinates. Verification reruns the producer and compares the entire receipt: rehashing a farther eligible result cannot pass. The existing ORIENT package supplies actual distance and bearing through the existing typed lookup. Candidate composition is pre-admission, not an admitted nearest archive or a new semantic compiler. Original tie rule is caller order for exact equal distance. Run the workflow's ranking step; evidence only, no package bytes.
+
+## Sixth turn — conditional electrical bond and C evidence
+
+C's exact 15138980638 review is independently hash-checked and binds all six A source/closure projections; formal acceptance stays OPEN. If cross-repository artifact acquisition is denied, the workflow records that blocker rather than fabricating a receipt. The existing factory registry remains unchanged. Electrical typed execution stages the factory's existing verified inputs and index, explicitly requires caller route metres and confirmed peak RMS current, then calls all four actual exports. No geographic route substitution, ordinary-load-factor or mean-current assumption. Only evidence uploaded; no new admitted archive.
