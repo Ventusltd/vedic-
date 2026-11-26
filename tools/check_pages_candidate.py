@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
-from stage_pages import stage, V1_ROUTE, V2_ROUTE
+from stage_pages import stage, V1_ROUTE, V2_ROUTE, V3_ROUTE
 import argparse
 
 
@@ -30,8 +30,14 @@ def exercise_pagination(site):
 
 
 def exercise_public(public):
+    for base in (public, public / V3_ROUTE):
+        html = (base / 'index.html').read_text(encoding='utf-8')
+        assert 'id="package-evidence"' in html and 'Package download unavailable' in html
+    for route in (V1_ROUTE, V2_ROUTE):
+        assert 'id="package-evidence"' not in (public / route / 'index.html').read_text(encoding='utf-8')
+    assert (public / 'data/dictionary.json').read_bytes() == (public / V2_ROUTE / 'data/dictionary.json').read_bytes()
     browser_smoke(public, run_demos=False, offline=True)
-    for route in (V1_ROUTE,V2_ROUTE):
+    for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE):
         browser_smoke(public, run_demos=False, offline=True, base_path=route)
 
 def main():
