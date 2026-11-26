@@ -2,7 +2,7 @@ import copy
 import tempfile
 import unittest
 from pathlib import Path
-from family_pulse import allocate, family_rows, key, export_pulse, verify_extension
+from family_pulse import allocate, checkpoint_cursor, family_identities, family_rows, key, export_pulse, verify_extension
 
 def row(word="FILTER ASSETS", sym="filterAssets"):
     return {"decision":"REVIEWED_FOR_ADMISSION","family_refs":[7],"entry":{
@@ -32,11 +32,21 @@ class DailyTests(unittest.TestCase):
         c=row();c["decision"]="CANDIDATE"
         with self.assertRaises(ValueError): allocate(self.d,queue(c))
     def test_cursor_and_family(self):
-        catalogue={"families":{"7":{"names":["filterAssets"],"repos":2},"8":{"names":["other"],"repos":1}}}
+        catalogue={"family_by_hash":{"a"*64:7,"b"*64:8,"c"*64:9},
+                   "families":{"7":{"names":["filterAssets"],"repos":2},"8":{"names":["other"],"repos":1}}}
+        identities=family_identities(catalogue)
         allocate(self.d,queue(row()))
-        rows,cursor,total=family_rows(catalogue,self.d["entries"],0)
-        self.assertEqual((rows[0][4],cursor,total),("MAPPED_FAMILY",8,2))
-        self.assertEqual(family_rows(catalogue,[],8)[1],8)
+        rows,cursor=family_rows(catalogue,identities,self.d["entries"],0)
+        self.assertEqual((rows[0][4],rows[-1][4],cursor),("MAPPED_FAMILY","NO_CURRENT_PLACEMENT",9))
+        self.assertEqual(family_rows(catalogue,identities,[],9),([],9))
+        checkpoint={"schema":"vedic.daily-family-pulse.v2","next_cursor":9,"cursor_family_hash":"c"*64}
+        self.assertEqual(checkpoint_cursor(checkpoint,identities),9)
+        checkpoint["cursor_family_hash"]="e"*64
+        with self.assertRaises(ValueError): checkpoint_cursor(checkpoint,identities)
+
+    def test_bounded_labels(self):
+        with self.assertRaisesRegex(ValueError, "command not compact"):
+            allocate(self.d,queue(row("ONE TWO THREE FOUR FIVE SIX")))
     def test_parquet(self):
         try:
             import duckdb
@@ -45,6 +55,8 @@ class DailyTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/"pulse.parquet"
             export_pulse([(1,"[]",1,"[]","REVIEW_REQUIRED","[]","[]","[]")],p)
+            self.assertGreater(p.stat().st_size,0)
+            export_pulse([],p)
             self.assertGreater(p.stat().st_size,0)
 
     def test_review_replay(self):

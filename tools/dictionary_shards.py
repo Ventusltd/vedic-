@@ -40,7 +40,9 @@ def build(d,t):
             terms=set(tokens(" ".join([e["word"],symbol,purpose,*aliases])).split())
             patterns=sorted(set(tags+[p for p,w in PATTERNS.items() if terms.intersection(w)]),key=str.casefold)
             row={k:e[k] for k in ("gg_id","number","word","estate_group","discipline","vedic_class_candidate","created_utc")}
-            row.update(priority=e.get("priority",9),page=path,components=e.get("components",[]),patterns=patterns,
+            app=e.get("application") or {}
+            row.update(purpose=purpose, launch=[app["name"],app["url"]] if app else None,
+                       priority=e.get("priority",9),page=path,components=e.get("components",[]),patterns=patterns,
                        search=tokens(" ".join([e["word"],e["gg_id"],purpose,e["estate_group"],e["discipline"],
                              e["vedic_class_candidate"],symbol,*aliases,*patterns,
                              *("family "+str(n) for n in e.get("modular_family_refs",[]))])))

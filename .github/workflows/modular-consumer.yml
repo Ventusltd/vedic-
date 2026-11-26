@@ -40,21 +40,30 @@ jobs:
       - name: Daily bounded command discovery
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py
-      - name: Compressed family pulse and reviewed command proposal (read-only PR rehearsal)
+      - name: Compressed family pulse and reviewed proposal artifact
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cursor=0
-          previous=$(gh run list --workflow modular-consumer.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-          if [ -n "$previous" ]; then
-            mkdir -p "$RUNNER_TEMP/previous"
-            gh run download "$previous" --pattern 'vedic-research-*' --dir "$RUNNER_TEMP/previous" || true
-            receipt=$(find "$RUNNER_TEMP/previous" -name family-research.json -print -quit)
-            if [ -n "$receipt" ]; then cursor=$(jq -er '.next_cursor' "$receipt"); fi
+          checkpoint=()
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+            started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
+            previous=$(gh run list --workflow modular-consumer.yml --event schedule --branch main --status success \
+              --created "2026-11-27..${started%%T*}" --limit 100 --json databaseId,createdAt |
+              jq -r --arg started "$started" '[.[] | select(.createdAt < $started)] | sort_by(.createdAt) | last | .databaseId // empty')
+            if [ -n "$previous" ]; then
+              mkdir -p "$RUNNER_TEMP/previous"
+              attempt=$(gh run view "$previous" --json attempt --jq .attempt)
+              gh run download "$previous" --name "vedic-research-$previous-$attempt" --dir "$RUNNER_TEMP/previous"
+              mapfile -t receipts < <(find "$RUNNER_TEMP/previous" -name family-research.json -type f)
+              if [ "${#receipts[@]}" -ne 1 ]; then
+                echo "Expected one prior scheduled checkpoint; refusing to restart discovery" >&2
+                exit 1
+              fi
+              checkpoint=(--checkpoint "${receipts[0]}")
+            fi
           fi
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then cursor=0; fi
-          python tools/family_pulse.py --cursor "$cursor"
+          python tools/family_pulse.py "${checkpoint[@]}"
           cat receipts/family-research.json
       - name: Acquire and validate existing producer database (manual only)
         if: github.event_name == 'workflow_dispatch'
@@ -68,48 +77,3 @@ jobs:
           path: receipts/
           if-no-files-found: error
           retention-days: 14
-
-  propose-reviewed-append:
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: snapshot
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: write
-      pull-requests: write
-      actions: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
-          path: receipts
-      - name: Submit reviewed append through normal CI/CD
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ ! -f receipts/admission/dictionary.json ]; then
-            echo "No new reviewed commands; no commit or PR"
-            exit 0
-          fi
-          existing=$(gh pr list --base main --state open --json headRefName --jq '[.[]|select(.headRefName|startswith("automation/vedic-daily-"))]|length')
-          if [ "$existing" != 0 ]; then
-            echo "A daily admission PR is already open; preserve the queue"
-            exit 0
-          fi
-          git fetch origin main
-          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
-            echo "Main advanced; retry next cycle without allocating conflicting IDs"
-            exit 1
-          fi
-          branch="automation/vedic-daily-${GITHUB_RUN_ID}"
-          cp receipts/admission/dictionary.json data/dictionary.json
-          git switch -c "$branch"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add data/dictionary.json
-          git commit -m "Append reviewed VEDIC commands"
-          git push origin "$branch"
-          gh pr create --base main --head "$branch" --title "VEDIC: daily reviewed command additions" --body "Append-only, duplicate-checked allocation. Review and merge under normal repository rules."
-          gh workflow run anatomy.yml --ref "$branch"
-          gh workflow run release-rehearsal.yml --ref "$branch"

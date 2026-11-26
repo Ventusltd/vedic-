@@ -92,7 +92,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         if paged:
                             assert any("/data/command-index.json" in x for x in requests)
                             assert not any("/data/dictionary.json" in x or "/data/prose-catalogue.json" in x for x in requests)
-                            assert any("/data/command-pages/" in x for x in requests)
+                            assert not any("/data/command-pages/" in x for x in requests)
                         assert page.locator("#dictRows tr").count() == expected_count
                         assert page.locator("#dictPage").inner_text() == f"Page 1 / {expected_pages}"
                         ordering = page.locator("#dictSort").input_value()
@@ -107,6 +107,9 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         page.locator("#dictSearch").fill("ORIENT")
                         wait_dictionary()
                         assert page.locator("#dictRows tr").count() == 1
+                        if paged:
+                            page.locator("#dictRows .code-cell button").click()
+                            page.locator("#dictRows .code-cell a.code-source").first.wait_for()
                         assert page.locator("#dictRows .code-cell a.code-source").count() == 2
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
@@ -117,14 +120,18 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "LINK"
                         assert page.locator("#dictRows tr td:nth-child(2) a").count() == expected_count
                         assert page.locator("#dictRows a[href^='./demo.html']").count() == 0
-                        assert page.locator("#dictRows tr").first.get_by_text("How to see it:", exact=False).count() == 1
+                        if not paged:
+                            assert page.locator("#dictRows tr").first.get_by_text("How to see it:", exact=False).count() == 1
                         expected = {e["gg_id"]: e["application"]["url"] for e in entries}
                         for i in range(expected_pages):
                             rows = page.locator("#dictRows tr").evaluate_all("""(rs) => rs.map(r => [r.cells[6].textContent, r.cells[1].querySelector('a').getAttribute('href'), ['a.code-source','a[href^="https://raw.githubusercontent.com/"]','a[href^="https://ventusltd.github.io/stars/code.html"]','a[href^="https://ventusltd.github.io/kuiper-belt/"]'].map(sel => Array.from(r.cells[2].querySelectorAll(sel), a=>a.getAttribute('href')))])""")
                             assert len(rows) == min(100, len(entries) - 100*i)
                             for identity, href, links in rows:
                                 assert expected.pop(identity) == href
-                                assert links == expected_links(identities[identity]), (identity, links)
+                                if paged:
+                                    assert all(not group for group in links), (identity, links)
+                                else:
+                                    assert links == expected_links(identities[identity]), (identity, links)
                             if i+1 < expected_pages:
                                 page.locator("#dictNext").click()
                                 wait_dictionary()
@@ -183,6 +190,25 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             wait_dictionary()
                             assert page.locator("#dictRows tr").count() == 1
                             assert page.locator("#dictRows tr td").first.text_content() == last["word"]
+                            if paged:
+                                before = [request for request in requests if "/data/command-pages/" in request]
+                                row = page.locator("#dictRows tr").first
+                                assert not row.locator("a.code-source").count()
+                                row.locator(".code-cell button").click()
+                                row.locator(".code-cell a.code-source").first.wait_for()
+                                assert row.get_by_text("How to see it:", exact=False).count() == 1
+                                assert row.locator("a.code-source").evaluate_all("(links) => links.map(link => link.href)") == expected_links(last)[0]
+                                after = [request for request in requests if "/data/command-pages/" in request]
+                                assert len(after) >= len(before)
+                                if expected_pages > 1:
+                                    index = json.loads((data_root/"data/command-index.json").read_bytes())
+                                    second = next(entry for entry in index["entries"] if entry["page"].endswith("000002.json"))
+                                    page.locator("#dictSearch").fill(second["gg_id"])
+                                    wait_dictionary()
+                                    assert page.locator("#dictRows tr").count() == 1
+                                    page.locator("#dictRows .code-cell button").click()
+                                    page.locator("#dictRows .code-cell a.code-source").first.wait_for()
+                                    assert any("/"+second["page"] in request for request in requests)
                             assert not page.locator("#dictRows img").count()
                             assert all("fixture-should-never-request" not in url for url in requests)
                         assert not errors, errors

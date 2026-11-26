@@ -72,7 +72,8 @@ def allocate(dictionary, queue, limit=MAX_ADDITIONS):
         require(isinstance(aliases,list) and all(isinstance(a,str) and key(a) for a in aliases), "invalid aliases")
         require(len({key(e["word"]), *map(key,aliases)}) == len(aliases)+1, "duplicate aliases")
         require(e["kind"] == "FUNCTION" and e["state"] == "STATIC_SOURCE_REVIEW" and e["demo"] is None, "unsupported admission")
-        require(len(e["word"]) <= 64 and len(e["purpose"]) <= 240, "command not compact")
+        require(1 <= len(tokens(e["word"]).split()) <= 5 and
+                len(e["word"]) <= 64 and len(e["purpose"]) <= 240, "command not compact")
         require(e.get("application") and e["application"]["url"].startswith("https://"), "application/source reference")
         require(not any(key(a) in words or key(a) in symbols for a in e.get("aliases", [])), "alias collision")
         n = dictionary["next_number"]
@@ -104,9 +105,13 @@ def asset_metadata():
 
 def acquire(directory):
     before = asset_metadata()
-    subprocess.run(["gh","release","download",TAG,"--repo",PRODUCER,"--pattern",ASSET,"--dir",str(directory)],check=True,timeout=90)
-    raw = (directory / ASSET).read_bytes()
-    require(before == asset_metadata() and len(raw) == before["size"] and
+    asset_path = directory / ASSET
+    with asset_path.open("wb") as output:
+        subprocess.run(["gh", "api", f"repos/{PRODUCER}/releases/assets/{before['id']}",
+                        "-H", "Accept: application/octet-stream"], stdout=output, check=True, timeout=90)
+    with asset_path.open("rb") as stream:
+        raw = stream.read(MAX_COMPRESSED + 1)
+    require(len(raw) == before["size"] and
             "sha256:" + hashlib.sha256(raw).hexdigest() == before["digest"], "producer asset changed or corrupt")
     with gzip.open(directory / ASSET,"rb") as stream:
         payload = stream.read(MAX_UNCOMPRESSED + 1)
@@ -115,29 +120,60 @@ def acquire(directory):
     require(isinstance(d["families"],dict) and isinstance(d["family_by_hash"],dict), "producer schema")
     return d, before
 
-def family_rows(catalogue, entries, cursor):
+def family_identities(catalogue):
+    identities = {}
+    for digest, number in catalogue["family_by_hash"].items():
+        require(isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{40,64}", digest) and
+                type(number) is int and number > 0 and number not in identities,
+                "invalid or duplicate permanent family identity")
+        identities[number] = digest
+    require(identities and all(int(n) in identities for n in catalogue["families"]),
+            "invalid producer placement identities")
+    return identities
+
+
+def checkpoint_cursor(checkpoint, identities):
+    if checkpoint is None:
+        return 0
+    require(checkpoint.get("schema") == "vedic.daily-family-pulse.v2", "unsupported checkpoint schema")
+    cursor = checkpoint.get("next_cursor")
+    require(type(cursor) is int and cursor >= 0, "invalid checkpoint cursor")
+    require((cursor == 0 or cursor in identities) and
+            identities.get(cursor) == checkpoint.get("cursor_family_hash"),
+            "checkpoint family identity changed")
+    return cursor
+
+
+def family_rows(catalogue, identities, entries, cursor):
     words, symbols, mapped, _ = indexes(entries)
-    families = sorted((int(n), v) for n,v in catalogue["families"].items())
-    require(families, "empty producer catalogue")
-    unseen = [(n,v) for n,v in families if n > cursor]
-    selected = (unseen or families)[:BATCH]
+    selected = sorted(n for n in identities if n > cursor)[:BATCH]
     rows = []
-    for n,v in selected:
+    for n in selected:
+        placement = catalogue["families"].get(str(n))
+        v = placement or {}
         names = [x for x in v.get("names",[]) if isinstance(x,str) and x != "(anonymous)"]
         possible = sorted({x for x in names if key(x) in words or key(x) in symbols})
-        status = "MAPPED_FAMILY" if n in mapped else "POSSIBLE_EXISTING_COMMAND" if possible else "REVIEW_REQUIRED"
+        if n in mapped:
+            status = "MAPPED_FAMILY"
+        elif placement is None:
+            status = "NO_CURRENT_PLACEMENT"
+        elif possible:
+            status = "POSSIBLE_EXISTING_COMMAND"
+        else:
+            status = "REVIEW_REQUIRED"
         terms=set(tokens(" ".join(names)).split())
         groups=sorted(p for p,words in PATTERNS.items() if terms.intersection(words))
         labels=sorted({tokens(name).upper() for name in names if tokens(name)})
-        rows.append((n,json.dumps(names),int(v["repos"]),json.dumps(v.get("places",[])),status,json.dumps(possible),json.dumps(groups),json.dumps(labels)))
-    return rows, selected[-1][0], len(families)
+        rows.append((n,json.dumps(names),int(v.get("repos",0)),json.dumps(v.get("places",[])),status,json.dumps(possible),json.dumps(groups),json.dumps(labels)))
+    return rows, selected[-1] if selected else cursor
 
 def export_pulse(rows, out):
     import duckdb
     db = duckdb.connect()
     try:
         db.execute("CREATE TABLE pulse(family_id BIGINT, names_json VARCHAR, repository_count INTEGER, occurrences_json VARCHAR, status VARCHAR, possible_matches_json VARCHAR, pattern_groups_json VARCHAR, candidate_labels_json VARCHAR)")
-        db.executemany("INSERT INTO pulse VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows)
+        if rows:
+            db.executemany("INSERT INTO pulse VALUES (?, ?, ?, ?, ?, ?, ?, ?)", rows)
         # Parameterised destination; never copy code or the whole producer database.
         db.execute("COPY (SELECT * FROM pulse ORDER BY family_id) TO ? (FORMAT PARQUET, COMPRESSION ZSTD)", [str(out)])
         require(db.execute("SELECT count(*) FROM read_parquet(?)",[str(out)]).fetchone()[0] == len(rows), "Parquet round trip")
@@ -146,28 +182,33 @@ def export_pulse(rows, out):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--cursor",type=int,default=0)
+    parser.add_argument("--checkpoint", type=Path)
+    parser.add_argument("--output", type=Path, default=ROOT/"receipts")
     args = parser.parse_args()
     d, queue = read(DICT), read(QUEUE)
     prior = json.loads(json.dumps(d))
     with tempfile.TemporaryDirectory(prefix="vedic-family-") as temp:
         catalogue, asset = acquire(Path(temp))
-        family_ids = {int(n) for n in catalogue["families"]}
+        identities = family_identities(catalogue)
+        prior_checkpoint = read(args.checkpoint) if args.checkpoint else None
+        cursor = checkpoint_cursor(prior_checkpoint, identities)
         for c in queue["records"]:
-            require(set(c["family_refs"]) <= family_ids,"unknown Modular Star family")
+            require(set(c["family_refs"]) <= identities.keys(),"unknown Modular Star family")
         added, held = allocate(d,queue)
+        out = args.output
         if added:
             validate(d,read(ROOT/"data/translation-geodesy.json"),prior)
             verify_source_entries({"entries":[e for e in d["entries"] if e["gg_id"] in added]})
-            write(ROOT/"receipts/admission/dictionary.json",d)
-        rows, cursor, total = family_rows(catalogue,d["entries"],args.cursor)
-        out = ROOT/"receipts"
-        out.mkdir(exist_ok=True)
+            write(out/"admission/dictionary.json",d)
+        rows, next_cursor = family_rows(catalogue,identities,d["entries"],cursor)
+        out.mkdir(parents=True,exist_ok=True)
         export_pulse(rows,out/"family-pulse.parquet")
-        write(out/"family-research.json",{"schema":"vedic.daily-family-pulse.v1","producer_asset":asset,
-              "producer_family_count":total,"scanned_families":len(rows),"next_cursor":cursor,
-              "dictionary_count":len(d["entries"]),"added":added,"held":held,
-              "execution_claim":False,"coverage":"family candidates, not semantic or executable coverage"})
-        print(json.dumps({"added":added,"next_cursor":cursor,"family_count":total,"scanned_families":len(rows),"possible_existing":sum(r[4]=="POSSIBLE_EXISTING_COMMAND" for r in rows),"review_required":sum(r[4]=="REVIEW_REQUIRED" for r in rows),"parquet_bytes":(out/"family-pulse.parquet").stat().st_size}))
+        write(out/"family-research.json",{"schema":"vedic.daily-family-pulse.v2","producer_asset":asset,
+              "producer_family_count":len(identities),"current_placement_family_count":len(catalogue["families"]),
+              "scanned_families":len(rows),"previous_cursor":cursor,"next_cursor":next_cursor,
+              "cursor_family_hash":identities.get(next_cursor),"status":"research_candidates" if rows else "no_change",
+              "dictionary_count":len(prior["entries"]),"proposed_dictionary_count":len(d["entries"]),
+              "proposed_additions":added,"held":held,"execution_claim":False,
+              "coverage":"permanent family IDs; placement metadata where present"})
 if __name__ == "__main__":
     main()
