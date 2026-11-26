@@ -1,4 +1,7 @@
 """Offline UI smoke against the exact checked-out VEDIC candidate."""
+import json
+import math
+from urllib.parse import parse_qs, urlparse
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -49,7 +52,7 @@ def main():
                         assert page.locator("#dictRows tr").count() == 1
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.locator("#dictSearch").fill("")
-                        links = page.locator("#dictRows a").evaluate_all("(els) => els.map(e => e.href)")
+                        links = page.locator('#dictRows a[href^="./demo.html?id="]').evaluate_all("(els) => els.map(e => e.href)")
                         assert len(links) == 6 and len(set(links)) == 6
                         for demo_url in links:
                             demo = browser.new_page(viewport={"width":width,"height":height})
@@ -58,6 +61,24 @@ def main():
                             demo.get_by_role("button",name="RUN DEMONSTRATION").click(timeout=10000)
                             result = demo.locator("#result").inner_text()
                             assert result not in ("Ready","Loading…") and not result.startswith(("Cannot run","Demonstration unavailable")), result
+                            actual = json.loads(result)
+                            identity = parse_qs(urlparse(demo_url).query)["id"][0]
+                            # Independent known-answer checks for the seeded examples.
+                            expected = {
+                                "GG2050-VEDIC-000001": 111.31949079327357,
+                                "GG2050-VEDIC-000002": [1, 0.5],
+                                "GG2050-VEDIC-000003": [132, 33, 0.75],
+                                "GG2050-VEDIC-000004": [0.8983152841195214, 0],
+                                "GG2050-VEDIC-000005": 90,
+                                "GG2050-VEDIC-000006": {"distance_km":111.31949079327357,"initial_bearing_deg":90}
+                            }[identity]
+                            def close(a, b):
+                                if isinstance(b, dict):
+                                    return isinstance(a, dict) and a.keys() == b.keys() and all(close(a[k], b[k]) for k in b)
+                                if isinstance(b, list):
+                                    return isinstance(a, list) and len(a) == len(b) and all(close(x,y) for x,y in zip(a,b))
+                                return isinstance(a,(int,float)) and math.isclose(a,b,rel_tol=1e-9,abs_tol=1e-9)
+                            assert close(actual, expected), (identity,actual,expected)
                             demo.locator("#args").fill("not JSON")
                             demo.get_by_role("button",name="RUN DEMONSTRATION").click()
                             assert demo.locator("#result").inner_text().startswith("Cannot run:")
