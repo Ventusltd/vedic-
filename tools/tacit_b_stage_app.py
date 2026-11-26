@@ -67,3 +67,39 @@ insert("tools/tacit5b_consumer.py",'                        layout.append(assert
                         expect(page.locator("#activation-evidence")).to_have_text("")
                         expect(page.locator("#activation-state")).to_have_text("Inputs changed. Activate again.")
                         layout.append(assert_layout(page,"explicit coordinate fallback"))''')
+
+# Reuse the existing activation input and package; selection does not grant authority.
+insert("apps/orient/index.html",'<label>Instruction<input id="instruction" value="Calculate the distance and initial bearing between two points"></label>',
+       '''<label>Choose operation<select id="operation-choice"><option value="orient">ORIENT — admitted internal</option><option value="nearest">Nearest substation — pre-admission only</option><option value="electrical">Electrical — pre-admission only</option></select></label>
+       <p><small>Nearest and electrical have executed in isolated CI, not in this application. No eligible dataset may be inferred from coordinates. No live package admission or engineering certification.</small></p>
+       <label>Instruction<input id="instruction" value="Calculate the distance and initial bearing between two points"></label>''')
+insert("apps/orient/app.mjs","let generation=0;","""let generation=0;
+const choice=document.querySelector('#operation-choice');
+const instructions={orient:'Calculate the distance and initial bearing between two points',
+ nearest:'Find the nearest candidate substation at or above 132 kV, then calculate geographical distance and initial bearing to that point.',
+ electrical:'Calculate voltage drop, resistive power loss and annual energy loss'};
+choice.addEventListener('change',()=>{
+ document.querySelector('#instruction').value=instructions[choice.value];
+ document.querySelector('#kuiper-key').value='';
+ invalidateActivation();
+ document.querySelector('#activate').focus();
+});
+document.querySelector('#instruction').addEventListener('input',()=>{const match=Object.keys(instructions).find(k=>instructions[k]===document.querySelector('#instruction').value);choice.value=match||'';});""")
+insert("apps/orient/app.mjs","document.querySelector('#instruction').value='Calculate the distance and initial bearing between two points';",
+       "document.querySelector('#operation-choice').value='orient';\n  document.querySelector('#instruction').value='Calculate the distance and initial bearing between two points';")
+insert("tools/tacit5b_consumer.py",'                        layout.append(assert_layout(page,"explicit coordinate fallback"))',
+       '''                        for operation in ("nearest","electrical"):
+                            page.locator("#operation-choice").select_option(operation)
+                            expect(page.locator("#activate")).to_be_focused()
+                            expect(page.locator("#activation-evidence")).to_have_text("")
+                            page.locator("#activate").click()
+                            expect(page.locator("#activation-state")).to_contain_text("REFUSED")
+                            expect(page.locator("#activation-evidence")).to_have_text("")
+                            layout.append(assert_layout(page,"unadmitted "+operation))
+                        page.locator("#operation-choice").select_option("orient")
+                        page.locator("#b-lon").fill("-1")
+                        page.locator("#activate").click()
+                        expect(page.locator("#activation-state")).to_contain_text("EXECUTED_INTERNAL")
+                        expect(page.locator("#activation-evidence")).to_contain_text("LOCAL_EXECUTION_OBSERVATION")
+                        layout.append(assert_layout(page,"operation choice restored"))
+                        layout.append(assert_layout(page,"explicit coordinate fallback"))''')
