@@ -1,0 +1,129 @@
+{
+  "schema": "vedic.static-spider.v1",
+  "label": "Substation lookup — static source dependency diagram",
+  "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7179722655",
+  "scope": "Historical extracted module: its source explicitly states that it was not loaded by the live Atlas. Current runtime caller not established. IDs are local diagram IDs, not permanent Stars identities. Grey denotes no runtime acceptance claim.",
+  "scope_source": {
+    "repo": "Ventusltd/ventus-grid-engine",
+    "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+    "path": "engine/v9-nearest-search.js",
+    "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+    "first": 6,
+    "last": 16
+  },
+  "nodes": [
+    {
+      "id": "vedic:normalise",
+      "label": "Standardise a substation name",
+      "type": "function",
+      "rag": "grey",
+      "reason": "Uppercase, remove punctuation and configured noise words, collapse spaces. Not fuzzy matching or identity proof.",
+      "gh": "https://github.com/Ventusltd/ventus-grid-engine/blob/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-nearest-search.js#L41-L48",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 41,
+        "last": 48
+      },
+      "block_candidate": "Vn"
+    },
+    {
+      "id": "vedic:index",
+      "label": "Build substation lookup",
+      "type": "function",
+      "rag": "grey",
+      "reason": "First record per normalised name, separate list of located points; absent name match returns null.",
+      "gh": "https://github.com/Ventusltd/ventus-grid-engine/blob/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-nearest-search.js#L50-L88",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 50,
+        "last": 88
+      },
+      "block_candidate": "Vn"
+    },
+    {
+      "id": "vedic:nearest",
+      "label": "Rank eligible substations by distance",
+      "type": "function",
+      "rag": "grey",
+      "reason": "Scan located points, filter by declared voltage, sort by measured distance, return one or a limited list. No capacity, routing or access inference.",
+      "gh": "https://github.com/Ventusltd/ventus-grid-engine/blob/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-nearest-search.js#L72-L86",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 72,
+        "last": 86
+      },
+      "block_candidate": "Vn"
+    },
+    {
+      "id": "vedic:distanceKm",
+      "label": "Measure spherical distance in kilometres",
+      "type": "function",
+      "rag": "grey",
+      "reason": "Haversine calculation using radius 6378.137 km. Source-backed, not a runtime trace.",
+      "gh": "https://github.com/Ventusltd/ventus-grid-engine/blob/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-geodesy.js#L29-L47",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 29,
+        "last": 47
+      },
+      "block_candidate": "Vg",
+      "catalogue_ref": "geodesy:distanceKm"
+    }
+  ],
+  "edges": [
+    {
+      "from": "vedic:index",
+      "to": "vedic:normalise",
+      "type": "calls",
+      "evidence": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 54,
+        "last": 54,
+        "contains": "normalise(point && point.name)"
+      }
+    },
+    {
+      "from": "vedic:index",
+      "to": "vedic:nearest",
+      "type": "contains",
+      "evidence": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 72,
+        "last": 72,
+        "contains": "nearest: (lon, lat, options) => {"
+      }
+    },
+    {
+      "from": "vedic:nearest",
+      "to": "vedic:distanceKm",
+      "type": "calls",
+      "evidence": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-nearest-search.js",
+        "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "first": 81,
+        "last": 81,
+        "contains": "distanceKm(lon, lat, point.location.lon, point.location.lat)"
+      }
+    }
+  ]
+}

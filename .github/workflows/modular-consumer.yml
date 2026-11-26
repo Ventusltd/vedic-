@@ -1,0 +1,35 @@
+name: VEDIC Modular Star consumer
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '25 */6 * * *'
+  pull_request:
+    paths:
+      - 'tools/modular_snapshot.py'
+      - 'tools/test_modular_snapshot.py'
+      - '.github/workflows/modular-consumer.yml'
+permissions:
+  contents: read
+concurrency:
+  group: vedic-modular-consumer-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
+      - name: Acquire and validate existing producer database
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: modular-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipts/modular-snapshot.json
+          if-no-files-found: error
+          retention-days: 30

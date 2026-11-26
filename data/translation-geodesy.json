@@ -1,0 +1,114 @@
+{
+  "schema": "vedic.translation.v1",
+  "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7179641875",
+  "app": "gridatlas",
+  "capability": "measure",
+  "relationship": "GridAtlas manifest names this geodesy module for measurement. Individual function use in the active runtime is not proven; records describe the module's exported functions.",
+  "records": [
+    {
+      "id": "geodesy:distanceKm",
+      "name": "distanceKm",
+      "purpose": "Measure distance between two geographic points",
+      "inputs": "Two longitude/latitude pairs in degrees",
+      "outputs": "Spherical great-circle distance in kilometres",
+      "limits": "Uses the estate radius 6378.137 km; not travel distance, route, land access or capacity.",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 29,
+        "last": 47
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "block_candidate": "Vg",
+      "family_id": null,
+      "line_ids": null,
+      "proof": null
+    },
+    {
+      "id": "geodesy:representativePoint",
+      "name": "representativePoint",
+      "purpose": "Choose a representative point for a mapped asset",
+      "inputs": "GeoJSON Point, Polygon or MultiPolygon",
+      "outputs": "Point coordinates or null",
+      "limits": "For a polygon uses the arithmetic mean of the outer ring vertices, not a true area centroid; MultiPolygon uses its first polygon.",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 63,
+        "last": 81
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "block_candidate": "Vg",
+      "family_id": null,
+      "line_ids": null,
+      "proof": null
+    },
+    {
+      "id": "geodesy:voltagesKv",
+      "name": "voltagesKv",
+      "purpose": "Read mapped voltage values in kilovolts",
+      "inputs": "Properties kv/KV (kV), voltage/VOLTAGE (V)",
+      "outputs": "Distinct positive parsed voltage values, descending, in kV",
+      "limits": "Parses labels; does not establish actual measured voltage, energisation or rating.",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 89,
+        "last": 107
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "block_candidate": "Vg",
+      "family_id": null,
+      "line_ids": null,
+      "proof": null
+    },
+    {
+      "id": "geodesy:destinationPoint",
+      "name": "destinationPoint",
+      "purpose": "Calculate a point from a distance and bearing",
+      "inputs": "Longitude, latitude, distance in km, bearing in degrees",
+      "outputs": "Destination longitude and latitude in degrees",
+      "limits": "Spherical calculation; longitude is not normalised and no navigable route is established.",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 121,
+        "last": 131
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "block_candidate": "Vg",
+      "family_id": null,
+      "line_ids": null,
+      "proof": null
+    },
+    {
+      "id": "geodesy:initialBearingDeg",
+      "name": "initialBearingDeg",
+      "purpose": "Calculate the initial bearing between two points",
+      "inputs": "Two longitude/latitude pairs in degrees",
+      "outputs": "Initial bearing in degrees, normalised to [0,360)",
+      "limits": "Not a device compass reading; coincident or antipodal points do not establish a unique physical heading.",
+      "source": {
+        "repo": "Ventusltd/ventus-grid-engine",
+        "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+        "path": "engine/v9-geodesy.js",
+        "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "first": 133,
+        "last": 139
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "block_candidate": "Vg",
+      "family_id": null,
+      "line_ids": null,
+      "proof": null
+    }
+  ]
+}

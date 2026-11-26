@@ -1,0 +1,170 @@
+{
+  "schema": "vedic.dictionary.v1",
+  "identity_reference": "https://github.com/Ventusltd/globalgrid2050/blob/b25a3387b31c7bb5a635bf029c47336bf834ecfb/automation/repd/build_v6.py",
+  "next_number": 7,
+  "entries": [
+    {
+      "number": 1,
+      "gg_id": "GG2050-VEDIC-000001",
+      "word": "MEASURE",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:distanceKm",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "distance_km",
+      "demo": "distance",
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Spherical geometry",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:distanceKm",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    },
+    {
+      "number": 2,
+      "gg_id": "GG2050-VEDIC-000002",
+      "word": "REPRESENT",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:representativePoint",
+      "inputs": [
+        "geojson_geometry"
+      ],
+      "output": "coordinate_pair_or_null",
+      "demo": "point",
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Computer science / Geometry processing",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Data",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:representativePoint",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    },
+    {
+      "number": 3,
+      "gg_id": "GG2050-VEDIC-000003",
+      "word": "VOLTAGE",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:voltagesKv",
+      "inputs": [
+        "voltage_properties"
+      ],
+      "output": "kilovolt_list",
+      "demo": "voltage",
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Computer science / Data normalisation",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Data",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:voltagesKv",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    },
+    {
+      "number": 4,
+      "gg_id": "GG2050-VEDIC-000004",
+      "word": "DESTINATION",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:destinationPoint",
+      "inputs": [
+        "coordinate_pair",
+        "distance_km",
+        "bearing_deg"
+      ],
+      "output": "coordinate_pair",
+      "demo": "destination",
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Spherical geometry",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:destinationPoint",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    },
+    {
+      "number": 5,
+      "gg_id": "GG2050-VEDIC-000005",
+      "word": "BEARING",
+      "kind": "FUNCTION",
+      "translation_ref": "geodesy:initialBearingDeg",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "bearing_deg",
+      "demo": "bearing",
+      "state": "STATIC_SOURCE_REVIEW",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Trigonometry",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "function:geodesy:initialBearingDeg",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    },
+    {
+      "number": 6,
+      "gg_id": "GG2050-VEDIC-000006",
+      "word": "ORIENT",
+      "kind": "COMPOSITION",
+      "purpose": "Measure straight-line distance and initial bearing between two points",
+      "components": [
+        "GG2050-VEDIC-000001",
+        "GG2050-VEDIC-000005"
+      ],
+      "composition_mode": "shared_inputs",
+      "inputs": [
+        "coordinate_pair",
+        "coordinate_pair"
+      ],
+      "output": "distance_and_bearing",
+      "demo": "orient",
+      "state": "DEMO_CANDIDATE",
+      "limits": "Demonstration composition only; not navigation, access or an engineered route.",
+      "estate_group": "GridAtlas / Geodesy",
+      "discipline": "Mathematics / Functional composition",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_category": "geodesy",
+      "periodic_block_candidate": "Vg",
+      "vedic_class_candidate": "Computation",
+      "created_utc": "2026-11-26T01:35:15Z",
+      "sense_key": "composition:shared_inputs:GG2050-VEDIC-000001,GG2050-VEDIC-000005",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+    }
+  ],
+  "resources": {
+    "periodic_table": "https://ventusltd.github.io/ventus-grid-engine/?graph=periodic-table",
+    "spider_genome": "https://ventusltd.github.io/ventus-grid-engine/?graph=genome-spider",
+    "maths_genome": "https://ventusltd.github.io/ventus-grid-engine/?graph=engine-graph",
+    "classification": "https://ventusltd.github.io/ventus-grid-engine/?graph=vedic",
+    "kuiper": "https://github.com/Ventusltd/kuiper-belt",
+    "compatibility": "https://ventusltd.github.io/ventus-grid-engine/?graph=chemistry"
+  },
+  "classification_basis": {
+    "periodic_table": "https://github.com/Ventusltd/stars/blob/main/modular-star/blocks-catalogue.json",
+    "kuiper": "https://github.com/Ventusltd/kuiper-belt/blob/main/README.md",
+    "spider": "https://github.com/Ventusltd/ventus-grid-engine/blob/main/spider/manifest.json",
+    "note": "Existing category geodesy; Vg candidate, not exact family resolution. Additional discipline labels are curated cross-cutting tags."
+  },
+  "identity_policy": {
+    "word": "Non-unique search label; multiple distinct senses are allowed.",
+    "created_utc": "Immutable first recorded dictionary allocation, ISO 8601 UTC; not source-code creation or latest update.",
+    "sense_key": "Unique canonical meaning reference; function translation ref or ordered composition of permanent IDs and mode. Not a Stars ID.",
+    "genesis_commit": "5ddc2e611dbcccb68cc4f7342637fddb912e5ef1"
+  }
+}
