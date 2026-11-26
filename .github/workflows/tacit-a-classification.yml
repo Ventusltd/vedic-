@@ -1,0 +1,41 @@
+name: TACIT A producer module classifications
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_classification.py'
+      - '.github/workflows/tacit-a-classification.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  classify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact Star-maker and Stars producer tables
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_classification.py acquire --root "$RUNNER_TEMP/tacit-a-classification"
+      - name: Verify module classifications without inventing family membership
+        run: |
+          set -euo pipefail
+          mkdir classification
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_classification.py verify --root "$RUNNER_TEMP/tacit-a-classification" --out "classification/$n.json"
+          done
+          cmp classification/first.json classification/second.json
+          mv classification/first.json classification/classification.json
+          rm classification/second.json
+          sha256sum classification/classification.json | tee classification/classification.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-module-classification
+          path: classification/
+          retention-days: 30
+          if-no-files-found: error
