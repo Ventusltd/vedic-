@@ -190,6 +190,23 @@ jobs:
           python tacit-b/tools/tacit_b_stage_factory.py "$PWD"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_admission.py --factory "$PWD" --a "$RUNNER_TEMP/tacit-a-candidate.zip" --c "$RUNNER_TEMP/tacit-c-review.zip" --nearest "$RUNNER_TEMP/nearest-source" --electrical "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-admission.json"
           sha256sum "$e/tacit-b-admission.json"
+      - name: Acquire exact D selector and original placement law
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: Ventusltd/kuiper-belt
+          ref: 4859abbdd7166ecab566ecc86337b56e0bd75125
+          path: tacit-b-kuiper
+          persist-credentials: false
+          sparse-checkout: |
+            tools/kuiper_select.py
+            learn-the-kuiper/202610050609/kuiper-law.js
+          sparse-checkout-cone-mode: false
+      - name: Offline Kuiper selection to actual factory execution
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_kuiper.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-kuiper.json"
+          sha256sum "$e/tacit-b-kuiper.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
