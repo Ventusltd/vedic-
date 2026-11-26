@@ -44,7 +44,28 @@ def derive(row,root,receipt):
             j.update(meaning_id=c["gg_id"],kuiper_key=c["kuiper"]["key"],join_state=c["kuiper"]["state"],stars_state=c["stars"]["state"])
         joins.append(j)
     properties={"bytes":len(raw),"export_count":len(exports),"static_dependency_count":len(parsed["imports"]),"static_dependencies":parsed["imports"],"module_exports":parsed["exports"],"declared_package_ports":d["ports"],"package_exports":d["exports"],"observed_tests":{"run":run["id"],"job":job["id"],"head":run["head_sha"],"conclusion":job["conclusion"]},"rights":"BLOCKED","runtime_state":row["runtime_state"],"independent_acceptance":False}
-    return {"family":family,"source":identity,"joins":joins,"properties":properties,"property_sha256":sha(canonical(properties)),"provenance":{"parser":parsed["parser"],"descriptor":row["descriptor"],"receipt_sha256":RECEIPT_SHA if family=="orient" else None,"derivation":"tacit4b.seed-properties.v1","dependency_count_basis":"unique static ESM import specifiers; not transitive graph or free-variable proof"}}
+    source_url="https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+s["path"]
+    desc_url="https://github.com/Ventusltd/vedic-/blob/"+row["descriptor"]["commit"]+"/"+row["descriptor"]["path"]
+    run_url="https://github.com/Ventusltd/vedic-/actions/runs/"+str(run["id"])
+    receipt_url="https://github.com/Ventusltd/vedic-/actions/artifacts/15126683549"
+    property_rows=[]
+    def prop(occ,name,value,unit,method,input_sha,evidence,state,reason=None):
+        need(state in ("OBSERVED","DERIVED","UNKNOWN"),"PROPERTY_STATE")
+        need((value is None and bool(reason)) if state=="UNKNOWN" else (value is not None and reason is None),"UNKNOWN_RULE")
+        property_rows.append({"source_occurrence":occ,"property":name,"definition_version":"tacit4b.seed-properties.v1","value":value,"unit":unit,"method":method,"input_sha256":input_sha,"evidence_ref":evidence,"state":state,"unknown_reason":reason})
+    prop(identity,"bytes",len(raw),"bytes","exact Git blob byte length",sha(raw),source_url,"OBSERVED")
+    prop(identity,"export_count",len(exports),"count","Acorn 8.15.0 named exports",sha(raw),source_url,"DERIVED")
+    prop(identity,"static_dependency_count",len(parsed["imports"]),"count","unique static ESM import specifiers",sha(raw),source_url,"DERIVED")
+    prop(identity,"declared_package_ports",d["ports"],None,"pinned descriptor, not inferred from source",sha(d_raw),desc_url,"OBSERVED")
+    prop(identity,"test_conclusion",job["conclusion"],None,"exact-head run and job metadata",sha(canonical({"run":run["id"],"head":run["head_sha"],"job":job["id"],"conclusion":job["conclusion"]})),run_url,"OBSERVED")
+    prop(identity,"runtime_state",row["runtime_state"],None,"historical package evidence tier",sha(d_raw),desc_url,"OBSERVED")
+    prop(identity,"redistribution_rights",None,None,"no clearance receipt",sha(raw),source_url,"UNKNOWN","RIGHTS_UNRESOLVED")
+    for j in joins:
+        occ={**identity,"export":j["export"],"span":j["span"]}
+        for k in ("meaning_id","kuiper_key","stars_occurrence"):
+            val=j[k]
+            prop(occ,k,val,None,"pinned producer receipt" if family=="orient" else "await specialist receipt",RECEIPT_SHA if family=="orient" else sha(raw),receipt_url if family=="orient" else source_url,"OBSERVED" if val is not None else "UNKNOWN",None if val is not None else ("STARS_OCCURRENCE_NOT_INDEXED" if family=="orient" else "EXACT_JOIN_NOT_REVIEWED"))
+    return {"family":family,"source":identity,"joins":joins,"properties":properties,"property_rows":property_rows,"property_sha256":sha(canonical(property_rows)),"provenance":{"parser":parsed["parser"],"descriptor":row["descriptor"],"receipt_sha256":RECEIPT_SHA if family=="orient" else None,"derivation":"tacit4b.seed-properties.v1","dependency_count_basis":"unique static ESM import specifiers; not transitive graph or free-variable proof"}}
 def main():
     p=argparse.ArgumentParser();p.add_argument("root",type=Path);p.add_argument("output",type=Path);a=p.parse_args()
     cohort=json.loads(read(HERE/"cohort.json"));need(len(cohort)==4,"COHORT_SIZE")
@@ -64,8 +85,14 @@ def main():
         try: derive(row,a.root,receipt)
         except ValueError as e: need(str(e)==("GIT_BLOB_MISMATCH" if altered=="digest" else "UNKNOWN_OR_MISSING_FIELD"),"WRONG_REFUSAL");checks+=1
         else: raise AssertionError("tamper accepted")
-    changed=copy.deepcopy(solar);changed["properties"]["runtime_state"]="SYNTHETIC_TEST_ONLY"
-    need(changed["source"]==solar["source"] and sha(canonical(changed["properties"]))!=solar["property_sha256"],"PROPERTY_IDENTITY_COUPLED");checks+=1
+    changed=copy.deepcopy(solar);changed["property_rows"][0]["value"]+=1
+    need(changed["source"]==solar["source"] and sha(canonical(changed["property_rows"]))!=solar["property_sha256"],"PROPERTY_IDENTITY_COUPLED");checks+=1
+    required=set("source_occurrence property definition_version value unit method input_sha256 evidence_ref state unknown_reason".split())
+    for row in rows:
+        for prop in row["property_rows"]:
+            need(set(prop)==required,"PROPERTY_FIELDS")
+            need(prop["state"]!="UNKNOWN" or (prop["value"] is None and prop["unknown_reason"]),"UNKNOWN_RULE")
+    checks+=1
     report={"schema":"tacit4b.seed-properties.v1","cohort_size":4,"records":rows,"identity_allocation":False,"independent_acceptance":False}
     a.output.mkdir(parents=True,exist_ok=True)
     (a.output/"seed-properties.json").write_bytes(canonical(report))
