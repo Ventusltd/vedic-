@@ -11,8 +11,10 @@ ZIP="649209e8723af1efd4c73f85ebd90b524a2312907d8a5e24759c8bf72ad1f72a"
 IDS={"orient":(1,5),"nearest-orient":(1,5,15,16),"electrical":(24,25,26,27)}
 MODULES={"orient":("Vg",),"nearest-orient":("Vg","Vn"),"electrical":("Vd",)}
 class Bridge:
-    def __init__(self,f,t,space,manifest,archive,build,nearest,nsources,esources):
-        self.f,self.t,self.space,self.manifest=f,t,space,manifest
+    def __init__(self,f,t,space_type,manifest_raw,archive,build,nearest,nsources,esources):
+        f.need(isinstance(manifest_raw,bytes) and f.sha(manifest_raw)==MANIFEST,"MANIFEST_AUTHENTICATION")
+        manifest=f.strict(manifest_raw)
+        self.f,self.t,self.space,self.manifest=f,t,space_type(manifest),manifest
         self.archive,self.build=archive,build
         self.nearest,self.nsources,self.esources=nearest,nsources,esources
     def keys(self,op):
@@ -90,8 +92,9 @@ def main():
     import package_factory as f
     import typed_package_execution as t
     from kuiper_select import Space
-    m=f.strict(member(f,a.bonds,ZIP,"bonds.json",MANIFEST))
-    bridge=Bridge(f,t,Space(m),m,a.archive.read_bytes(),f.strict(a.build.read_bytes()),a.nearest,a.nsources,a.esources)
+    m=member(f,a.bonds,ZIP,"bonds.json",MANIFEST)
+    def create(raw):return Bridge(f,t,Space,raw,a.archive.read_bytes(),f.strict(a.build.read_bytes()),a.nearest,a.nsources,a.esources)
+    bridge=create(m)
     fixture=f.strict((a.nearest/"packages/nearest-candidate/consumer-fixture.json").read_bytes())["input"]
     electrical=f.strict(a.electrical.read_bytes())["request"]
     orient={"crs":"WGS84","unit":"degrees","point_a":{"longitude":0,"latitude":0},"point_b":{"longitude":1,"latitude":0}}
@@ -101,6 +104,9 @@ def main():
     checks={}
     def check(name,ok):f.need(ok,name);checks[name]="PASS"
     def reject(name,fn,reason):check(name,refusal(fn)==reason)
+    changed=f.strict(m);changed["source_entries"][0]["kuiper"]["key"]+=1
+    reject("raw_manifest_key_mutation",lambda:create(f.canonical(changed)),"MANIFEST_AUTHENTICATION")
+    reject("raw_manifest_object",lambda:create(changed),"MANIFEST_AUTHENTICATION")
     for op,q in requests.items():
         bridge.replay(q,results[op],experiment=True);check(op+":replay",True)
     check("nearest_real",results["nearest-orient"]["output"]["id"]=="eligible" and abs(results["nearest-orient"]["output"]["distance_km"]-111.31949079327356)<1e-8 and results["nearest-orient"]["output"]["initial_bearing_deg"]==90)
