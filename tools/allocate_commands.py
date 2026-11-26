@@ -97,7 +97,7 @@ def main():
                                               "new_commands": len(current["entries"])-len(base["entries"])}, indent=2)+"\n").encode())
     else:
         from family_pulse import verify_extension
-        queue = json.loads((ROOT / "data/daily-command-queue.json").read_bytes())
+        queue = json.loads((ROOT / "data/admitted-queue-archive.json").read_bytes())
         published = json.loads(target.read_bytes())
         verify_extension(current, published, queue)
         validate(published, translations, current)
