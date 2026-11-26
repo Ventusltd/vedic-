@@ -48,10 +48,7 @@ class DailyTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "command not compact"):
             allocate(self.d,queue(row("ONE TWO THREE FOUR FIVE SIX")))
     def test_parquet(self):
-        try:
-            import duckdb
-        except ImportError:
-            self.skipTest("DuckDB installed in daily workflow")
+        import duckdb
         with tempfile.TemporaryDirectory() as d:
             p=Path(d)/"pulse.parquet"
             export_pulse([(1,"[]",1,"[]","REVIEW_REQUIRED","[]","[]","[]")],p)
