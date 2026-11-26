@@ -1,0 +1,39 @@
+name: TACIT 4b seed property proof
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit4b/seed/**'
+      - '.github/workflows/tacit4b-seed.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  properties:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Acquire four pinned sources and actual evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python tools/tacit4b/seed/acquire.py "$RUNNER_TEMP/seed-input"
+          cd tools/tacit4b/seed
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0
+      - name: Offline deterministic property derivation
+        run: |
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" tools/tacit4b/seed/properties.py "$RUNNER_TEMP/seed-input" "$RUNNER_TEMP/seed-evidence"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seed-properties-evidence-only
+          path: ${{ runner.temp }}/seed-evidence
+          retention-days: 30
+          if-no-files-found: error
