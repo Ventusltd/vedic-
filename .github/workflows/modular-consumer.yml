@@ -12,6 +12,8 @@ on:
       - 'tools/test_family_pulse.py'
       - 'tools/dictionary_shards.py'
       - 'data/daily-command-queue.json'
+      - 'data/admitted-queue-archive.json'
+      - 'tools/allocate_commands.py'
       - 'tools/test_daily_intelligence.py'
       - '.github/workflows/modular-consumer.yml'
 permissions:
@@ -45,25 +47,41 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           checkpoint=()
+          state_base=INITIAL
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
-            previous=$(gh run list --workflow modular-consumer.yml --event schedule --branch main --status success \
-              --created "2026-11-27..${started%%T*}" --limit 100 --json databaseId,createdAt |
-              jq -r --arg started "$started" '[.[] | select(.createdAt < $started)] | sort_by(.createdAt) | last | .databaseId // empty')
-            if [ -n "$previous" ]; then
-              mkdir -p "$RUNNER_TEMP/previous"
-              attempt=$(gh run view "$previous" --json attempt --jq .attempt)
-              gh run download "$previous" --name "vedic-research-$previous-$attempt" --dir "$RUNNER_TEMP/previous"
-              mapfile -t receipts < <(find "$RUNNER_TEMP/previous" -name family-research.json -type f)
-              if [ "${#receipts[@]}" -ne 1 ]; then
-                echo "Expected one prior scheduled checkpoint; refusing to restart discovery" >&2
-                exit 1
+            state_ref=refs/heads/automation/vedic-research-state
+            if state_line=$(git ls-remote --exit-code origin "$state_ref"); then
+              state_base=$(printf '%s\n' "$state_line" | cut -f1)
+              git fetch --no-tags origin "$state_base"
+              git show "$state_base:state/family-research.json" > "$RUNNER_TEMP/vedic-state.json"
+              checkpoint=(--checkpoint "$RUNNER_TEMP/vedic-state.json")
+            else
+              status=$?
+              if [ "$status" != 2 ]; then exit "$status"; fi
+              # Refuse to reset if previous scheduled research exists.
+              started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
+              previous=$(gh run list --workflow modular-consumer.yml --event schedule --branch main --status success --limit 100 --json databaseId,createdAt |
+                jq -r --arg started "$started" '[.[] | select(.createdAt < $started)] | sort_by(.createdAt) | last | .databaseId // empty')
+              if [ -n "$previous" ]; then
+                attempt=$(gh run view "$previous" --json attempt --jq .attempt)
+                mkdir -p "$RUNNER_TEMP/previous"
+                gh run download "$previous" --name "vedic-research-$previous-$attempt" --dir "$RUNNER_TEMP/previous"
+                mapfile -t receipts < <(find "$RUNNER_TEMP/previous" -name family-research.json -type f)
+                test "${#receipts[@]}" = 1
+                checkpoint=(--checkpoint "${receipts[0]}")
+                echo "::notice::Migrating previous scheduled checkpoint to durable state."
+              else
+                echo "::notice::First scheduled discovery; initializing permanent family cursor."
               fi
-              checkpoint=(--checkpoint "${receipts[0]}")
             fi
           fi
           python tools/family_pulse.py "${checkpoint[@]}"
+          printf '%s\n' "$state_base" > receipts/state-base.txt
+          if [ -f receipts/admission/dictionary.json ]; then
+            python tools/family_pulse.py --verify-proposal
+          fi
           cat receipts/family-research.json
       - name: Acquire and validate existing producer database (manual only)
         if: github.event_name == 'workflow_dispatch'
@@ -77,3 +95,43 @@ jobs:
           path: receipts/
           if-no-files-found: error
           retention-days: 14
+
+  persist-research-checkpoint:
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main'
+    needs: snapshot
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipts
+      - name: Persist checkpoint only (no canonical dictionary changes)
+        run: |
+          set -euo pipefail
+          state_ref=refs/heads/automation/vedic-research-state
+          expected=$(cat receipts/state-base.txt)
+          if state_line=$(git ls-remote --exit-code origin "$state_ref"); then
+            actual=$(printf '%s\n' "$state_line" | cut -f1)
+            test "$actual" = "$expected"
+            git fetch --no-tags origin "$actual"
+            base="$actual"
+          else
+            status=$?
+            test "$status" = 2
+            test "$expected" = INITIAL
+            base=$(git rev-parse HEAD)
+          fi
+          git worktree add --detach "$RUNNER_TEMP/vedic-state" "$base"
+          mkdir -p "$RUNNER_TEMP/vedic-state/state"
+          jq '{schema,next_cursor,cursor_family_hash,producer_asset,producer_family_count,status}' receipts/family-research.json > "$RUNNER_TEMP/vedic-state/state/family-research.json"
+          git -C "$RUNNER_TEMP/vedic-state" config user.name 'github-actions[bot]'
+          git -C "$RUNNER_TEMP/vedic-state" config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git -C "$RUNNER_TEMP/vedic-state" add state/family-research.json
+          if ! git -C "$RUNNER_TEMP/vedic-state" diff --cached --quiet; then
+            git -C "$RUNNER_TEMP/vedic-state" commit -m "Record VEDIC research checkpoint ${GITHUB_RUN_ID}"
+            git -C "$RUNNER_TEMP/vedic-state" push origin "HEAD:$state_ref"
+          fi
