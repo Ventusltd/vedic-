@@ -1,7 +1,7 @@
 """Offline UI smoke against the exact checked-out VEDIC candidate."""
 import json
 import math
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -16,6 +16,27 @@ def main():
     thread.start()
     url = f"http://127.0.0.1:{server.server_port}/"
     entries = json.loads((ROOT / 'data/dictionary.json').read_text())['entries']
+    translations = {r["id"]: r for r in json.loads((ROOT / "data/translation-geodesy.json").read_text())["records"]}
+    identities = {e["gg_id"]: e for e in entries}
+    def source_records(entry, seen=None):
+        if seen is None:
+            seen = set()
+        if entry["gg_id"] in seen:
+            return []
+        seen.add(entry["gg_id"])
+        t = translations.get(entry.get("translation_ref"), {})
+        source = t.get("source") or entry.get("source")
+        if source:
+            return [source]
+        return [s for identity in entry.get("components", []) for s in source_records(identities[identity], seen)]
+    def expected_links(entry):
+        sources = source_records(entry)
+        return [
+            ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in sources],
+            ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in sources],
+            ["https://ventusltd.github.io/stars/code.html" for s in sources],
+            ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in sources]
+        ]
     expected_count = min(100, len(entries))
     expected_pages = max(1, math.ceil(len(entries) / 100))
     passed = 0
@@ -55,6 +76,7 @@ def main():
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
                         page.locator("#dictSearch").fill("ORIENT")
                         assert page.locator("#dictRows tr").count() == 1
+                        assert page.locator("#dictRows .code-cell a.code-source").count() == 2
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
                         assert page.locator("#dictRows tr").count() == expected_count
@@ -65,10 +87,11 @@ def main():
                         assert page.locator("#dictRows tr").first.get_by_text("How to see it:", exact=False).count() == 1
                         expected = {e["gg_id"]: e["application"]["url"] for e in entries}
                         for i in range(expected_pages):
-                            rows = page.locator("#dictRows tr").evaluate_all("(rs) => rs.map(r => [r.cells[5].textContent, r.cells[1].querySelector('a').getAttribute('href')])")
+                            rows = page.locator("#dictRows tr").evaluate_all("""(rs) => rs.map(r => [r.cells[6].textContent, r.cells[1].querySelector('a').getAttribute('href'), ['a.code-source','a[href^="https://raw.githubusercontent.com/"]','a[href^="https://ventusltd.github.io/stars/code.html"]','a[href^="https://ventusltd.github.io/kuiper-belt/"]'].map(sel => Array.from(r.cells[2].querySelectorAll(sel), a=>a.getAttribute('href')))])""")
                             assert len(rows) == min(100, len(entries) - 100*i)
-                            for identity, href in rows:
+                            for identity, href, links in rows:
                                 assert expected.pop(identity) == href
+                                assert links == expected_links(identities[identity]), (identity, links)
                             if i+1 < expected_pages:
                                 page.locator("#dictNext").click()
                         assert not expected

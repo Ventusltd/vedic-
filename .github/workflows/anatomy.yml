@@ -20,6 +20,7 @@ jobs:
       - run: python tools/validate_anatomy.py --online
       - run: python tools/validate_translation.py --online
       - run: python tools/validate_graph.py --online
+      - run: python tools/verify_reuse_routes.py
       - name: Check permanent dictionary identity against previous release
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
