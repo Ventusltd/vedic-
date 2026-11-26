@@ -1,0 +1,38 @@
+name: TACIT A seventh-turn cold recovery
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_*'
+      - '.github/workflows/tacit-a-recovery.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Cold acquire exact existing channels and evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_recovery.py acquire --root "$RUNNER_TEMP/recovery"
+      - name: Verify recovery twice offline
+        run: |
+          mkdir evidence
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_recovery.py verify --root "$RUNNER_TEMP/recovery" --out "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/capsule.json
+          rm evidence/second.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-recovery
+          path: evidence/
+          if-no-files-found: error
