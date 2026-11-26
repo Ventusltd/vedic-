@@ -8,10 +8,19 @@ on:
       - 'tools/modular_snapshot.py'
       - 'tools/test_modular_snapshot.py'
       - 'tools/daily_intelligence.py'
+      - 'tools/daily_operations.py'
+      - 'tools/test_daily_operations.py'
+      - 'tools/daily_source_policy.py'
+      - 'tools/test_daily_source_policy.py'
+      - 'tools/source_admissions.py'
+      - 'tools/test_source_admissions.py'
       - 'tools/family_pulse.py'
       - 'tools/test_family_pulse.py'
       - 'tools/dictionary_shards.py'
       - 'data/daily-command-queue.json'
+      - 'data/source-command-candidates.json'
+      - 'data/source-policy*.json'
+      - 'data/admitted-queue-archive.json'
       - 'tools/test_daily_intelligence.py'
       - '.github/workflows/modular-consumer.yml'
 permissions:
@@ -37,44 +46,123 @@ jobs:
       - run: python -m unittest discover -s tools -p 'test_family_pulse.py' -v
       - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
       - run: python -m unittest discover -s tools -p 'test_daily_intelligence.py' -v
-      - name: Daily bounded command discovery
-        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-        run: python tools/daily_intelligence.py
+      - name: Historical research preview
+        if: github.event_name == 'workflow_dispatch'
+        run: python tools/daily_intelligence.py --output "$RUNNER_TEMP/receipts/daily-research.json"
       - name: Compressed family pulse and reviewed proposal artifact
         shell: bash
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          checkpoint=()
+          run=()
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
-            previous=$(gh run list --workflow modular-consumer.yml --event schedule --branch main --status success \
-              --created "2026-11-27..${started%%T*}" --limit 100 --json databaseId,createdAt |
-              jq -r --arg started "$started" '[.[] | select(.createdAt < $started)] | sort_by(.createdAt) | last | .databaseId // empty')
-            if [ -n "$previous" ]; then
-              mkdir -p "$RUNNER_TEMP/previous"
-              attempt=$(gh run view "$previous" --json attempt --jq .attempt)
-              gh run download "$previous" --name "vedic-research-$previous-$attempt" --dir "$RUNNER_TEMP/previous"
-              mapfile -t receipts < <(find "$RUNNER_TEMP/previous" -name family-research.json -type f)
-              if [ "${#receipts[@]}" -ne 1 ]; then
-                echo "Expected one prior scheduled checkpoint; refusing to restart discovery" >&2
-                exit 1
-              fi
-              checkpoint=(--checkpoint "${receipts[0]}")
-            fi
+            run=(--run-id "$GITHUB_RUN_ID")
           fi
-          python tools/family_pulse.py "${checkpoint[@]}"
-          cat receipts/family-research.json
+          python tools/daily_operations.py research --output "$RUNNER_TEMP/receipts" "${run[@]}"
       - name: Acquire and validate existing producer database (manual only)
         if: github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
+        run: python tools/modular_snapshot.py --output "$RUNNER_TEMP/receipts/modular-snapshot.json"
       - uses: actions/upload-artifact@v4
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
-          name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
-          path: receipts/
+          name: vedic-research-${{ github.run_id }}
+          path: ${{ runner.temp }}/receipts/
           if-no-files-found: error
+          overwrite: true
           retention-days: 14
+
+  record-family-progress:
+    if: github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.repository == 'Ventusltd/vedic-'
+    needs: snapshot
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: vedic-research-${{ github.run_id }}
+          path: ${{ runner.temp }}/receipts/
+      - run: python tools/daily_operations.py persist --output "$RUNNER_TEMP/receipts" --run-id "$GITHUB_RUN_ID"
+
+  proposal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      status: ${{ steps.prepare.outputs.status }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p 'test_daily_operations.py' -v
+      - name: Prepare bounded source admission for review
+        id: prepare
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          started=$(gh run view "$GITHUB_RUN_ID" --json createdAt --jq .createdAt)
+          unset GH_TOKEN
+          python tools/daily_operations.py proposal --output "$RUNNER_TEMP/proposal" --created-at "$started"
+          status=$(jq -r .status "$RUNNER_TEMP/proposal/proposal.json")
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" = 'ready_for_review' ]; then
+            echo 'A verified Git bundle is available in the VEDIC proposal artifact.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vedic-proposal-${{ github.run_id }}
+          path: ${{ runner.temp }}/proposal/
+          if-no-files-found: error
+          overwrite: true
+          retention-days: 14
+
+  offer-review-pr:
+    if: >-
+      github.event_name == 'schedule' && github.ref == 'refs/heads/main' && github.repository == 'Ventusltd/vedic-' &&
+      needs.proposal.outputs.status == 'ready_for_review' && vars.VEDIC_REVIEW_APP_CLIENT_ID != ''
+    needs: proposal
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: vedic-proposal-${{ github.run_id }}
+          path: ${{ runner.temp }}/proposal/
+      - id: review-app
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3
+        with:
+          client-id: ${{ vars.VEDIC_REVIEW_APP_CLIENT_ID }}
+          private-key: ${{ secrets.VEDIC_REVIEW_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Offer independently gated review PR
+        env:
+          GH_TOKEN: ${{ steps.review-app.outputs.token }}
+        run: |
+          gh auth setup-git
+          python tools/daily_operations.py review-pr --output "$RUNNER_TEMP/proposal"
