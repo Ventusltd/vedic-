@@ -68,6 +68,42 @@ def replay(root):
     need(len(requests)==len(NAMES),"REPLAY_COHORT")
     q=root/"fresh-requests.json";q.write_bytes(canonical(requests)+b"\n")
     subprocess.run([sys.executable,str(root/"producer/tools/edition_keys.py"),"--bodies",str(q),"--roots",str(root/"roots"),"--out",str(root/"fresh-producer.json")],check=True,timeout=120)
+def normalized_producer(raw):
+    """Remove only volatile execution metadata and source text, not identity fields."""
+    data=json.loads(raw)
+    for k in ("seconds","command"): data["summary"].pop(k,None)
+    for body in data["bodies"]: body.pop("line_text",None)
+    return canonical(data)
+def project(result, out):
+    """Review candidates only, deliberately not a reviewed factory schema."""
+    family_ids={"electrical":{24,25,26,27},"nearest":{15,16,1},"orient":{1,5}}
+    out.mkdir(exist_ok=False)
+    manifest={}
+    for family,ids in family_ids.items():
+        rows=[r for r in result["entries"] if int(r["meaning_id"][-6:]) in ids]
+        need(len(rows)==len(ids),"FAMILY_CENSUS")
+        modules={r["source"]["path"]:{"blob":r["source"]["blob"],"sha256":r["module_sha256"]} for r in rows}
+        receipt={"schema":"vedic.tacit-a.source-review-candidate.v1","family":family,
+          "source_commit":COMMIT,"dictionary_commit":EDITION,"modules":modules,"entries":rows,
+          "producer_commit":KUIPER,"producer_normalized_sha256":result["fresh_producer_normalized_sha256"],
+          "candidate_state":"REFUSED_REVIEW_PENDING","identity_complete":False,"independent_acceptance":False,"rights":"BLOCKED"}
+        if family=="electrical":
+            closure={"static_imports":[],"internal_dependencies":result["electrical_internal_dependencies"],
+              "typed_bonds":[{"from":"voltageDropVolts.value","to":"dropPercent.dropVolts","condition":"positive result and same phase/voltage basis"},
+                {"from":"lossesWatts.value","to":"annualLossKwh.peakLossWatts","condition":"explicit peak current and loss-load-factor context"}]}
+        elif family=="nearest":
+            closure={"static_imports":[result["nearest_closure"]["static_import"]],"internal_dependencies":result["nearest_closure"]["calls"],
+              "typed_bonds":result["nearest_typed_bond"]["edges"]}
+        else:
+            closure={"static_imports":[],"internal_dependencies":None,"typed_bonds":[],"note":"Existing ORIENT admission unchanged; no new authority"}
+        closure.update(schema="vedic.tacit-a.closure-review-candidate.v1",family=family,modules=modules,
+             source_commit=COMMIT,candidate_state="REFUSED_REVIEW_PENDING",execution_edges=[],runtime_verified=False,
+             independent_acceptance=False,review_required="TACIT13")
+        for kind,data in (("source",receipt),("closure",closure)):
+            raw=canonical(data)+b"\n";name=family+"-"+kind+".json"
+            (out/name).write_bytes(raw);manifest[name]=sha(raw)
+    (out/"manifest.json").write_bytes(canonical({"schema":"vedic.tacit-a.family-review-manifest.v1",
+      "files":manifest,"status":"CANDIDATE_ONLY","authority":"NO_ADMISSION","review_required":["TACIT10","TACIT13"]})+b"\n")
 def verify(root,out):
     sys.path.insert(0,str(root.resolve()))
     from identity_bridge import kuiper_join
@@ -84,6 +120,9 @@ def verify(root,out):
     fresh_raw=(root/"fresh-producer.json").read_bytes(); fresh=json.loads(fresh_raw)
     need(identity["kuiper_producer_commit"]==KUIPER and sha((root/"producer/cosmos/wafer.tsv").read_bytes())==identity["kuiper_wafer_sha256"],"PRODUCER_WAFER_PIN")
     need(len(fresh["bodies"])==len(NAMES),"FRESH_REPLAY_COHORT")
+    second_raw=(root/"fresh-producer-second.json").read_bytes()
+    normalized=normalized_producer(fresh_raw)
+    need(normalized==normalized_producer(second_raw),"FRESH_PRODUCER_NORMALIZED_PARITY")
     orient_raw=member(root,"identity","source-receipt/receipt.json")
     need(sha(orient_raw)=="83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19","ORIENT_RECEIPT_DIGEST")
     orient=json.loads(orient_raw)
@@ -108,7 +147,7 @@ def verify(root,out):
     graph=json.loads((BASE/"data/nearest-spider.json").read_text())
     graph_counts=validate(graph,lambda repo,commit,path:read(path) if repo==GRID and commit==COMMIT else b"")
     validate_aliases(graph,trans)
-    rows=[]; tests=[]
+    rows=[]; tests=["two fresh normalized producer replays match"]
     def check(name,condition): need(condition,name); tests.append(name)
     def reject(name,fn):
         try: fn()
@@ -187,7 +226,7 @@ def verify(root,out):
     result={"schema":"vedic.tacit-a-candidate-closure.v1","dictionary_commit":EDITION,"dictionary_sha256":DICT,
       "producer_commit":identity["kuiper_producer_commit"],"producer_receipt_sha256":sha(raw),"artifact_pins":ARTIFACTS,
       "entries":rows,"reverse_key_to_meaning":by_key,"properties":properties,"spider_graph_counts":graph_counts,
-      "fresh_producer_receipt_sha256":sha(fresh_raw),"fresh_pinned_producer_replay":True,
+      "fresh_producer_normalized_sha256":sha(normalized),"fresh_pinned_producer_replay":True,
       "source_dependency_graph":{"nodes":nodes,"edges":edges,"validator_commit":T13,"execution_edges":[],"printer_relationship":"URL_REFERENCE_ONLY_NOT_EXECUTABLE","periodic_membership":"UNKNOWN"},
       "nearest_typed_bond":nearest["graph"],
       "nearest_closure":nested,"electrical_internal_dependencies":{k:v["module_dependencies"] for k,v in ep["functions"].items()},
@@ -195,6 +234,10 @@ def verify(root,out):
       "rights":"BLOCKED","admission":"REFUSED_REVIEW_PENDING","wafer_replayed":False,"runtime_verified":False,
       "tests":tests,"test_count":len(tests)}
     out.write_bytes(canonical(result)+b"\n")
+    project(result,out.with_suffix(".families"))
+    out.with_suffix(".audit.json").write_bytes(canonical({"schema":"vedic.tacit-a.replay-audit.v1",
+       "raw_receipt_sha256":[sha(fresh_raw),sha(second_raw)],"normalized_receipt_sha256":sha(normalized),
+       "volatile_fields_excluded":["summary.seconds","summary.command","bodies[].line_text"]})+b"\n")
     print(json.dumps({"test_count":len(tests),"keys":by_key,"sha256":sha(out.read_bytes()),"admission":result["admission"]},sort_keys=True))
 if __name__=="__main__":
     p=argparse.ArgumentParser();p.add_argument("mode",choices=["acquire","replay","verify"]);p.add_argument("--root",type=Path,required=True);p.add_argument("--out",type=Path);a=p.parse_args()
