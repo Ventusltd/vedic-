@@ -186,6 +186,14 @@ def replay(base, archive, load=pinned, date=stamp, *, legacy_records=(), checker
 
 def replay_published(base, archive, *, checker=None):
     legacy = pinned(LEGACY, ARCHIVE)
+    manifests = {item["manifest_commit"] for item in archive["records"][len(legacy["records"]):]}
+    for manifest in manifests:
+        require(bool(re.fullmatch(r"[0-9a-f]{40}", manifest)), "invalid manifest commit")
+        is_ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", manifest, "HEAD"], cwd=ROOT, timeout=30,
+            check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        ).returncode == 0
+        require(is_ancestor, "policy manifest must remain in Git history; use a merge commit")
     return replay(base, archive, legacy_records=legacy["records"], checker=checker)
 
 
