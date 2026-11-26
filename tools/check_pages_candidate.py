@@ -5,7 +5,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
-from stage_pages import stage
+from stage_pages import stage, V1_ROUTE, V2_ROUTE
+import argparse
 
 
 def exercise_pagination(site):
@@ -28,13 +29,22 @@ def exercise_pagination(site):
     browser_smoke(site, run_demos=False, offline=True)
 
 
+def exercise_public(public):
+    browser_smoke(public, run_demos=False, offline=True)
+    for route in (V1_ROUTE,V2_ROUTE):
+        browser_smoke(public, run_demos=False, offline=True, base_path=route)
+
 def main():
+    p=argparse.ArgumentParser()
+    p.add_argument('staged',nargs='?',type=Path)
+    args=p.parse_args()
     with TemporaryDirectory(prefix="vedic-pages-") as directory:
         root = Path(directory)
-        public = root / "public"
-        stage(public)
+        public = args.staged or root / "public"
+        if args.staged is None:
+            stage(public)
         print("Browser smoke: exact staged Pages payload", flush=True)
-        browser_smoke(public, run_demos=False, offline=True)
+        exercise_public(public)
         fixture = root / "fixture"
         shutil.copytree(public, fixture)
         exercise_pagination(fixture)

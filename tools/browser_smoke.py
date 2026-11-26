@@ -10,13 +10,14 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def main(root=ROOT, *, run_demos=True, offline=False):
+def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
+    data_root = root / base_path
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
-    url = f"http://127.0.0.1:{server.server_port}/"
-    entries = json.loads((root / 'data/dictionary.json').read_text(encoding='utf-8'))['entries']
-    translations = {r["id"]: r for r in json.loads((root / "data/translation-geodesy.json").read_text(encoding="utf-8"))["records"]}
+    url = f"http://127.0.0.1:{server.server_port}/" + (base_path.rstrip("/") + "/" if base_path else "")
+    entries = json.loads((data_root / 'data/dictionary.json').read_text(encoding='utf-8'))['entries']
+    translations = {r["id"]: r for r in json.loads((data_root / "data/translation-geodesy.json").read_text(encoding="utf-8"))["records"]}
     identities = {e["gg_id"]: e for e in entries}
     def source_records(entry, seen=None):
         if seen is None:

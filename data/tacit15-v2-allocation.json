@@ -1,0 +1,148 @@
+{
+  "schema": "vedic.allocation.v2",
+  "release": "202611261351",
+  "baseline_commit": "b17a153a6c0698902bfa89516a34ec8a956c11e7",
+  "prior_dictionary_blob": "3f8b6d9b17f426ca459b8817455214102e141ec4",
+  "candidate_receipt_commit": "89bd1d4e87bb75686f8e62f5113c2a8652266674",
+  "candidate_receipt_blob": "e45e49b0ae87d1093ac6c26bb8115b53992293a0",
+  "created_utc": "2026-11-26T13:51:17Z",
+  "previous_count": 39,
+  "new_count": 50,
+  "next_number": 51,
+  "accepted": [
+    {
+      "gg_id": "GG2050-VEDIC-000040",
+      "sense_key": "function:tacit15:kuiper:describe",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 300,
+        "last": 308
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000041",
+      "sense_key": "function:tacit15:kuiper:showNew",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 436,
+        "last": 442
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000042",
+      "sense_key": "function:tacit15:kuiper:lightTime",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 570,
+        "last": 581
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000043",
+      "sense_key": "function:tacit15:kuiper:fillLines",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 816,
+        "last": 824
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000044",
+      "sense_key": "function:tacit15:kuiper:edFly",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 720,
+        "last": 726
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000045",
+      "sense_key": "function:tacit15:kuiper:edCard",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 681,
+        "last": 697
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000046",
+      "sense_key": "function:tacit15:gridatlas-search:buildWhere",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 241,
+        "last": 259
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000047",
+      "sense_key": "function:tacit15:gridatlas-search:buildScore",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 261,
+        "last": 275
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000048",
+      "sense_key": "function:tacit15:gridatlas-search:queryUkGazetteer",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 448,
+        "last": 501
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000049",
+      "sense_key": "function:tacit15:gridatlas-search:queryGlobalGazetteer",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 503,
+        "last": 549
+      }
+    },
+    {
+      "gg_id": "GG2050-VEDIC-000050",
+      "sense_key": "function:tacit15:gridatlas-vicinity:openProjectVicinity",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/modules/202611222000-uk-offtakers-overlay.js",
+        "blob": "961c07151d845ce5ea35fac704b079da79cb7c24",
+        "first": 423,
+        "last": 434
+      }
+    }
+  ],
+  "held": 29,
+  "scope": "Static meanings only; release not verified until exact-head CI and served-byte checks."
+}
