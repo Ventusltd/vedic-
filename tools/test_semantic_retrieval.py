@@ -13,7 +13,7 @@ class TestSemanticRetrieval(unittest.TestCase):
         d = json.loads((ROOT/"data/dictionary.json").read_text(encoding="utf-8"))
         t = json.loads((ROOT/"data/translation-geodesy.json").read_text(encoding="utf-8"))
         cls.records = curated_records(d,t)
-        cls.curated = Index(cls.records)
+        cls.curated = Index(cls.records, prefer_coverage=True)
         raw = (f"// Family #42 · element #43 · 2 places in 1 repositories · "
                f"https://github.com/Ventusltd/testcode/blob/{'a'*40}/math.js#L1-L3\n"
                "export const f42_distance = function distance(a,b){return a-b;};\n").encode()
@@ -43,6 +43,8 @@ class TestSemanticRetrieval(unittest.TestCase):
     def test_composition(self):
         r = self.curated.query("distance and bearing between two points")["results"][0]
         self.assertEqual(r["word"],"ORIENT")
+        self.assertIn("distance", r["matched_terms"])
+        self.assertIn("bearing", r["matched_terms"])
         self.assertEqual(len(r["components"]),2)
         self.assertIsNone(r["source"])
 
