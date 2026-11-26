@@ -11,5 +11,21 @@
 <button id="calculate" disabled>Calculate</button></form>
 <output id="result" aria-live="polite">Loading verified package…</output>
 <small id="evidence"></small><p><small>Internal development only. Independent package acceptance and redistribution clearance pending.</small></p>
+<section aria-labelledby="electrical-title"><h2 id="electrical-title">Electrical calculations</h2>
+<p>Unavailable — awaiting admitted package. Candidate inputs only. No calculation or automatic transfer of geodesic distance.</p>
+<form id="electrical" novalidate>
+<fieldset disabled><legend>AC RMS · lagging or unity power factor</legend>
+<label>Phase <select name="phases"><option value="three">Balanced three-phase</option><option value="single">Single-phase</option></select></label>
+<label>Current (A)<input name="currentA" type="number" value="100"></label>
+<label>One-way route length (m)<input name="lengthM" type="number" value="1000"></label>
+<label>Operating resistance per conductor (Ω/km)<input name="resistanceOhmPerKm" type="number" step="any" value="0.2"></label>
+<label>Reactance per conductor (Ω/km)<input name="reactanceOhmPerKm" type="number" step="any" value="0"></label>
+<label>Power factor (0–1, lagging/unity)<input name="powerFactor" type="number" step="any" value="1"></label>
+<label>Nominal supply voltage (V; line-to-line for three-phase, across supply for single-phase)<input name="nominalVolts" type="number" value="400"></label>
+<label>Loss load factor (not ordinary load factor)<input name="lossLoadFactor" type="number" step="any" value="0.5"></label>
+<label>Hours (h)<input name="hours" type="number" value="8760"></label>
+<button id="electrical-calculate" disabled>Calculate electrical — unavailable</button></fieldset>
+<output id="electrical-result" aria-live="polite">Unavailable: no admitted electrical package.</output></form></section>
+<section><h2>Other capabilities</h2><p>Nearest substation — unavailable pending admitted package.</p><p>Solar geometry — unavailable pending admitted package.</p></section>
 <p><a href="./catalogue.json">Capability catalogue (JSON)</a></p></main>
 <script type="module" src="./app.mjs"></script></html>

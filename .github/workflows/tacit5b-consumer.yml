@@ -40,16 +40,27 @@ jobs:
           unzip -p "$p/producer.zip" source-receipt/receipt.json > "$p/receipt.json"
           unzip -p "$p/producer.zip" source-receipt/v9-geodesy.mjs > "$p/module.mjs"
           curl -fsSL --retry 2 --max-time 60 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o "$p/LICENSE"
+          mkdir -p "$p/factory/tools" "$p/factory/packages/factory/admissions"
+          cp "$p/builder.py" "$p/prototype.py"
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/tools/package_factory.py?ref=050aa53d553eff6a7990fc0ed5f00623788babdd' > "$p/factory/tools/package_factory.py"
+          test "$(git hash-object "$p/factory/tools/package_factory.py")" = 9512aa3c6db77ea32d54619ed484119d3cb08d7d
+          gh api -H 'Accept: application/vnd.github.raw+json' 'repos/Ventusltd/vedic-/contents/packages/factory/admissions/orient.json?ref=050aa53d553eff6a7990fc0ed5f00623788babdd' > "$p/factory/packages/factory/admissions/orient.json"
+          test "$(git hash-object "$p/factory/packages/factory/admissions/orient.json")" = ba59702d4540126a9229f19e521207301afd6692
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15130218779/zip > "$p/factory-evidence.zip"
+          echo "c4d8de96f83e431ec1f678581b579a1de24524bb57f29ea019db755860607e2e  $p/factory-evidence.zip" | sha256sum -c -
       - name: Replay exact private package and verify browser consumer
         run: |
           set -euo pipefail
           p="$RUNNER_TEMP/tacit5b-input"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env PATH="$PATH" "$(command -v python)" "$p/builder.py" --module "$p/module.mjs" --receipt "$p/receipt.json" --licence "$p/LICENSE" --out "$p/package.zip"
           echo "ad4d0daa6cef5b30756184f44726b8a750e6a6d0eb31e2fea7fe6886a6b8669c  $p/package.zip" | sha256sum -c -
-          python tools/tacit5b_consumer.py --package "$p/package.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence"
+          python tools/tacit5b_consumer.py --package "$p/package.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence/legacy"
+          mkdir "$p/factory-out"
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$p/factory/tools/package_factory.py" build --descriptor "$p/factory/packages/factory/admissions/orient.json" --inputs "$p" --out "$p/factory-out/package.zip"
+          python tools/tacit5b_consumer.py --package "$p/factory-out/package.zip" --factory-evidence "$p/factory-evidence.zip" --app apps/orient --evidence "$RUNNER_TEMP/tacit5b-evidence/shared"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: tacit5b-consumer-evidence
-          path: ${{ runner.temp }}/tacit5b-evidence/*.json
+          path: ${{ runner.temp }}/tacit5b-evidence/**/*.json
           if-no-files-found: error
           retention-days: 30

@@ -26,3 +26,6 @@ try {
   result.textContent='Enter coordinates or calculate the synthetic example.';
   button.disabled=false;
 }catch(error){result.textContent='Package metadata unavailable: '+error.message;}
+
+// No admission means no executable electrical path, even on synthetic submit.
+document.querySelector('#electrical').addEventListener('submit',event=>{event.preventDefault();document.querySelector('#electrical-result').textContent='Unavailable: no admitted electrical package.';});

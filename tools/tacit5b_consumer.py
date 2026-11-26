@@ -11,6 +11,8 @@ import threading
 import zipfile
 
 PIN="ad4d0daa6cef5b30756184f44726b8a750e6a6d0eb31e2fea7fe6886a6b8669c"
+FACTORY_PIN="e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787"
+DESCRIPTOR_PIN="b45e61e955e0d0ddde15495f9be7c3fc4943c3193dd8f318a4249524f2fb5f53"
 MODULE="af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb"
 NAMES={"index.mjs","v9-geodesy.mjs","manifest.json","package.json","README.md","UPSTREAM-LICENSE","source-receipt.json"}
 def digest(data): return hashlib.sha256(data).hexdigest()
@@ -25,23 +27,44 @@ def zip_bytes(files):
             info.create_system=3; info.external_attr=0o100644<<16
             z.writestr(info,raw)
     return out.getvalue()
-def verified(raw):
-    require(digest(raw)==PIN,"package digest mismatch")
+def verified(raw, factory_evidence=None):
+    pin=digest(raw)
+    require(pin in (PIN,FACTORY_PIN),"package digest mismatch")
     with zipfile.ZipFile(io.BytesIO(raw)) as z:
         require(len(z.namelist())==len(NAMES) and set(z.namelist())==NAMES,"unexpected package entries")
         files={name:z.read(name) for name in NAMES}
     m=json.loads(files["manifest.json"])
-    require(m["files"]=={name:digest(data) for name,data in files.items() if name!="manifest.json"},"file digest mismatch")
-    require(m["public_exports"]==["orient"] and m["source_sha256"]==MODULE and digest(files["v9-geodesy.mjs"])==MODULE,"wrong export or source")
+    require(m["public_exports"]==["orient"] and digest(files["v9-geodesy.mjs"])==MODULE,"wrong export or source")
     require(m["redistribution"]=="BLOCKED" and m["independent_acceptance"] is False,"unexpected rights state")
-    return files,m
-def build(raw,app):
-    package,m=verified(raw)
-    catalogue={"schema":"vedic.consumer-catalogue.provisional.v1","packages":[{
-        **{k:m[k] for k in ("name","version","source","identity_tier","input","outputs","vedic_ids","runtime","redistribution","independent_acceptance")},
-        "package_sha256":PIN,"manifest_sha256":digest(package["manifest.json"]),
-        "development_build":"verified_exact_archive","browser_acceptance":"see separate exact-run receipt",
-        "release_approval":False,"public_readback":None}],"counts":{"exact_packages":1,"independently_accepted":0,"released":0}}
+    if pin==PIN:
+        require(factory_evidence is None,"wrong receipt edition")
+        require(m["files"]=={name:digest(data) for name,data in files.items() if name!="manifest.json"},"file digest mismatch")
+        require(m["source_sha256"]==MODULE,"wrong source")
+        entry={k:m[k] for k in ("name","version","source","identity_tier","input","outputs","vedic_ids","runtime")}
+    else:
+        require(factory_evidence is not None,"shared factory evidence required")
+        manifest,receipt=factory_evidence
+        require(manifest==files["manifest.json"],"factory evidence manifest mismatch")
+        r=json.loads(receipt);d=m["descriptor"]
+        canonical=(json.dumps(d,sort_keys=True,ensure_ascii=True,allow_nan=False,separators=(",",":"))+"\n").encode()
+        require(m["schema"]=="vedic.package-factory-manifest.v1" and d["schema"]=="vedic.package-descriptor.v1","factory schema")
+        require(digest(canonical)==m["descriptor_sha256"]==DESCRIPTOR_PIN==r["descriptor_sha256"],"descriptor pin")
+        require(r["schema"]=="vedic.package-build-receipt.v1" and r["archive_sha256"]==pin and r["archive_bytes"]==len(raw) and r["state"]=="DEVELOPMENT_CHECKS_PASS" and r["reproducible"] is True and r["redistribution"]=="BLOCKED" and r["independent_acceptance"] is False,"factory receipt")
+        require(r["input_pins"]==m["input_pins"] and m["file_count"]==r["file_count"]==len(files),"factory input pins/count")
+        require(len(m["files"])==len(files)-1 and {x["path"]:(x["sha256"],x["bytes"]) for x in m["files"]}=={k:(digest(v),len(v)) for k,v in files.items() if k!="manifest.json"},"factory file digests")
+        source=next(x for x in d["inputs"] if x["role"]=="module")
+        require(source["digest"]==MODULE and d["family"]=="orient" and d["version"]=="0.2.0","factory source/version")
+        entry={**{k:d[k] for k in ("name","version","identity_tier","runtime","candidate","licence")},"source":source,"input":d["ports"]["input"],"outputs":d["ports"]["output"],"descriptor_sha256":DESCRIPTOR_PIN,"build_receipt_sha256":digest(receipt)}
+    entry.update(package_sha256=pin,manifest_sha256=digest(files["manifest.json"]),development_build="verified_exact_archive",browser_acceptance="see separate exact-run receipt",independent_acceptance=False,redistribution="BLOCKED",release_approval=False,public_readback=None)
+    return files,entry
+def build(raw,app,factory_evidence=None):
+    package,entry=verified(raw,factory_evidence)
+    catalogue={"schema":"vedic.consumer-catalogue.v2","packages":[entry],"capabilities":[
+        {"family":"orient","state":"available_internal","package_sha256":entry["package_sha256"]},
+        {"family":"electrical","state":"unavailable","reason":"Awaiting shared-factory admission and exact archive receipt","candidate_contract":"53d893e877b2287dc45faec4db87e30f418c2b5e","package_sha256":None},
+        {"family":"nearest-substation","state":"unavailable","reason":"Awaiting admitted package"},
+        {"family":"solar-geometry","state":"unavailable","reason":"Awaiting admitted package"}],
+        "counts":{"exact_packages":1,"independently_accepted":0,"released":0}}
     files={"index.html":(app/"index.html").read_bytes(),"app.mjs":(app/"app.mjs").read_bytes(),"catalogue.json":encode(catalogue)}
     files.update({"package/"+k:v for k,v in package.items()})
     files["asset-manifest.json"]=encode({"schema":"vedic.consumer-assets.v1","files":{k:digest(v) for k,v in sorted(files.items())}})
@@ -76,6 +99,10 @@ def browser_checks(root,expected):
                     button=page.locator("#calculate"); result=page.locator("#result")
                     from playwright.sync_api import expect
                     expect(button).to_be_enabled()
+                    expect(page.locator("#electrical-calculate")).to_be_disabled()
+                    page.locator("#electrical").evaluate("(f)=>f.dispatchEvent(new Event('submit',{cancelable:true}))")
+                    expect(page.locator("#electrical-result")).to_have_text("Unavailable: no admitted electrical package.")
+                    expect(page.locator("#evidence")).to_contain_text(json.loads(expected["catalogue.json"])["packages"][0]["version"])
                     button.focus(); button.press("Enter")
                     expect(result).to_have_text("111.319490793 km\n90.000000° initial bearing",use_inner_text=True)
                     page.locator("#a-lon").fill("1");page.locator("#b-lon").fill("0")
@@ -94,7 +121,7 @@ def browser_checks(root,expected):
                     observed={k:digest(r.body()) for k,r in imports.items()}
                     require(observed=={k:digest(expected[k]) for k in imports},"served import hash mismatch")
                     require(not errors and not denied,f"errors={errors} external_requests={denied}")
-                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3})
+                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3,"electrical_refusal":True})
                     context.close()
                 browser.close()
     finally:
@@ -103,8 +130,20 @@ def browser_checks(root,expected):
 def main():
     p=argparse.ArgumentParser()
     p.add_argument("--package",type=Path,required=True);p.add_argument("--app",type=Path,required=True);p.add_argument("--evidence",type=Path,required=True)
-    a=p.parse_args();raw=a.package.read_bytes();files=build(raw,a.app);artifact=zip_bytes(files)
-    require(artifact==zip_bytes(build(raw,a.app)),"non-reproducible consumer")
+    p.add_argument("--factory-evidence",type=Path)
+    a=p.parse_args();raw=a.package.read_bytes()
+    evidence=None
+    if a.factory_evidence:
+        blob=a.factory_evidence.read_bytes()
+        require(digest(blob)=="c4d8de96f83e431ec1f678581b579a1de24524bb57f29ea019db755860607e2e","factory evidence ZIP digest")
+        with zipfile.ZipFile(io.BytesIO(blob)) as z:
+            evidence=tuple(z.read(name) for name in ("manifest.json","build-receipt.json"))
+        for bad in (None,(evidence[0]+b" ",evidence[1]),(evidence[0],b"{}")):
+            try: verified(raw,bad)
+            except (ValueError,KeyError): pass
+            else: raise AssertionError("bad factory receipt accepted")
+    files=build(raw,a.app,evidence);artifact=zip_bytes(files)
+    require(artifact==zip_bytes(build(raw,a.app,evidence)),"non-reproducible consumer")
     try: verified(raw+b"x")
     except ValueError: pass
     else: raise AssertionError("tampered package accepted")
@@ -121,7 +160,7 @@ def main():
     a.evidence.mkdir(parents=True,exist_ok=True)
     (a.evidence/"catalogue.json").write_bytes(files["catalogue.json"])
     (a.evidence/"asset-manifest.json").write_bytes(files["asset-manifest.json"])
-    receipt={"state":"BROWSER_DEVELOPMENT_PASS","package_sha256":PIN,"consumer_sha256":digest(artifact),"consumer_bytes":len(artifact),"reproducible":True,"browser_cases":cases,"independent_acceptance":False,"redistribution":"BLOCKED"}
+    receipt={"state":"BROWSER_DEVELOPMENT_PASS","package_sha256":digest(raw),"consumer_sha256":digest(artifact),"consumer_bytes":len(artifact),"reproducible":True,"browser_cases":cases,"independent_acceptance":False,"redistribution":"BLOCKED"}
     (a.evidence/"consumer-receipt.json").write_bytes(encode(receipt))
     print(json.dumps(receipt,sort_keys=True))
 if __name__=="__main__": main()
