@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from browser_smoke import main as browser_smoke
-from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, FIRST_PROSE_ROUTE, V1_ROUTE, V2_ROUTE, V3_ROUTE
+from stage_pages import stage, validate_publication, CATALOGUE, PUBLICATION, FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE, V1_ROUTE, V2_ROUTE, V3_ROUTE
 import argparse
 
 
@@ -16,12 +16,13 @@ def exercise_pagination(site):
     if len(entries) < 101:
         number = max(entry["number"] for entry in entries)
         template = next(entry for entry in entries if entry.get("source"))
-        for index in range(101 - len(entries)):
+        missing = 101 - len(entries)
+        for index in range(missing):
             entries.append({
                 **template,
                 "gg_id": f"UI-FIXTURE-{index + 1}",
                 "number": number + index + 1,
-                "word": f"Pagination fixture {index + 1}",
+                "word": ("<img src=/fixture-should-never-request>" if index == missing - 1 else f"Pagination fixture {index + 1}"),
                 "priority": number + index + 1,
             })
         dictionary.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
@@ -31,24 +32,27 @@ def exercise_pagination(site):
 
 def exercise_public(public):
     manifest = json.loads((public / "release.json").read_bytes())
-    assert validate_publication({name: (public / name).read_bytes() for name in (CATALOGUE, PUBLICATION)}) == manifest["prose_count"]
-    for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE):
-        assert not (public / route / CATALOGUE).exists()
-        assert not (public / route / PUBLICATION).exists()
-    prior = public / FIRST_PROSE_ROUTE
-    prior_manifest = json.loads((prior / "release.json").read_bytes())
-    assert validate_publication({name: (prior / name).read_bytes() for name in (CATALOGUE, PUBLICATION)}) == prior_manifest["prose_count"]
+    assert "prose_count" not in manifest
+    assert manifest["row_count"] == len(json.loads((public / "data/dictionary.json").read_bytes())["entries"])
+    for base in (public, *(public / r for r in (V1_ROUTE, V2_ROUTE, V3_ROUTE))):
+        assert not (base / CATALOGUE).exists()
+        assert not (base / PUBLICATION).exists()
+    prior, latest = (public / route for route in (FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE))
+    for archive, count in ((prior, 6), (latest, 8)):
+        assert validate_publication({name: (archive / name).read_bytes() for name in (CATALOGUE, PUBLICATION)}) == count
     prior_rows = json.loads((prior / CATALOGUE).read_bytes())["records"]
-    current_rows = json.loads((public / CATALOGUE).read_bytes())["records"]
-    assert current_rows[:len(prior_rows)] == prior_rows
+    archived_rows = json.loads((latest / CATALOGUE).read_bytes())["records"]
+    assert archived_rows[:len(prior_rows)] == prior_rows
     for base in (public, public / V3_ROUTE):
         html = (base / 'index.html').read_text(encoding='utf-8')
         assert 'id="package-evidence"' in html and 'Package download unavailable' in html
     for route in (V1_ROUTE, V2_ROUTE):
         assert 'id="package-evidence"' not in (public / route / 'index.html').read_text(encoding='utf-8')
-    assert (public / 'data/dictionary.json').read_bytes() == (public / V2_ROUTE / 'data/dictionary.json').read_bytes()
+    baseline = json.loads((latest / "data/dictionary.json").read_bytes())["entries"]
+    current = json.loads((public / "data/dictionary.json").read_bytes())["entries"]
+    assert current[:len(baseline)] == baseline
     browser_smoke(public, run_demos=False, offline=True)
-    for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE,FIRST_PROSE_ROUTE):
+    for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE,FIRST_PROSE_ROUTE,TELEPRINTER_PROSE_ROUTE):
         browser_smoke(public, run_demos=False, offline=True, base_path=route)
 
 def main():

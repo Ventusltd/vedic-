@@ -78,6 +78,9 @@ def main():
     source=git_bytes(allocation["candidate_receipt_commit"],"data/tacit15-v2-candidate-decisions.json")
     require(git_blob(prior)==allocation["prior_dictionary_blob"],"prior blob mismatch")
     require(git_blob(source)==allocation["candidate_receipt_blob"] and source==(ROOT/"data/tacit15-v2-candidate-decisions.json").read_bytes(),"candidate receipt changed")
-    print("Validated deterministic dictionary allocation:",verify_receipt(receipt,allocation,read("data/dictionary.json"),json.loads(prior),args.online))
+    released_v2 = json.loads(git_bytes("55ff568b378acff4adae02fb5c758b4f4f8c6bcd", "data/dictionary.json"))
+    current = read("data/dictionary.json")
+    require(current["entries"][:len(released_v2["entries"])] == released_v2["entries"], "edited V2 entries")
+    print("Validated historical V2 allocation:", verify_receipt(receipt, allocation, released_v2, json.loads(prior), args.online))
 if __name__=="__main__":
     main()

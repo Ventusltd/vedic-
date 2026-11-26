@@ -2,13 +2,13 @@
 import copy
 import json
 import unittest
-from validate_v2_allocation import read, allocate, verify_receipt
+from validate_v2_allocation import read, allocate, verify_receipt, git_bytes
 from validate_dictionary import verify_source_entries
 class V2Tests(unittest.TestCase):
     def setUp(self):
         self.r=read("data/tacit15-v2-candidate-decisions.json")
         self.a=read("data/tacit15-v2-allocation.json")
-        self.d=read("data/dictionary.json")
+        self.d=json.loads(git_bytes("55ff568b378acff4adae02fb5c758b4f4f8c6bcd", "data/dictionary.json"))
         self.old=copy.deepcopy(self.d)
         self.old["entries"]=self.old["entries"][:39]
         self.old["next_number"]=40

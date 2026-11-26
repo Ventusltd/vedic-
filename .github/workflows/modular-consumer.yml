@@ -21,12 +21,14 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
       - run: python -m unittest discover -s tools -p 'test_daily_intelligence.py' -v
-      - name: Daily bounded intelligence review
+      - name: Daily bounded command discovery
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py
       - name: Acquire and validate existing producer database (manual only)
@@ -35,7 +37,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python tools/modular_snapshot.py --output receipts/modular-snapshot.json
       - uses: actions/upload-artifact@v4
-        if: github.event_name != 'pull_request'
+        if: always() && github.event_name != 'pull_request'
         with:
           name: vedic-research-${{ github.run_id }}-${{ github.run_attempt }}
           path: receipts/*.json

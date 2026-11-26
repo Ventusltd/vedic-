@@ -57,6 +57,8 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         if offline:
                             page.route("**/*", lambda route: route.continue_()
                                        if route.request.url.startswith(url) else route.abort())
+                        requests = []
+                        page.on("request", lambda request: requests.append(request.url))
                         page.goto(url)
                         page.locator("#anatomy > summary").click()
                         page.get_by_text("9 recorded cartridges", exact=False).wait_for()
@@ -139,6 +141,16 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         if catalogue:
                             exercise_published(page, catalogue)
                             exercise_local(page, url)
+                        if not catalogue:
+                            assert not page.locator("#prose-library, #proseSearch, #proseImport").count()
+                            assert "CONTINUOUS ENGLISH LIBRARY" not in page.locator("body").inner_text()
+                            assert all("prose-catalogue.json" not in url for url in requests)
+                            last = entries[-1]
+                            page.locator("#dictSearch").fill(last["gg_id"])
+                            assert page.locator("#dictRows tr").count() == 1
+                            assert page.locator("#dictRows tr td").first.text_content() == last["word"]
+                            assert not page.locator("#dictRows img").count()
+                            assert all("fixture-should-never-request" not in url for url in requests)
                         assert not errors, errors
                         page.close()
                         passed += 1
