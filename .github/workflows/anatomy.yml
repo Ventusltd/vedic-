@@ -14,3 +14,4 @@ jobs:
           python-version: '3.12'
       - run: python -m unittest discover -s tools -p 'test_*.py' -v
       - run: python tools/validate_anatomy.py --online
+      - run: python tools/validate_translation.py --online
