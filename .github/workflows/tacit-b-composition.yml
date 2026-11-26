@@ -170,6 +170,19 @@ jobs:
           fi
           offline tacit-b/tools/tacit_b_electrical.py --factory "$PWD" --inputs "$RUNNER_TEMP/factory-electrical" --out "$e/tacit-b-electrical.json"
           sha256sum "$e/tacit-b-electrical.json"
+      - name: Join actual A typed bond manifest to B and C evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/tacit-a-bonds.zip"
+          e="$RUNNER_TEMP/factory-evidence"
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15138897783/zip > "$p"
+          echo "649209e8723af1efd4c73f85ebd90b524a2312907d8a5e24759c8bf72ad1f72a  $p" | sha256sum -c -
+          if test -f "$e/tacit-b-reviewed-intake.json"; then
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_bond_intake.py --factory "$PWD" --archive "$p" --ranking "$e/tacit-b-ranking.json" --review "$e/tacit-b-reviewed-intake.json" --electrical "$e/tacit-b-electrical.json" --out "$e/tacit-b-abc-bonds.json"
+            sha256sum "$e/tacit-b-abc-bonds.json"
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
