@@ -219,13 +219,13 @@ def main():
             result = {"state": "RESOLVED", "plan": plan, "plan_sha256": sha256(json_bytes(plan))}
     except Refusal as exc:
         result = {"schema": RECEIPT_SCHEMA, "state": "REFUSED", "reason": str(exc), **exc.details}
-        print(json_bytes(result).decode(), end="")
+        sys.stdout.buffer.write(json_bytes(result))
         return 2
     except OSError:
-        print(json_bytes({"schema": RECEIPT_SCHEMA, "state": "REFUSED",
-                          "reason": "EVIDENCE_IO_ERROR"}).decode(), end="")
+        sys.stdout.buffer.write(json_bytes({"schema": RECEIPT_SCHEMA, "state": "REFUSED",
+                                           "reason": "EVIDENCE_IO_ERROR"}))
         return 2
-    print(json_bytes(result).decode(), end="")
+    sys.stdout.buffer.write(json_bytes(result))
     return 0
 
 
