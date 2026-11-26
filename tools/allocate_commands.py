@@ -99,7 +99,11 @@ def main():
         from family_pulse import verify_extension
         queue = json.loads((ROOT / "data/daily-command-queue.json").read_bytes())
         published = json.loads(target.read_bytes())
-        verify_extension(current, published, queue)
+        from source_admissions import BASE as SOURCE_BASE, ARCHIVE, pinned, replay
+        historical = pinned(SOURCE_BASE, DICTIONARY)
+        verify_extension(current, historical, queue)
+        archive = json.loads((ROOT / ARCHIVE).read_bytes())
+        require(replay(historical, archive) == published, "exact source-admission replay mismatch")
         validate(published, translations, current)
         current = published
     print("Reviewed dictionary entries:", len(current["entries"]))
