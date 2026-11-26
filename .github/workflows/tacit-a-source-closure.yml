@@ -1,0 +1,52 @@
+name: TACIT A source and dependency candidate
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_*'
+      - '.github/workflows/tacit-a-source-closure.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire exact upstream evidence and parsers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_closure.py acquire --root "$RUNNER_TEMP/tacit-a"
+      - name: Parse pinned source without execution
+        run: |
+          set -euo pipefail
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0
+          R="$RUNNER_TEMP/tacit-a"
+          cp "$R/"*-parse.mjs .
+          node electrical-parse.mjs "$R/voltage-drop.js" "$R/electrical-parser.json"
+          node seed-parse.mjs "$R/v9-geodesy.js" > "$R/geodesy-parser.json"
+          node seed-parse.mjs "$R/v9-nearest-search.js" > "$R/nearest-parser.json"
+          node tools/tacit_a_nearest.mjs "$R/v9-nearest-search.js" > "$R/nearest-closure.json"
+      - name: Reconcile and reproduce candidate offline
+        run: |
+          set -euo pipefail
+          R="$RUNNER_TEMP/tacit-a"
+          mkdir evidence
+          for suffix in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_closure.py verify --root "$R" --out "evidence/$suffix.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/candidate.json
+          rm evidence/second.json
+          sha256sum evidence/candidate.json | tee evidence/candidate.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-candidate-closure
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 30
