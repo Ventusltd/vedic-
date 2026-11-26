@@ -281,12 +281,12 @@ def build(d, root, out):
     second, _=assemble(d,root)
     need(raw==archive(second),"NONREPRODUCIBLE")
     need(checks.get("state")=="PACKAGE_DEVELOPMENT_CHECKS_PASS","RUNTIME_CHECK")
+    node_version=subprocess.check_output(["node","--version"],text=True).strip()
     publish_local(out,raw)
     return {"schema":"vedic.package-build-receipt.v1","state":"DEVELOPMENT_CHECKS_PASS",
             "descriptor_sha256":sha(canonical(d)),"archive_sha256":sha(raw),
             "archive_bytes":len(raw),"file_count":len(payload),"reproducible":True,
-            "python":os.sys.version.split()[0],"node":subprocess.check_output(
-                ["node","--version"],text=True).strip(),
+            "python":os.sys.version.split()[0],"node":node_version,
             "input_pins":strict(payload["manifest.json"])["input_pins"],
             "consumer_checks":checks,"independent_acceptance":False,
             "redistribution":"BLOCKED","obligations":d["obligations"]}

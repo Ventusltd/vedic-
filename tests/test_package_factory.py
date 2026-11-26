@@ -1,4 +1,6 @@
 import copy
+import shutil
+import subprocess
 import io
 import json
 from pathlib import Path
@@ -110,6 +112,60 @@ class Contracts(unittest.TestCase):
             p=Path(t)/"candidate.zip";f.publish_local(p,b"first")
             with self.assertRaises(FileExistsError):f.publish_local(p,b"second")
             self.assertEqual(p.read_bytes(),b"first")
+
+REAL_INPUTS = None
+if "--real-inputs" in sys.argv:
+    i=sys.argv.index("--real-inputs")
+    REAL_INPUTS=Path(sys.argv[i+1])
+    del sys.argv[i:i+2]
+
+@unittest.skipUnless(REAL_INPUTS is not None,"requires actual pinned inputs")
+class RealInputControls(unittest.TestCase):
+    def setUp(self):
+        self.d=f.strict(f.ADMISSIONS["orient"].read_bytes())
+        self.tmp=tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root=Path(self.tmp.name)
+        for item in self.d["inputs"]:
+            shutil.copyfile(REAL_INPUTS/item["filename"],self.root/item["filename"])
+    def reject_changed(self, filename, role):
+        p=self.root/filename
+        p.write_bytes(p.read_bytes()+b"\n")
+        out=self.root/"bad.zip"
+        with self.assertRaisesRegex(f.Refusal,"INPUT_DIGEST:"+role):
+            f.build(self.d,self.root,out)
+        self.assertFalse(out.exists())
+    def test_changed_real_source(self):
+        self.reject_changed("module.mjs","module")
+    def test_changed_real_receipt(self):
+        self.reject_changed("receipt.json","receipt")
+    def test_changed_real_licence(self):
+        self.reject_changed("LICENSE","licence")
+    def test_changed_real_prototype(self):
+        self.reject_changed("prototype.py","prototype")
+    def test_missing_real_licence(self):
+        (self.root/"LICENSE").unlink()
+        with self.assertRaisesRegex(f.Refusal,"MISSING_OR_SYMLINK"):
+            f.build(self.d,self.root,self.root/"bad.zip")
+        self.assertFalse((self.root/"bad.zip").exists())
+    def test_missing_runtime_dependency_even_with_matching_manifest(self):
+        payload,script=f.assemble(self.d,self.root)
+        del payload["v9-geodesy.mjs"]
+        m=f.strict(payload["manifest.json"])
+        m["files"]=[r for r in m["files"] if r["path"]!="v9-geodesy.mjs"]
+        m["file_count"]-=1
+        payload["manifest.json"]=f.canonical(m)
+        raw=f.archive(payload)
+        f.verify(raw,payload)
+        with self.assertRaises(subprocess.CalledProcessError):
+            f.run_consumer(self.d,raw,payload,script)
+    def test_archive_traversal_on_read(self):
+        payload,_=f.assemble(self.d,self.root)
+        buf=io.BytesIO(f.archive(payload))
+        with zipfile.ZipFile(buf,"a") as z:
+            z.writestr("../escape",b"bad")
+        with self.assertRaisesRegex(f.Refusal,"UNSAFE_PATH"):
+            f.verify(buf.getvalue(),payload)
 
 if __name__=="__main__":
     unittest.main()

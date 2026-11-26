@@ -50,7 +50,7 @@ jobs:
           offline () {
             sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
           }
-          offline tests/test_package_factory.py -v 2>&1 | tee "$e/contract-tests.txt"
+          offline tests/test_package_factory.py --real-inputs "$p" -v 2>&1 | tee "$e/contract-tests.txt"
           offline tools/package_factory.py validate --descriptor packages/factory/admissions/orient.json
           mkdir "$p/first"
           offline tools/package_factory.py build --descriptor packages/factory/admissions/orient.json --inputs "$p" --out "$p/first/package.zip" | tee "$e/build-receipt.json"
