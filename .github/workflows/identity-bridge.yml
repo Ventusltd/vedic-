@@ -1,0 +1,122 @@
+name: TACIT 10 identity bridge
+on:
+  pull_request:
+    paths:
+      - 'tools/identity_bridge.py'
+      - 'tools/test_identity_bridge.py'
+      - '.github/workflows/identity-bridge.yml'
+      - 'data/dictionary.json'
+      - 'data/translation-geodesy.json'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p test_identity_bridge.py -v
+      - name: Resolve real Modular Star snapshot; emit Kuiper replay requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PYTHONPATH=tools python - <<'PY'
+          import json
+          import tempfile
+          from pathlib import Path
+          from modular_snapshot import metadata, unpack_snapshot, gh, PRODUCER, TAG, ASSET
+          from identity_bridge import resolve
+          with tempfile.TemporaryDirectory() as tmp:
+              p=Path(tmp)
+              before=metadata()
+              gh("release","download",TAG,"--repo",PRODUCER,"--pattern",ASSET,"--dir",str(p))
+              after=metadata()
+              db=p/"modular.sqlite"
+              hashes=unpack_snapshot(p/ASSET,db,before,after)
+              result=resolve(json.loads(Path("data/dictionary.json").read_text()),
+                  json.loads(Path("data/translation-geodesy.json").read_text()),
+                  db,hashes["database_sha256"])
+              result["producer_metadata"]=before
+              result["snapshot"]=hashes
+              Path("identity-bridge.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+              Path("kuiper-requests.json").write_text(json.dumps(result["kuiper_requests"],indent=2)+"\n")
+              print(json.dumps({k:v for k,v in result.items() if k not in ("entries","kuiper_requests")},indent=2))
+          PY
+      - name: Replay exact Kuiper addresses with existing pinned producer
+        run: |
+          PYTHONPATH=tools python - <<'PY'
+          import json, subprocess, tempfile
+          from pathlib import Path
+          from identity_bridge import kuiper_join, git_blob, sha
+          from validate_translation import fetch
+          from urllib.parse import quote
+          KUIPER="eec3f1891294af9e93ce6613c10cdf71806802f2"
+          report=json.loads(Path("identity-bridge.json").read_text())
+          req=json.loads(Path("kuiper-requests.json").read_text())
+          def git(*args):
+              subprocess.run(["git", *map(str,args)],check=True,timeout=600)
+          with tempfile.TemporaryDirectory() as tmp:
+              roots=Path(tmp)
+              producer=roots/"producer"
+              git("init",producer)
+              git("-C",producer,"remote","add","origin","https://github.com/Ventusltd/kuiper-belt.git")
+              git("-C",producer,"fetch","--depth=1","origin",KUIPER)
+              git("-C",producer,"checkout","--detach",KUIPER)
+              for repo,commit in sorted({(r["repo"],r["commit"]) for r in req}):
+                  dest=roots/repo
+                  if not dest.exists():
+                      git("init",dest)
+                      git("-C",dest,"remote","add","origin","https://github.com/Ventusltd/"+repo+".git")
+                  git("-C",dest,"fetch","--depth=1","origin",commit)
+              subprocess.run(["python",str(producer/"tools/edition_keys.py"),"--bodies","kuiper-requests.json",
+                              "--roots",str(roots),"--out","kuiper-producer.json"],check=True,timeout=600)
+              wafer_sha=sha((producer/"cosmos/wafer.tsv").read_bytes())
+          raw=Path("kuiper-producer.json").read_bytes()
+          receipt=json.loads(raw)
+          report["kuiper_producer_commit"]=KUIPER
+          report["kuiper_receipt_sha256"]=sha(raw)
+          report["kuiper_wafer_sha256"]=wafer_sha
+          for e in report["entries"]:
+              if "source" in e:
+                  e["kuiper"]=kuiper_join(e["source"],receipt)
+          report["receipt_matches"]=sum(e.get("kuiper",{}).get("key") is not None for e in report["entries"])
+          Path("identity-bridge.json").write_text(json.dumps(report,indent=2,sort_keys=True)+"\n")
+          print("Kuiper receipt matches:",report["receipt_matches"],"/",len(req))
+          assert len(req)>0 and report["receipt_matches"]==len(req),"unresolved Kuiper requests"
+          # Independently retrieve the original module, not the compiled library or a rewritten formula.
+          orient=[]
+          for e in report["entries"]:
+              if e["gg_id"] not in ("GG2050-VEDIC-000001","GG2050-VEDIC-000005"):
+                  continue
+              s=e["source"]
+              b=fetch(s["repo"],s["commit"],s["path"])
+              assert git_blob(b)==s["blob"],"source blob mismatch"
+              parts=b.split(b"\n")
+              lines=[p+b"\n" for p in parts[:-1]]+([parts[-1]] if parts[-1] else [])
+              assert s["last"]<=len(lines)
+              span=sha(b"".join(lines[s["first"]-1:s["last"]]))
+              indexed=e["stars"].get("span_sha256")
+              assert indexed is None or indexed==span,"Stars span differs from Git"
+              entry=dict(e,git_span_sha256=span,git_blob_verified=True,
+                  source_url="https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"])+"#L"+str(s["first"])+"-L"+str(s["last"]))
+              orient.append(entry)
+              print("ORIENT identity:",json.dumps(entry,sort_keys=True))
+          assert len(orient)==2
+          Path("orient-identity.json").write_text(json.dumps({"composition":"GG2050-VEDIC-000006",
+              "components":orient,"kuiper_producer_commit":KUIPER,"kuiper_receipt_sha256":sha(raw),
+              "snapshot_sha256":report["snapshot_sha256"],"kuiper_wafer_sha256":wafer_sha,"runtime_verified":False},indent=2,sort_keys=True)+"\n")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: identity-bridge
+          path: |
+            identity-bridge.json
+            kuiper-requests.json
+            kuiper-producer.json
+            orient-identity.json
+          if-no-files-found: error
+          retention-days: 30
