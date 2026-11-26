@@ -1,0 +1,104 @@
+[
+  {
+    "family": "orient",
+    "source": {
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/v9-geodesy.js",
+      "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+      "sha256": "af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb"
+    },
+    "selected_exports": [
+      "distanceKm",
+      "initialBearingDeg"
+    ],
+    "descriptor": {
+      "commit": "050aa53d553eff6a7990fc0ed5f00623788babdd",
+      "path": "packages/factory/admissions/orient.json",
+      "blob": "ba59702d4540126a9229f19e521207301afd6692"
+    },
+    "test": {
+      "run": 45846057823,
+      "job": 139999905383,
+      "head": "050aa53d553eff6a7990fc0ed5f00623788babdd"
+    },
+    "runtime_state": "INTERNAL_FACTORY_BUILT"
+  },
+  {
+    "family": "electrical",
+    "source": {
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/voltage-drop.js",
+      "blob": "85f48ecf7effabb47973b0a056f90e82b8196ef2",
+      "sha256": "8c3d99ca10b0d02722b54c6da21ebf1acb77936fe440cbd413b457266a994287"
+    },
+    "selected_exports": [
+      "voltageDropVolts",
+      "dropPercent",
+      "lossesWatts",
+      "annualLossKwh"
+    ],
+    "descriptor": {
+      "commit": "9439ccccc3c99e02a13494810c3fe05d2b5eceeb",
+      "path": "packages/electrical/proposed-descriptor.json",
+      "blob": "03d3ce31edda74f903f3d23a4ed7a57019fbaeaf"
+    },
+    "test": {
+      "run": 45847748321,
+      "job": 140005726426,
+      "head": "9439ccccc3c99e02a13494810c3fe05d2b5eceeb"
+    },
+    "runtime_state": "PRE_ADMISSION"
+  },
+  {
+    "family": "nearest",
+    "source": {
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/v9-nearest-search.js",
+      "blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+      "sha256": null
+    },
+    "selected_exports": [
+      "index",
+      "normalise"
+    ],
+    "descriptor": {
+      "commit": "54ff2c0a057a77616037de1ef25fa41bd6218ef8",
+      "path": "packages/nearest-candidate/factory-proposal.json",
+      "blob": "3c5dda175a100837e0c320a829dec07ea488f13d"
+    },
+    "test": {
+      "run": 45847802153,
+      "job": 140005914989,
+      "head": "54ff2c0a057a77616037de1ef25fa41bd6218ef8"
+    },
+    "runtime_state": "PRE_ADMISSION"
+  },
+  {
+    "family": "solar",
+    "source": {
+      "repo": "Ventusltd/globalgrid2050",
+      "commit": "2f4b7cb82ee154fa3c684cba634d45f2183c6e7d",
+      "path": "energy-transition-simulator/202609282123/mod/engine/structures.mjs",
+      "blob": "52619f60fea35e05d7634d760b7c19b6712f9b97",
+      "sha256": "1712c5a131e857f0a2747a7ed82f95d1a9fab04e9cf5602fe260443b2be2a13d"
+    },
+    "selected_exports": [
+      "tableShape",
+      "formatRefusal"
+    ],
+    "descriptor": {
+      "commit": "e6d32f8889183101a7dc5503989b1df808cb727a",
+      "path": "tools/tacit4b/descriptor.json",
+      "blob": "89707d762eb55bbc57ff6fe77a3fa18a649bce9e"
+    },
+    "test": {
+      "run": 45847783485,
+      "job": 140005852042,
+      "head": "e6d32f8889183101a7dc5503989b1df808cb727a"
+    },
+    "runtime_state": "PRE_ADMISSION"
+  }
+]
