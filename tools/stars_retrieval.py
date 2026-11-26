@@ -98,14 +98,14 @@ class Index:
                     norm = 1.2*(0.25+0.75*self.lengths[v][i]/self.averages[v])
                     scores[i][v] += weight * idf * tf * 2.2 / (tf+norm)
                     matched[i].add(t)
-        ranked = sorted(scores, key=lambda i: (-sum(scores[i].values()), self.records[i]["family_id"]))
+        ranked = sorted(scores, key=lambda i: (-sum(scores[i].values()), self.records[i].get("gg_id", self.records[i].get("family_id"))))
         rows = []
         for i in ranked[:limit]:
             r = self.records[i]
             rows.append({k: v for k,v in r.items() if k != "features"} |
                         {"score": sum(scores[i].values()), "score_by_view": dict(scores[i]),
                          "matched_terms": sorted(matched[i]),
-                         "source_state": "PRODUCER_DECLARED_ORIGINAL_SOURCE_NOT_REPLAYED"})
+                         "source_state": r.get("source_state", "PRODUCER_DECLARED_ORIGINAL_SOURCE_NOT_REPLAYED")})
         # Deliberately conservative: discovery may rank a candidate, never auto-select or execute.
         margin = (sum(scores[ranked[0]].values()) - sum(scores[ranked[1]].values())
                   if len(ranked) > 1 else None)
