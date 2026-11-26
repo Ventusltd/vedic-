@@ -26,13 +26,14 @@ def main():
                         errors = []
                         page.on("pageerror", lambda err: errors.append(str(err)))
                         page.goto(url)
+                        page.locator("#anatomy > summary").click()
                         page.get_by_text("9 recorded cartridges", exact=False).wait_for()
                         page.get_by_role("button", name="Find nearby grid infrastructure").click()
                         page.get_by_text("03 / VEDIC functional language", exact=True).wait_for()
                         page.get_by_text("04 / Source dependency diagram", exact=True).wait_for()
                         assert page.locator("#detail").get_by_text("Measure distance between two geographic points", exact=True).count() == 1
                         assert page.get_by_text("not loaded by the live Atlas", exact=False).count() == 1
-                        assert page.get_by_role("link", name="Spider-compatible graph JSON").count() == 1
+                        assert page.get_by_role("link", name="Static dependency graph JSON").count() == 1
                         page.locator("#search").fill("vicinity")
                         assert page.get_by_role("button", name="Explore Vicinity").count() == 1
                         assert page.get_by_role("button", name="Find nearby grid infrastructure").count() == 0
@@ -45,13 +46,15 @@ def main():
                         assert page.get_by_role("button", name="Find a place", exact=True).count() == 1
                         page.locator("#dictRows tr").first.wait_for()
                         assert page.locator("#dictRows tr").count() == 6
+                        assert page.locator("#dictPage").inner_text() == "Page 1 / 1"
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "BEARING"
                         page.locator("#dictSort").select_option("number")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
                         page.locator("#dictSearch").fill("ORIENT")
                         assert page.locator("#dictRows tr").count() == 1
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
-                        page.locator("#dictSearch").fill("")
+                        page.get_by_role("button",name="CLEAR FILTERS").click()
+                        assert page.locator("#dictRows tr").count() == 6
                         links = page.locator('#dictRows a[href^="./demo.html?id="]').evaluate_all("(els) => els.map(e => e.href)")
                         assert len(links) == 6 and len(set(links)) == 6
                         for demo_url in links:
