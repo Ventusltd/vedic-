@@ -26,9 +26,9 @@ jobs:
         run: |
           if [ -n "$BASE_SHA" ] && git cat-file -e "$BASE_SHA:data/dictionary.json" 2>/dev/null; then
             git show "$BASE_SHA:data/dictionary.json" > "$RUNNER_TEMP/vedic-prior.json"
-            python tools/validate_dictionary.py --prior "$RUNNER_TEMP/vedic-prior.json"
+            python tools/validate_dictionary.py --online --prior "$RUNNER_TEMP/vedic-prior.json"
           else
-            python tools/validate_dictionary.py
+            python tools/validate_dictionary.py --online
           fi
       - run: python tools/stage_demo.py
       - run: python -m pip install playwright==1.56.0
