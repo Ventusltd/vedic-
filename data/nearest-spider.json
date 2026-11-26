@@ -78,7 +78,8 @@
         "first": 29,
         "last": 47
       },
-      "block_candidate": "Vg"
+      "block_candidate": "Vg",
+      "catalogue_ref": "geodesy:distanceKm"
     }
   ],
   "edges": [
