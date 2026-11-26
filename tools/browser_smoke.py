@@ -85,7 +85,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         if ordering != "word":
                             assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == min(entries, key=lambda e: (e.get("priority", 9), e["number"]))["word"]
                         else:
-                            first_label = min((e["word"] for e in entries), key=lambda label: label.replace("<", "").casefold())
+                            first_label = page.evaluate("words => words.sort((a, b) => a.localeCompare(b))[0]", [entry["word"] for entry in entries])
                             assert page.locator("#dictRows tr td").first.inner_text() == first_label
                         page.locator("#dictSort").select_option("number")
                         assert page.locator("#dictRows tr").first.locator("td").first.inner_text() == "MEASURE"
