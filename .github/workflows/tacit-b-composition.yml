@@ -36,6 +36,11 @@ jobs:
           ref: 9330897d89214602077806a3915054b4afc301c5
           path: tacit-b-semantic
           persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: c4d6d309940d131d2a1ae6181701086aa7221839
+          path: tacit-b-a1-t17
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -231,6 +236,24 @@ jobs:
           done
           cmp "$e/tacit-b1-convergence.json" "$RUNNER_TEMP/tacit-b1-convergence-repeat.json"
           sha256sum "$e/tacit-b1-convergence.json"
+      - name: Acquire exact A1 semantic resolver inputs
+        run: |
+          set -euo pipefail
+          mkdir "$RUNNER_TEMP/vedic-t17"
+          cp "$RUNNER_TEMP/tacit-a-bonds.zip" "$RUNNER_TEMP/vedic-t17/bonds.zip"
+          python -B tacit-b-a1-t17/tools/tacit_a1_semantics.py acquire --root "$RUNNER_TEMP/vedic-t17"
+      - name: B1 actual instruction to compound factory execution (twice offline)
+        run: |
+          set -euo pipefail
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" -B "$@"
+          }
+          for out in "$e/tacit-b1-compound.json" "$RUNNER_TEMP/tacit-b1-compound-repeat.json"; do
+            offline tacit-b/tools/tacit_b_compound_test.py --factory "$PWD" --d "$PWD/tacit-b-kuiper" --bonds "$RUNNER_TEMP/tacit-a-bonds.zip" --nearest "$PWD/tacit-b-nearest" --nsources "$RUNNER_TEMP/nearest-source" --esources "$RUNNER_TEMP/factory-electrical" --archive "$RUNNER_TEMP/factory-input/second/package.zip" --build "$e/build-receipt.json" --a1 "$PWD/tacit-b-a1-t17" --semantic-root "$RUNNER_TEMP/vedic-t17" --prior "$e/tacit-b1-convergence.json" --out "$out"
+          done
+          cmp "$e/tacit-b1-compound.json" "$RUNNER_TEMP/tacit-b1-compound-repeat.json"
+          sha256sum "$e/tacit-b1-compound.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
