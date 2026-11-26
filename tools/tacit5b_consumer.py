@@ -89,6 +89,20 @@ def server_for(root,activation=None,port=0):
             raw=encode(body)
             self.send_response(200);self.send_header("Content-Type","application/json");self.send_header("Content-Length",str(len(raw)));self.end_headers();self.wfile.write(raw)
     return http.server.ThreadingHTTPServer(("127.0.0.1",port),partial(Handler,directory=str(root)))
+def assert_layout(page,stage):
+    metrics=page.evaluate("""() => {
+        const width=innerWidth, doc=document.documentElement;
+        return {width,scrollWidth:doc.scrollWidth,bodyWidth:document.body.scrollWidth,
+          offenders:[...document.querySelectorAll('body *')].map(e=>{
+            const r=e.getBoundingClientRect();
+            return {tag:e.tagName,id:e.id,left:Math.round(r.left),right:Math.round(r.right),scroll:e.scrollWidth,client:e.clientWidth};
+          }).filter(r=>r.right>width+1||r.left< -1).slice(0,12)};
+    }""")
+    require(page.evaluate("document.documentElement.scrollWidth <= innerWidth"),
+            f"horizontal overflow at {stage}: {json.dumps(metrics,sort_keys=True)}")
+    require(metrics["bodyWidth"]<=metrics["width"],f"body overflow at {stage}: {metrics}")
+    return {"stage":stage,"viewport_width":metrics["width"],"document_width":metrics["scrollWidth"]}
+
 def browser_checks(root,expected,activation=None):
     from playwright.sync_api import sync_playwright
     server=server_for(root,activation)
@@ -116,6 +130,7 @@ def browser_checks(root,expected,activation=None):
                     button=page.locator("#calculate"); result=page.locator("#result")
                     from playwright.sync_api import expect
                     expect(button).to_be_enabled()
+                    layout=[assert_layout(page,'initial')]
                     expect(page.locator("#electrical-calculate")).to_be_disabled()
                     page.locator("#electrical").evaluate("(f)=>f.dispatchEvent(new Event('submit',{cancelable:true}))")
                     expect(page.locator("#electrical-result")).to_have_text("Unavailable: no admitted electrical package.")
@@ -140,16 +155,19 @@ def browser_checks(root,expected,activation=None):
                         expect(page.locator("#activation-state")).to_contain_text("270.000000°")
                         expect(page.locator("#activation-evidence")).to_contain_text("86415575118")
                         expect(page.locator("#activation-evidence")).to_contain_text("86415575222")
+                        layout.append(assert_layout(page,"populated source evidence"))
                         page.locator("#b-lon").fill("-1")
                         expect(page.locator("#activation-state")).to_have_text("Inputs changed. Activate again.")
                         page.locator("#activate").click()
                         expect(page.locator("#activation-state")).to_contain_text("222.638981587 km")
+                        layout.append(assert_layout(page,"changed input result"))
                         page.locator("#kuiper-key").fill("86415575118")
                         page.locator("#activate").click()
                         expect(page.locator("#activation-state")).to_contain_text("EXECUTED_INTERNAL")
                         page.locator("#kuiper-key").fill("999")
                         page.locator("#activate").click()
                         expect(page.locator("#activation-state")).to_contain_text("UNKNOWN_KUIPER_KEY")
+                        layout.append(assert_layout(page,"unknown key refusal"))
                         page.locator("#kuiper-key").fill("")
                         page.locator("#instruction").fill("Find the nearest candidate substation at or above 132 kV, then calculate geographical distance and initial bearing")
                         page.locator("#activate").click()
@@ -157,12 +175,12 @@ def browser_checks(root,expected,activation=None):
                         expect(page.locator("#activation-state")).not_to_contain_text(" km")
                         bad=page.evaluate("""async()=>await (await fetch('/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({instruction:'Calculate the distance and initial bearing between two points',key:'',inputs:{crs:'WGS84',unit:'radians',point_a:{longitude:0,latitude:0},point_b:{longitude:1,latitude:0}}})})).json()""")
                         require(bad["state"]=="REFUSED" and "unit" in bad["reason"],"incompatible units accepted")
-                    require(page.evaluate("document.documentElement.scrollWidth <= innerWidth"),"horizontal overflow")
+                    layout.append(assert_layout(page,"final state"))
                     require(set(imports)=={"package/index.mjs","package/v9-geodesy.mjs"},"missing actual module request")
                     observed={k:digest(r.body()) for k,r in imports.items()}
                     require(observed=={k:digest(expected[k]) for k in imports},"served import hash mismatch")
                     require(not errors and not denied,f"errors={errors} external_requests={denied}")
-                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3,"electrical_refusal":True,"semantic_activation_tested":activation is not None})
+                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3,"electrical_refusal":True,"semantic_activation_tested":activation is not None,"layout_checks":layout})
                     context.close()
                 browser.close()
     finally:

@@ -3,6 +3,14 @@
 <title>VEDIC | Distance and bearing</title><link rel="icon" href="data:,">
 <style>
 *{box-sizing:border-box}body{background:#10151d;color:#eef4fa;font:16px system-ui;margin:0 auto;max-width:680px;padding:20px}fieldset{border:1px solid #64748b;border-radius:8px;margin:12px 0;padding:12px;min-width:0}label{display:block;margin:8px 0}input,button{font:inherit;min-height:44px;width:100%;padding:10px;border-radius:6px;border:1px solid #64748b}input{background:#192331;color:white}button{background:#a5f3fc;color:#10202a;font-weight:bold}output{display:block;margin:16px 0;font-size:1.2rem;white-space:pre-line}small{display:block;overflow-wrap:anywhere;color:#cbd5e1}a{color:#a5f3fc}:focus-visible{outline:3px solid #fbbf24}
+/* Contain intrinsic widths without hiding content or suppressing overflow. */
+body{width:100%;overflow-wrap:anywhere}
+main,section,form,fieldset,label,output,pre{min-width:0;max-width:100%}
+legend{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+input,button,select{min-width:0;max-width:100%;width:100%}
+button,output{white-space:normal;overflow-wrap:anywhere}
+output{white-space:pre-line}
+#activation-evidence{display:block;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;max-width:100%;min-width:0}
 </style>
 <main><h1>Distance and bearing</h1><p>WGS84 coordinates in degrees. Spherical straight-line distance, not a road or cable route.</p>
 <form id="coords" novalidate>
