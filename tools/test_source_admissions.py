@@ -13,7 +13,7 @@ from source_admissions import (
     BASE, POLICY, SCHEMA, make_policy_receipt, prepare, replay, stage_proposal,
     verify_policy_candidate, verify_policy_receipt,
 )
-from source_evidence import source_link, verify_exact_span
+from source_evidence import source_link, verify_exact_span, verify_lightning_initializer
 
 MANIFEST = "a" * 40
 TIME = "2026-11-26T00:00:00Z"
@@ -181,3 +181,21 @@ class SourceBoundaryTests(unittest.TestCase):
                             (JAVASCRIPT.replace(b"'}'", b"/}/"), "lexical construct")):
             with self.assertRaisesRegex(ValueError, error):
                 verify_exact_span(source(body, "engine/test.js", last=6), "firstCommand", body)
+
+    @unittest.skipUnless(which("node"), "JavaScript syntax checking requires Node")
+    def test_reviewed_initializer_requires_complete_unique_assignment(self):
+        sample = (
+            b"(() => {\n"
+            b"  const label = `Lightning`;\n"
+            b"  window.initVentusMap = function addPublicLightningLayer(options) {\n"
+            b"    return originalInit.call(this, options);\n"
+            b"  };\n"
+            b"})();\n"
+        )
+        verify_lightning_initializer(sample, 3, 5)
+        with self.assertRaisesRegex(ValueError, "unclosed"):
+            verify_lightning_initializer(sample, 3, 4)
+        with self.assertRaisesRegex(ValueError, "complete assignment"):
+            verify_lightning_initializer(sample, 3, 6)
+        with self.assertRaisesRegex(ValueError, "reviewed assignment"):
+            verify_lightning_initializer(sample + sample, 3, 5)

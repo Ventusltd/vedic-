@@ -10,6 +10,19 @@ MAX_SOURCE_BYTES = 1_000_000
 POLICY = "vedic.static-source.v1"
 POLICY_SCHEMA = "vedic.static-policy-receipt.v1"
 POLICY_STATE = "STATIC_POLICY_REPRODUCED"
+LIGHTNING_LAYER_SOURCE = {
+    "repo": "Ventusltd/gridatlas",
+    "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+    "blob": "9268a1c4aeac981dea019e3ec63ad8e8384ae227",
+    "path": "atlas/cartridges/202610221600-sld-sandbox-v9-8.js",
+    "first": 8680,
+    "last": 8698,
+}
+LIGHTNING_LAYER_SYMBOL = "addPublicLightningLayer"
+LIGHTNING_INITIALIZER = re.compile(
+    r"^[ \t]*window\.initVentusMap[ \t]*=[ \t]*function[ \t]+"
+    + LIGHTNING_LAYER_SYMBOL + r"[ \t]*(?=\()", re.MULTILINE
+)
 JS_FUNCTION = re.compile(
     r"^[ \t]*(?:export[ \t]+)?(?:async[ \t]+)?function[ \t]+"
     r"([A-Za-z_$][A-Za-z0-9_$]*)[ \t]*(?=\()", re.MULTILINE
@@ -65,12 +78,8 @@ def matching_delimiter(text, start, opening, closing):
     raise ValueError("unclosed JavaScript function delimiter")
 
 
-def javascript_spans(raw, symbol):
+def verify_javascript_syntax(raw):
     try:
-        text = raw.decode("utf-8").replace("\r\n", "\n")
-        if any(separator in text for separator in ("\r", "\u2028", "\u2029")):
-            raise ValueError("unsupported JavaScript line endings")
-        masked = JS_NON_CODE.sub(mask_javascript, text)
         syntax = subprocess.run(
             ["node", "--check", "--input-type=module"], input=raw,
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10,
@@ -79,6 +88,37 @@ def javascript_spans(raw, symbol):
         raise ValueError("JavaScript syntax verifier unavailable") from error
     if syntax.returncode != 0:
         raise ValueError("invalid JavaScript source")
+
+
+def javascript_text(raw):
+    text = raw.decode("utf-8").replace("\r\n", "\n")
+    if any(separator in text for separator in ("\r", "\u2028", "\u2029")):
+        raise ValueError("unsupported JavaScript line endings")
+    return text
+
+
+def verify_lightning_initializer(raw, first, last):
+    """Check the complete assignment in the independently reviewed cartridge."""
+    text = javascript_text(raw)
+    matches = list(LIGHTNING_INITIALIZER.finditer(text))
+    if len(matches) != 1 or text.count("\n", 0, matches[0].start()) + 1 != first:
+        raise ValueError("lightning initializer differs from the reviewed assignment")
+    snippet = "\n".join(text.split("\n")[first - 1:last])
+    masked = JS_NON_CODE.sub(mask_javascript, snippet)
+    match = LIGHTNING_INITIALIZER.match(masked)
+    params_end = matching_delimiter(masked, match.end(), "(", ")")
+    body = re.match(r"\s*\{", masked[params_end + 1:])
+    if not body:
+        raise ValueError("lightning initializer has no function body")
+    close = matching_delimiter(masked, params_end + body.end(), "{", "}")
+    if masked[close + 1:].strip() != ";" or masked.count("\n", 0, close) + first != last:
+        raise ValueError("lightning initializer span must end at the complete assignment")
+    verify_javascript_syntax(raw)
+
+
+def javascript_spans(raw, symbol):
+    masked = JS_NON_CODE.sub(mask_javascript, javascript_text(raw))
+    verify_javascript_syntax(raw)
 
     spans = []
     for match in JS_FUNCTION.finditer(masked):
@@ -105,6 +145,9 @@ def javascript_spans(raw, symbol):
 
 def verify_exact_span(source, symbol, raw):
     verify_blob(source, raw)
+    if source == LIGHTNING_LAYER_SOURCE and symbol == LIGHTNING_LAYER_SYMBOL:
+        verify_lightning_initializer(raw, source["first"], source["last"])
+        return
     extension = PurePosixPath(source["path"]).suffix
     if extension == ".py":
         spans = python_spans(raw, symbol)

@@ -587,6 +587,37 @@
         "source_sha256": "5054564335d1ff5d6efcaabc56f56b9a004cf9cf20ae3248a247781eaad57482",
         "contract_sha256": "8ffb3dd4fe5386189984dfe915b2e2caf942f8bea8c378e8112d68f2ababc7db"
       }
+    },
+    {
+      "word": "REGISTER LIGHTNING MAP LAYER",
+      "purpose": "Add the archived GridAtlas satellite-flash point layer to the map configuration when it is absent.",
+      "inputs": [
+        "GridAtlas map initialization options with a layer-group configuration",
+        "original map initializer captured by the cartridge"
+      ],
+      "output": "The original initializer's result after adding the point-layer configuration if needed.",
+      "limits": "Source-only record for the archived cartridge. An existing layer is kept and the feed is registered without preload. The layer describes optical satellite flashes.",
+      "symbol": "addPublicLightningLayer",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "blob": "9268a1c4aeac981dea019e3ec63ad8e8384ae227",
+        "path": "atlas/cartridges/202610221600-sld-sandbox-v9-8.js",
+        "first": 8680,
+        "last": 8698
+      },
+      "estate_group": "GridAtlas",
+      "discipline": "Geospatial visualisation",
+      "periodic_category": "map layers",
+      "vedic_class_candidate": "Computation",
+      "aliases": [],
+      "receipt": "https://github.com/Ventusltd/gridatlas/blob/afffa9781f6130529ae93052604cd3d98d172a35/atlas/cartridges/202610221600-sld-sandbox-v9-8.js#L8680-L8698",
+      "policy_receipt": {
+        "schema": "vedic.static-policy-receipt.v1",
+        "policy": "vedic.static-source.v1",
+        "source_sha256": "fd97b7c8dd8dedc23d29540c80203c6087265abd7ba9c1a1ffc5a47349faec7c",
+        "contract_sha256": "3120c2738591d95ed0c9aa32072194df74c900d4957b2bc56657c3f5caf295a4"
+      }
     }
   ]
 }

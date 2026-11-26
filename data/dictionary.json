@@ -1,7 +1,7 @@
 {
   "schema": "vedic.dictionary.v1",
   "identity_reference": "https://github.com/Ventusltd/globalgrid2050/blob/b25a3387b31c7bb5a635bf029c47336bf834ecfb/automation/repd/build_v6.py",
-  "next_number": 93,
+  "next_number": 94,
   "entries": [
     {
       "number": 1,
@@ -4422,6 +4422,63 @@
         "policy": "vedic.static-source.v1",
         "source_sha256": "5054564335d1ff5d6efcaabc56f56b9a004cf9cf20ae3248a247781eaad57482",
         "contract_sha256": "8ffb3dd4fe5386189984dfe915b2e2caf942f8bea8c378e8112d68f2ababc7db"
+      }
+    },
+    {
+      "word": "REGISTER LIGHTNING MAP LAYER",
+      "purpose": "Add the archived GridAtlas satellite-flash point layer to the map configuration when it is absent.",
+      "limits": "Source-only record for the archived cartridge. An existing layer is kept and the feed is registered without preload. The layer describes optical satellite flashes.",
+      "inputs": [
+        "GridAtlas map initialization options with a layer-group configuration",
+        "original map initializer captured by the cartridge"
+      ],
+      "output": "The original initializer's result after adding the point-layer configuration if needed.",
+      "estate_group": "GridAtlas",
+      "discipline": "Geospatial visualisation",
+      "periodic_category": "map layers",
+      "vedic_class_candidate": "Computation",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "blob": "9268a1c4aeac981dea019e3ec63ad8e8384ae227",
+        "path": "atlas/cartridges/202610221600-sld-sandbox-v9-8.js",
+        "first": 8680,
+        "last": 8698
+      },
+      "receipt": "https://github.com/Ventusltd/gridatlas/blob/afffa9781f6130529ae93052604cd3d98d172a35/atlas/cartridges/202610221600-sld-sandbox-v9-8.js#L8680-L8698",
+      "number": 93,
+      "gg_id": "GG2050-VEDIC-000093",
+      "kind": "FUNCTION",
+      "translation_ref": "source-command:Ventusltd/gridatlas:addPublicLightningLayer",
+      "sense_key": "function:source-command:Ventusltd/gridatlas:addPublicLightningLayer",
+      "aliases": [],
+      "fixture_status": "Static source contract reproduced by policy; runtime not verified",
+      "demo": null,
+      "demo_unavailable_reason": "No independently admitted executable package.",
+      "state": "STATIC_POLICY_REPRODUCED",
+      "classification_state": "CURATED_CANDIDATE",
+      "periodic_block_candidate": "Unresolved",
+      "created_utc": "2026-11-26T23:03:43Z",
+      "creation_evidence": "https://github.com/Ventusltd/vedic-/commit/cfe1b4da283a358868d6afa79464cbfb3221420d",
+      "priority": 2,
+      "family_id": null,
+      "element_id": null,
+      "tablet_id": null,
+      "line_ids": null,
+      "proof": null,
+      "contract_fingerprint": "a49dc3076941cf4fe1e73f9fd2d88978f1a67f4545f30a890985e91d6d76d12e",
+      "admission_policy": "vedic.static-source.v1",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://github.com/Ventusltd/gridatlas/blob/afffa9781f6130529ae93052604cd3d98d172a35/atlas/cartridges/202610221600-sld-sandbox-v9-8.js#L8680-L8698",
+        "instructions": "Inspect the pinned source and input contract.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "policy_receipt": {
+        "schema": "vedic.static-policy-receipt.v1",
+        "policy": "vedic.static-source.v1",
+        "source_sha256": "fd97b7c8dd8dedc23d29540c80203c6087265abd7ba9c1a1ffc5a47349faec7c",
+        "contract_sha256": "3120c2738591d95ed0c9aa32072194df74c900d4957b2bc56657c3f5caf295a4"
       }
     }
   ],
