@@ -65,18 +65,27 @@ def inventory(database):
                 "translated_unique_lines": None, "active_application_unique_lines": None,
                 "scope": "Producer database inventory, including historical occurrences; not VEDIC translation coverage."}
 
+def download_snapshot(directory, require_digest=False):
+    before = metadata()
+    require(0 < before["size"] <= MAX_BYTES, "asset size outside bound")
+    if require_digest:
+        require(isinstance(before["digest"], str) and before["digest"].startswith("sha256:"),
+                "producer asset is missing its digest")
+    compressed = directory / ASSET
+    with compressed.open("xb") as stream:
+        subprocess.run(["gh", "api", f"repos/{PRODUCER}/releases/assets/{before['asset_id']}",
+                        "-H", "Accept: application/octet-stream"], stdout=stream, check=True, timeout=300)
+    database = directory / "modular.sqlite"
+    hashes = unpack_snapshot(compressed, database, before, metadata())
+    return database, before, hashes
+
+
 def acquire(output):
     output = output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
     require(not output.exists(), "refuse to overwrite existing receipt")
     with tempfile.TemporaryDirectory(prefix="vedic-stars-") as directory:
-        temp = Path(directory)
-        before = metadata()
-        require(0 < before["size"] <= MAX_BYTES, "asset size outside bound")
-        gh("release", "download", TAG, "--repo", PRODUCER, "--pattern", ASSET, "--dir", str(temp))
-        after = metadata()
-        database = temp / "modular.sqlite"
-        hashes = unpack_snapshot(temp / ASSET, database, before, after)
+        database, before, hashes = download_snapshot(Path(directory))
         report = {"schema": "vedic.modular-snapshot.v1", "producer": PRODUCER, "release_tag": TAG,
                   "asset": ASSET, "metadata": before, "snapshot": hashes,
                   "observed_utc": dt.datetime.now(dt.timezone.utc).isoformat(), **inventory(database)}

@@ -1,6 +1,7 @@
 """Compile the domain crib library and scan all unique indexed lines in ID order."""
 
 import argparse
+from contextlib import closing
 from collections import Counter
 from functools import lru_cache
 import hashlib
@@ -61,21 +62,12 @@ def source_contexts(database, groups, maximum_id):
     return masks
 
 
-def scan(database, columns, cues):
-    import cupy as cp
-
-    lookup = lru_cache(maxsize=16384)(tokens)
+def gpu_scorer(cp, cues, powers):
     kernel = cp.RawKernel(DOT_CUDA, "cross_dot")
-    groups = cues.shape[1] // 2
     weights = cp.asarray(cues)
-    powers = 2 ** np.arange(groups, dtype=np.uint64)
     device_powers = cp.asarray(powers)
-    started = perf_counter()
-    elapsed = cpu_seconds = preparation = 0.0
-    line_ids, winners = [], []
-    truncated = 0
 
-    def gpu_score(matrix):
+    def score(matrix):
         device = cp.asarray(matrix)
         n, width = matrix.shape
         k = cues.shape[1]
@@ -85,7 +77,23 @@ def scan(database, columns, cues):
         hits = (scores[:, 0::2] >= 1) & (scores[:, 1::2] >= 2)
         return cp.sum(hits * device_powers, axis=1, dtype=cp.uint64).get()
 
-    gpu_score(np.zeros((1, len(columns)), dtype=np.float32))
+    score(np.zeros((1, cues.shape[0]), dtype=np.float32))
+    return score
+
+
+def scan(database, columns, cues, backend="cupy"):
+    powers = 2 ** np.arange(cues.shape[1] // 2, dtype=np.uint64)
+    gpu_score = None
+    if backend == "cupy":
+        import cupy as cp
+
+        gpu_score = gpu_scorer(cp, cues, powers)
+    lookup = lru_cache(maxsize=16384)(tokens)
+    started = perf_counter()
+    elapsed = cpu_seconds = preparation = 0.0
+    line_ids, winners = [], []
+    truncated = 0
+
     cursor = database.execute("SELECT n, text FROM line ORDER BY n")
     while rows := cursor.fetchmany(BATCH):
         initial = perf_counter()
@@ -97,18 +105,20 @@ def scan(database, columns, cues):
             line_ids.append(number)
         preparation += perf_counter() - initial
         initial = perf_counter()
-        actual = gpu_score(matrix)
-        elapsed += perf_counter() - initial
-        initial = perf_counter()
         cpu = matrix @ cues
         expected = np.sum(((cpu[:, 0::2] >= 1) & (cpu[:, 1::2] >= 2)) *
                           powers, axis=1, dtype=np.uint64)
         cpu_seconds += perf_counter() - initial
-        if not np.array_equal(actual, expected):
-            raise ValueError("CPU and GPU disagree on line domain clues")
-        winners.append(actual)
-    benchmarks = {"cupy_seconds_including_transfers": elapsed, "numpy_seconds": cpu_seconds,
-                  "line_preparation_seconds": preparation, "peak_cached_gpu_bytes": cp.get_default_memory_pool().total_bytes(),
+        if gpu_score is not None:
+            initial = perf_counter()
+            actual = gpu_score(matrix)
+            elapsed += perf_counter() - initial
+            if not np.array_equal(actual, expected):
+                raise ValueError("CPU and GPU disagree on line domain clues")
+        winners.append(expected)
+    benchmarks = {"cupy_seconds_including_transfers": elapsed if gpu_score is not None else None,
+                  "numpy_seconds": cpu_seconds, "line_preparation_seconds": preparation,
+                  "peak_cached_gpu_bytes": cp.get_default_memory_pool().total_bytes() if gpu_score is not None else None,
                   "seconds_including_database_iteration": perf_counter() - started}
     return np.asarray(line_ids), np.concatenate(winners), truncated, benchmarks
 
@@ -165,30 +175,36 @@ def main():
     parser.add_argument("output", type=Path)
     parser.add_argument("--seed", type=int, default=20261126)
     parser.add_argument("--spider", type=Path, help="existing Spiders genome.json for local provenance references")
+    parser.add_argument("--backend", choices=("numpy", "cupy"), default="cupy")
     args = parser.parse_args()
-    groups, columns, cues = compile_library(args.library)
-    with sqlite3.connect(args.database.resolve().as_uri() + "?mode=ro", uri=True) as database:
+    scan_estate(args.database, args.library, args.output, args.seed, args.spider, args.backend)
+
+
+def scan_estate(database_path, library, output, seed, spider_path=None, backend="cupy"):
+    groups, columns, cues = compile_library(library)
+    with closing(sqlite3.connect(database_path.resolve().as_uri() + "?mode=ro", uri=True)) as database:
         maximum_id, = database.execute("SELECT max(n) FROM line").fetchone()
         context_index = source_contexts(database, groups, maximum_id)
-        ids, lexical, truncated, benchmark = scan(database, columns, cues)
+        ids, lexical, truncated, benchmark = scan(database, columns, cues, backend)
     contexts = context_index[ids]
-    shots = source_shots(ids, lexical, contexts, groups, args.seed)
-    args.output.mkdir(parents=True, exist_ok=False)
-    spider = spider_evidence(args.spider, groups) if args.spider else None
+    shots = source_shots(ids, lexical, contexts, groups, seed)
+    output.mkdir(parents=True, exist_ok=False)
+    spider = spider_evidence(spider_path, groups) if spider_path else None
     if spider:
-        (args.output / "spider-references.json").write_text(json.dumps(spider, indent=2) + "\n", encoding="utf-8")
-    parquet = args.output / "domain-lines.parquet"
+        (output / "spider-references.json").write_text(json.dumps(spider, indent=2) + "\n", encoding="utf-8")
+    parquet = output / "domain-lines.parquet"
     pq.write_table(pa.table({"line_id": ids, "lexical_domain_mask": lexical,
                              "source_context_mask": contexts}), parquet, compression="zstd")
-    (args.output / "vogel-shots.json").write_text(json.dumps(shots, indent=2) + "\n", encoding="utf-8")
-    receipt = {"schema": "vedic.estate-domain-scan.v1", "seed": args.seed,
-               "library_sha256": sha256(args.library), "database_sha256": sha256(args.database),
+    (output / "vogel-shots.json").write_text(json.dumps(shots, indent=2) + "\n", encoding="utf-8")
+    receipt = {"schema": "vedic.estate-domain-scan.v1", "seed": seed,
+               "library_sha256": sha256(library), "database_sha256": sha256(database_path),
                "lines": len(ids), "line_group_pairs": len(ids) * len(groups),
                "source_context_lines": int(np.count_nonzero(contexts)),
                "lexical_group_lines": int(np.count_nonzero(lexical)),
                "same_domain_agreement_lines": int(np.count_nonzero(contexts & lexical)),
                "any_domain_lines": int(np.count_nonzero(contexts | lexical)),
-               "bounded_long_lines": truncated, "exact_cpu_gpu_mask_parity": True,
+               "bounded_long_lines": truncated, "backend": backend,
+               "exact_cpu_gpu_mask_parity": True if backend == "cupy" else None,
                "groups_in_bit_order": [group["title"] for group in groups],
                "spider_evidence_sha256": spider["sha256"] if spider else None,
                "spider_cross_repository_references": spider["matching_feed_edges"] if spider else None,
@@ -197,8 +213,9 @@ def main():
                    "context": int(np.count_nonzero(contexts & (1 << index))),
                } for index, group in enumerate(groups)},
                "benchmark": benchmark, "parquet_sha256": sha256(parquet), "parquet_bytes": parquet.stat().st_size}
-    (args.output / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    (output / "manifest.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({key: value for key, value in receipt.items() if key not in {"groups_in_bit_order", "counts"}}, indent=2))
+    return receipt
 
 
 if __name__ == "__main__":

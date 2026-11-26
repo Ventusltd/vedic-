@@ -1,11 +1,22 @@
 name: VEDIC Modular Star consumer
 on:
   workflow_dispatch:
+    inputs:
+      accelerator:
+        description: Rehearse the nightly CPU accelerator on the current verified Modular Star snapshot
+        type: boolean
+        default: false
   schedule:
     - cron: '37 3 * * *'
   pull_request:
     paths:
       - 'tools/modular_snapshot.py'
+      - 'tools/modular_features.py'
+      - 'tools/estate_crib_search.py'
+      - 'tools/estate_domain_scan.py'
+      - 'tools/daily_accelerator.py'
+      - 'tools/test_daily_accelerator.py'
+      - 'data/estate-crib-library.json'
       - 'tools/test_modular_snapshot.py'
       - 'tools/daily_intelligence.py'
       - 'tools/daily_operations.py'
@@ -31,7 +42,7 @@ concurrency:
 jobs:
   snapshot:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     permissions:
       contents: read
       actions: read
@@ -43,25 +54,40 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install duckdb==1.4.2
+      - name: Install CPU accelerator dependencies
+        if: github.event_name == 'schedule' || inputs.accelerator || github.event_name == 'pull_request'
+        run: python -m pip install numpy==2.4.6 pyarrow==25.0.1
+      - name: Test CPU accelerator and checkpoint progression
+        if: github.event_name == 'schedule' || inputs.accelerator || github.event_name == 'pull_request'
+        run: python -m unittest discover -s tools -p 'test_daily_accelerator.py' -v
       - run: python -m unittest discover -s tools -p 'test_family_pulse.py' -v
       - run: python -m unittest discover -s tools -p 'test_modular_snapshot.py' -v
       - run: python -m unittest discover -s tools -p 'test_daily_intelligence.py' -v
       - name: Historical research preview
         if: github.event_name == 'workflow_dispatch'
         run: python tools/daily_intelligence.py --output "$RUNNER_TEMP/receipts/daily-research.json"
-      - name: Compressed family pulse and reviewed proposal artifact
+      - name: Compressed family pulse and CPU accelerator
+        id: research
         shell: bash
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         env:
           GH_TOKEN: ${{ github.token }}
+          ACCELERATOR_PREVIEW: ${{ inputs.accelerator }}
+          OPENBLAS_NUM_THREADS: '2'
+          OMP_NUM_THREADS: '2'
         run: |
           run=()
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
-            run=(--run-id "$GITHUB_RUN_ID")
+            run=(--run-id "$GITHUB_RUN_ID" --accelerator)
+          elif [ "$ACCELERATOR_PREVIEW" = "true" ]; then
+            run=(--accelerator)
           fi
           python tools/daily_operations.py research --output "$RUNNER_TEMP/receipts" "${run[@]}"
+          if [ -f "$RUNNER_TEMP/receipts/accelerator-research.json" ]; then
+            echo 'accelerator=true' >> "$GITHUB_OUTPUT"
+          fi
       - name: Acquire and validate existing producer database (manual only)
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && !inputs.accelerator
         env:
           GH_TOKEN: ${{ github.token }}
         run: python tools/modular_snapshot.py --output "$RUNNER_TEMP/receipts/modular-snapshot.json"
@@ -69,9 +95,18 @@ jobs:
         if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         with:
           name: vedic-research-${{ github.run_id }}
-          path: ${{ runner.temp }}/receipts/
+          path: |
+            ${{ runner.temp }}/receipts/
+            !${{ runner.temp }}/receipts/accelerator-research.json
           if-no-files-found: error
           overwrite: true
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: steps.research.outputs.accelerator == 'true'
+        with:
+          name: vedic-accelerator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/receipts/accelerator-research.json
+          if-no-files-found: error
           retention-days: 14
 
   record-family-progress:
