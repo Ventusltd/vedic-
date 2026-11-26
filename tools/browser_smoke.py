@@ -9,6 +9,7 @@ from threading import Thread
 from playwright.sync_api import sync_playwright
 
 from prose_smoke import exercise_published, exercise_local
+from stage_pages import FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -41,7 +42,8 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
             ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in sources]
         ]
     catalogue_path = data_root / "data/prose-catalogue.json"
-    catalogue = json.loads(catalogue_path.read_bytes()) if catalogue_path.is_file() else None
+    catalogue = (json.loads(catalogue_path.read_bytes())
+                 if base_path in (FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE) else None)
     expected_count = min(100, len(entries))
     expected_pages = max(1, math.ceil(len(entries) / 100))
     passed = 0
