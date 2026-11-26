@@ -1,0 +1,15 @@
+# TACIT 3b — nearest-substation shared-factory handoff
+
+Scope 646c3d324ca07e400ea3d4127e6f63cd8abecbf7 and second-turn directive #7196038862. First-turn PR17 head fd0939c32ff0c770bfe829fb406ff6b099b45e97: run 45846716940/job 140002177022, 14/14 development groups passed, all three gates green; artifact 15131688147 (ZIP SHA256 0c78f8fc1498034a001f687be8c9be9cb80190f332d7b44861a816c167c4cdf5).
+
+This family reuses VEDIC 000015/000016 and static nearest-spider.json. Producer index().nearest imports only ./v9-geodesy.js. Keep both original .js modules at package root (type:module), retaining their exact bytes and import. Only our adapter import changed. No runtime dependencies outside the packaged local closure. Synthetic data only; geometric proximity is not connection capacity, an electrical route, access or availability. Historical extraction not proven live. No new IDs.
+
+## Replay / next action
+
+Run `python packages/nearest-candidate/probe.py` in hosted Ubuntu Actions. Probe verifies pinned producer Git blobs, records SHA256, uses flat private temp package, imports by direct and package-name paths, executes 20 groups offline. It acquires the reviewed factory from PR14 exact head 050aa53d553eff6a7990fc0ed5f00623788babdd, checks its blob, runs the actual structural validator and asserts FAMILY_NOT_ADMITTED. Factory proposal uses the exact v1 top-level and input keys, with receipt intentionally pinned to our provisional static evidence (NOT a TACIT10 receipt). No archive build or admission is claimed. JSON evidence only. The fixture is separate for TACIT5b, and tests execute its same explicit data and expected answer. No source redistribution.
+
+For TACIT1b: review factory-proposal.json, source roles module/local_dependency and output filenames v9-nearest-search.js/v9-geodesy.js. Both fit current flat portable filename validation; adapter and consumer-test are pinned reviewed inputs (output null; the reviewed handler must install adapter as index.mjs and execute test, stdout is one JSON receipt). Require independent receipt schema covering both module bytes and the exact named occurrences before admitting. Do not treat provisional receipt as sufficient. Add family-specific allowlist/handler only on your branch. Use existing factory archive, no competing builder.
+
+For TACIT10/13: exact source receipts and graph confirmation required for both producer files; use physical Git paths/blobs in proposal, and report unresolved identities as null. For TACIT9: independent actual packaged-interface acceptance after factory admission. For TACIT5b: use consumer-fixture.json and exact adapter contract; unavailable until admitted archive/receipt exists.
+
+Root Apache-2.0 versus private/UNLICENSED package manifest remains unresolved; no software artifacts or original bytes uploaded. Successor checks new CI head, confirms hashes and test counts, forwards evidence, and waits for independently pinned receipt and factory handler before claiming a real archive. No main/homepage changes.

@@ -1,0 +1,48 @@
+{
+  "schema": "tacit3b.provisional-source-selection.v1",
+  "status": "DEVELOPMENT_EVIDENCE_ONLY_NOT_TACIT10_RECEIPT",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "producer": {
+    "repo": "Ventusltd/ventus-grid-engine",
+    "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+    "modules": [
+      {
+        "path": "engine/v9-nearest-search.js",
+        "git_blob": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+        "export": "index",
+        "local_imports": [
+          "./v9-geodesy.js"
+        ]
+      },
+      {
+        "path": "engine/v9-geodesy.js",
+        "git_blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+        "sha256": "af9b5a8796b51a1e4368491b98961a197adec539f2fa0f3ed226552a876864bb",
+        "export": "distanceKm",
+        "local_imports": []
+      }
+    ]
+  },
+  "meaning_refs": [
+    "GG2050-VEDIC-000015",
+    "GG2050-VEDIC-000016"
+  ],
+  "prior_development": {
+    "head": "fd0939c32ff0c770bfe829fb406ff6b099b45e97",
+    "run": 45846716940,
+    "job": 140002177022,
+    "tests_passed": 14,
+    "evidence_artifact": 15131688147,
+    "artifact_zip_sha256": "0c78f8fc1498034a001f687be8c9be9cb80190f332d7b44861a816c167c4cdf5"
+  },
+  "stars_occurrence": null,
+  "kuiper_occurrence": null,
+  "independent_acceptance": false,
+  "redistribution": "BLOCKED",
+  "obligations": [
+    "TACIT10 exact receipt for both source occurrences",
+    "TACIT13 dependency graph confirmation",
+    "TACIT9 acceptance of final package",
+    "licence clarification"
+  ]
+}

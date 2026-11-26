@@ -1,0 +1,37 @@
+name: TACIT 3b VEDIC Kuiper bond
+on:
+  pull_request:
+    paths:
+      - 'packages/nearest-candidate/kuiper_bond.py'
+      - 'packages/nearest-candidate/consumer-fixture.json'
+      - '.github/workflows/tacit3b-kuiper-bond.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  bond:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Acquire pinned producer evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python packages/nearest-candidate/kuiper_bond.py acquire --root "$RUNNER_TEMP/tacit3b-bond"
+      - name: Verify sparse joins and typed bond offline
+        run: |
+          sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" packages/nearest-candidate/kuiper_bond.py verify --root "$RUNNER_TEMP/tacit3b-bond" --out receipts/tacit3b-kuiper-bond.json
+          sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" packages/nearest-candidate/kuiper_bond.py verify --root "$RUNNER_TEMP/tacit3b-bond" --out receipts/tacit3b-kuiper-repeat.json
+          cmp receipts/tacit3b-kuiper-bond.json receipts/tacit3b-kuiper-repeat.json
+          sha256sum receipts/tacit3b-kuiper-bond.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit3b-kuiper-bond-evidence
+          path: receipts/tacit3b-kuiper-bond.json
+          if-no-files-found: error
+          retention-days: 30
