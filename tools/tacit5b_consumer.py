@@ -81,6 +81,8 @@ def browser_checks(root,expected):
                     page.locator("#a-lon").fill("1");page.locator("#b-lon").fill("0")
                     expect(result).to_have_text("Inputs changed. Calculate again.")
                     button.click();expect(result).to_have_text("111.319490793 km\n270.000000° initial bearing",use_inner_text=True)
+                    page.locator("#b-lon").fill("-1");button.click()
+                    expect(result).to_have_text("222.638981587 km\n270.000000° initial bearing",use_inner_text=True)
                     for invalid in ("1","181",""):
                         page.locator("#b-lon").fill(invalid);button.click()
                         expect(result).to_contain_text("Cannot calculate:")
@@ -92,7 +94,7 @@ def browser_checks(root,expected):
                     observed={k:digest(r.body()) for k,r in imports.items()}
                     require(observed=={k:digest(expected[k]) for k in imports},"served import hash mismatch")
                     require(not errors and not denied,f"errors={errors} external_requests={denied}")
-                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":2,"invalid_cases":3})
+                    receipts.append({"browser":kind,"version":browser.version,"viewport":[width,height],"state":"PASS","import_sha256":observed,"known_answers":3,"invalid_cases":3})
                     context.close()
                 browser.close()
     finally:
