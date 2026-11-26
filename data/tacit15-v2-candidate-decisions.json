@@ -1,0 +1,704 @@
+{
+  "schema": "vedic.v2.candidate-decisions.v1",
+  "baseline": {
+    "commit": "b17a153a6c0698902bfa89516a34ec8a956c11e7",
+    "dictionary_blob": "3f8b6d9b17f426ca459b8817455214102e141ec4",
+    "count": 39,
+    "next_number": 40
+  },
+  "source_receipts": [
+    "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+    "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+    "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181246651",
+    "https://github.com/Ventusltd/vedic-/blob/d4c3e9c29ccf49377f55147823a71034c12ab4c8/data/tacit7-gis-sld-candidates.json"
+  ],
+  "proposed": 40,
+  "selected": [
+    {
+      "word": "EXPLAIN",
+      "symbol": "describe",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 300,
+        "last": 308
+      },
+      "purpose": "Describe a resolved Kuiper key, including its repository, commit and line offset, or explain an unissued key.",
+      "inputs": [
+        "resolved_address",
+        "repository_metadata"
+      ],
+      "output": "human_readable_address_description",
+      "limits": "Not the source text; returns a retrieval command, not proof of a Stars identity.",
+      "dependencies": [
+        "repos",
+        "fmt",
+        "words",
+        "N"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Use Find, enter a numeric key, then press Enter.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "RECENT",
+      "symbol": "showNew",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 436,
+        "last": 442
+      },
+      "purpose": "Set the start of an animated highlight for code commits within a selected number of hours of the newest indexed commit.",
+      "inputs": [
+        "hours",
+        "ordered_commits"
+      ],
+      "output": "recent_band_animation_state",
+      "limits": "Relative to latest indexed commit, not wall clock. The animation step is separate; not a unique LOC count.",
+      "dependencies": [
+        "findBy",
+        "commits",
+        "SPACE",
+        "canvas",
+        "performance"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Use Find and enter 'new 24', or use the new-code control.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "PERIOD",
+      "symbol": "lightTime",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 570,
+        "last": 581
+      },
+      "purpose": "Select a UTC day, month or year and display the corresponding commit band and aggregate issued line and repository counts.",
+      "inputs": [
+        "year",
+        "month_optional",
+        "day_optional",
+        "ordered_commits"
+      ],
+      "output": "commit_period_summary_or_null",
+      "limits": "JavaScript normalises dates; strict calendar validation is not provided. Counts issued lines rather than unique LOC.",
+      "dependencies": [
+        "Date.UTC",
+        "findBy",
+        "commits",
+        "home",
+        "fmt"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Enter '2026-10' in Find and inspect the band and summary.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Computation",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "FILTER",
+      "symbol": "fillLines",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 816,
+        "last": 824
+      },
+      "purpose": "Filter placed verified-line records by visibility and a text match on repository, path or title.",
+      "inputs": [
+        "placed_records",
+        "visibility_state",
+        "query"
+      ],
+      "output": "filtered_line_panel",
+      "limits": "Not a search over the full corpus; verification status is inherited, not established here.",
+      "dependencies": [
+        "visibleLine",
+        "edPlaced",
+        "lyQuery",
+        "line-card",
+        "esc"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Open the lines panel and type 'gridatlas' into its filter.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "FRAME CODE CARD",
+      "symbol": "edFly",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 720,
+        "last": 726
+      },
+      "purpose": "Move the virtual camera towards a selected line while allowing for the unobscured screen band and reduced-motion preference.",
+      "inputs": [
+        "selected_line",
+        "viewport_band",
+        "zoom"
+      ],
+      "output": "camera_tween",
+      "limits": "Only virtual screen framing; not physical navigation. Depends on edAim and existing animation state.",
+      "dependencies": [
+        "edBand",
+        "edScreen",
+        "edAim",
+        "flyTo",
+        "matchMedia"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Select a verified line in the lines panel or use next.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Movement",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "INSPECT",
+      "symbol": "edCard",
+      "source": {
+        "repo": "Ventusltd/kuiper-belt",
+        "commit": "e8b04bea0d369e422cd6313981f1d51cbc4347b9",
+        "path": "editions/202611021201/index.html",
+        "blob": "b12bd24b2d6a250aa1467229dc056db51b8df943",
+        "first": 681,
+        "last": 697
+      },
+      "purpose": "Display a selected curated line's source location, pinned GitHub destination and available evidence details.",
+      "inputs": [
+        "placed_record_index",
+        "address_metadata"
+      ],
+      "output": "line_evidence_card",
+      "limits": "Delegates to line-card module when admitted; does not independently verify the record.",
+      "dependencies": [
+        "address",
+        "edPlaced",
+        "line-card",
+        "describe",
+        "esc"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "Kuiper Edition 12",
+        "url": "https://ventusltd.github.io/kuiper-belt/editions/202611021201/",
+        "instructions": "Select a verified line and inspect its details and GitHub link.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "Kuiper / Code navigation",
+      "discipline": "Computer science / Interactive visualisation",
+      "periodic_category": "visualisation",
+      "vedic_class_candidate": "Data",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7181647595",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "1afba8d896d2717e25f0c73fd9ea4a2bd226d987"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 2
+    },
+    {
+      "word": "QUERY",
+      "symbol": "buildWhere",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 241,
+        "last": 259
+      },
+      "purpose": "Build a SQL predicate for matching project register names, addresses, postcodes and references using AND groups and OR alternatives.",
+      "inputs": [
+        "query_text"
+      ],
+      "output": "sql_predicate",
+      "limits": "Not fuzzy search or proof of asset identity; requires the existing SQL helpers and register schema.",
+      "dependencies": [
+        "parseGroups",
+        "normaliseCompact",
+        "sqlString",
+        "invariant"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Enter a multiword or slash-alternative query in GridAtlas project search.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "GridAtlas / Search and Vicinity",
+      "discipline": "Geographic information / Infrastructure screening",
+      "periodic_category": "geographic search",
+      "vedic_class_candidate": "Computation",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 3
+    },
+    {
+      "word": "SCORE",
+      "symbol": "buildScore",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 261,
+        "last": 275
+      },
+      "purpose": "Build an additive SQL score expression prioritising exact postcode and reference matches over name and address matches.",
+      "inputs": [
+        "query_text"
+      ],
+      "output": "sql_sort_expression",
+      "limits": "Not distance ranking or calibrated confidence; score is internal.",
+      "dependencies": [
+        "normaliseCompact",
+        "parseGroups",
+        "sqlString"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Enter a known reference or postcode and inspect result order.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "GridAtlas / Search and Vicinity",
+      "discipline": "Geographic information / Infrastructure screening",
+      "periodic_category": "geographic search",
+      "vedic_class_candidate": "Computation",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 3
+    },
+    {
+      "word": "UK GEOCODE",
+      "symbol": "queryUkGazetteer",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 448,
+        "last": 501
+      },
+      "purpose": "Return UK postcode, postcode district or named-place candidates with coordinates from postcodes.io.",
+      "inputs": [
+        "query_text"
+      ],
+      "output": "uk_location_candidates",
+      "limits": "External service and network required; empty or partial result on failure; not REPD identity or surveyed coordinates.",
+      "dependencies": [
+        "geocoderGet",
+        "FULL_POSTCODE",
+        "OUTCODE",
+        "normaliseCompact",
+        "joinParts"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Enter a UK postcode or place in search and select a UK location result.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "GridAtlas / Search and Vicinity",
+      "discipline": "Geographic information / Infrastructure screening",
+      "periodic_category": "geographic search",
+      "vedic_class_candidate": "Data",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 3
+    },
+    {
+      "word": "GLOBAL GEOCODE",
+      "symbol": "queryGlobalGazetteer",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/cartridges/202611132345-place-global-search-v9-5.js",
+        "blob": "0563ec95d16521953d553c75007180abaee27df0",
+        "first": 503,
+        "last": 549
+      },
+      "purpose": "Retrieve global place or address candidates from Nominatim with finite longitude and latitude.",
+      "inputs": [
+        "submitted_query_text"
+      ],
+      "output": "global_location_candidates",
+      "limits": "Network dependent; UK-postcode-shaped input excluded; no REPD identity or survey proof.",
+      "dependencies": [
+        "fetch",
+        "GLOBAL_GEOCODER_URL",
+        "normaliseCompact",
+        "FULL_POSTCODE",
+        "OUTCODE",
+        "state"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Enter a non-UK place, press Enter and select a Global location result.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "GridAtlas / Search and Vicinity",
+      "discipline": "Geographic information / Infrastructure screening",
+      "periodic_category": "geographic search",
+      "vedic_class_candidate": "Data",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 3
+    },
+    {
+      "word": "OPEN VICINITY",
+      "symbol": "openProjectVicinity",
+      "source": {
+        "repo": "Ventusltd/gridatlas",
+        "commit": "afffa9781f6130529ae93052604cd3d98d172a35",
+        "path": "atlas/modules/202611222000-uk-offtakers-overlay.js",
+        "blob": "961c07151d845ce5ea35fac704b079da79cb7c24",
+        "first": 423,
+        "last": 434
+      },
+      "purpose": "Validate a supplied project reference and UK-envelope coordinate pair, request the substation layer and open a proximity-screening card.",
+      "inputs": [
+        "project_reference",
+        "longitude_latitude",
+        "name_optional",
+        "technology_optional",
+        "capacity_MW_optional"
+      ],
+      "output": "screening_card_opened_boolean",
+      "limits": "Supplied location and capacity are not independently confirmed; no connection rights or capacity proof.",
+      "dependencies": [
+        "mh",
+        "NS.gridScope",
+        "enableSubstationLayer",
+        "dcc"
+      ],
+      "span_kind": "WHOLE_FUNCTION",
+      "application": {
+        "name": "GridAtlas",
+        "url": "https://ventusltd.github.io/gridatlas/atlas/",
+        "instructions": "Use a project MAP link from Pipeline News, then tap VICINITY if available.",
+        "state": "RELATED_APPLICATION_RUNTIME_UNVERIFIED"
+      },
+      "estate_group": "GridAtlas / Search and Vicinity",
+      "discipline": "Geographic information / Infrastructure screening",
+      "periodic_category": "geographic search",
+      "vedic_class_candidate": "Structure",
+      "receipt": "https://github.com/Ventusltd/neural-link-between-agents/issues/87#issuecomment-7189275136",
+      "licence": {
+        "name": "Apache-2.0",
+        "path": "LICENSE",
+        "blob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+      },
+      "state": "STATIC_SOURCE_REVIEW",
+      "decision": "ACCEPT_CANDIDATE_FOR_CI",
+      "agent": 3
+    }
+  ],
+  "held": [
+    {
+      "agent": 2,
+      "word": "ADDRESS",
+      "decision": "HELD",
+      "reason": "Inline closing brace; requires explicit exact-boundary validator support."
+    },
+    {
+      "agent": 2,
+      "word": "RANDOM",
+      "decision": "HELD",
+      "reason": "Keyboard sub-body, not standalone function."
+    },
+    {
+      "agent": 2,
+      "word": "STEP",
+      "decision": "HELD",
+      "reason": "Wrapper assignment and known no-visible-line defect."
+    },
+    {
+      "agent": 2,
+      "word": "KEEP",
+      "decision": "HELD",
+      "reason": "Proposed span mixes function and event registration; exact inline closure needs verification."
+    },
+    {
+      "agent": 3,
+      "word": "SELECT VOLTAGE BAND",
+      "decision": "HELD",
+      "reason": "Arrow assignment plus separate control; exact parser bounds required."
+    },
+    {
+      "agent": 3,
+      "word": "SUMMARISE VICINITY",
+      "decision": "HELD",
+      "reason": "Arrow assignment; exact parser bounds required."
+    },
+    {
+      "agent": 3,
+      "word": "REVEAL NEARBY SET",
+      "decision": "HELD",
+      "reason": "Callback sub-body; exact parser bounds required."
+    },
+    {
+      "agent": 3,
+      "word": "FRAME VICINITY",
+      "decision": "HELD",
+      "reason": "Arrow assignment; exact parser bounds required."
+    },
+    {
+      "agent": 3,
+      "word": "EXPORT VICINITY",
+      "decision": "HELD",
+      "reason": "Arrow assignment; exact parser bounds required."
+    },
+    {
+      "agent": 4,
+      "word": "BUILD",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "MOVE",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "MODEL ROWS",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "ANIMATE",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "FLATTEN",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "RECEIPT",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "ALIGN",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "DRAPE",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "ABOVEGROUND",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 4,
+      "word": "STREAM",
+      "decision": "HELD",
+      "reason": "Pinned source blob checked; explicit archived-source licence evidence not yet established; additional exact-boundary review where applicable."
+    },
+    {
+      "agent": 7,
+      "word": "QUANTIFY PLANT",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "CONFIGURE STRING TOPOLOGY",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "CONFIGURE CENTRAL TOPOLOGY",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "SET DEVELOPMENT DEFAULTS",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "PROJECT SOLAR GENERATION",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "VALUE STORAGE CYCLES",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "ESTIMATE CAPITAL EXPENDITURE",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "ESTIMATE UNDISCOUNTED SURPLUS",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "VALUE DEVELOPMENT RISK",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    },
+    {
+      "agent": 7,
+      "word": "SCREEN FINANCIAL ASSUMPTIONS",
+      "decision": "HELD",
+      "reason": "Archived-source licence evidence not yet established; verify exact spans, overlapping finance sub-bodies and engineering limitations before allocation."
+    }
+  ],
+  "limitations": [
+    "Static source review only; no standalone/runtime/producer ID assertions.",
+    "Candidate boundaries PERIOD and INSPECT corrected to actual closing lines; FRAME limited to edFly, with edAim dependency.",
+    "All selections provisional pending combined CI, independent review and served-byte proof."
+  ]
+}

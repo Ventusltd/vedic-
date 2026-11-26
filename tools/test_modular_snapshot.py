@@ -3,6 +3,7 @@ import hashlib
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from pathlib import Path
 from modular_snapshot import inventory, unpack_snapshot, TABLES
 
@@ -10,7 +11,7 @@ class SnapshotTests(unittest.TestCase):
     def test_read_only_inventory(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "test.sqlite"
-            with sqlite3.connect(p) as db:
+            with closing(sqlite3.connect(p)) as db, db:
                 for t in TABLES:
                     db.execute(f'CREATE TABLE "{t}" (repo TEXT)')
                 db.execute("INSERT INTO line VALUES ('x')")
@@ -24,7 +25,7 @@ class SnapshotTests(unittest.TestCase):
     def test_missing_schema(self):
         with tempfile.TemporaryDirectory() as d:
             p = Path(d) / "empty.sqlite"
-            with sqlite3.connect(p) as db:
+            with closing(sqlite3.connect(p)) as db, db:
                 db.execute("CREATE TABLE other (n INT)")
             with self.assertRaises(ValueError):
                 inventory(p)
