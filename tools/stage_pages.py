@@ -16,7 +16,11 @@ LEGACY_PUBLIC_FILES = (
 )
 CATALOGUE = "data/prose-catalogue.json"
 PUBLICATION = "data/prose-publication.json"
-CURRENT_PUBLIC_FILES = (*LEGACY_PUBLIC_FILES, "data/accelerator-loop-193906.json")
+CURRENT_PUBLIC_FILES = (
+    *LEGACY_PUBLIC_FILES,
+    "data/accelerator-loop-193906.json",
+    "data/accelerator-loop-193907.json",
+)
 PROSE_ARCHIVE_FILES = (*LEGACY_PUBLIC_FILES, CATALOGUE, PUBLICATION)
 V1_COMMIT = "b17a153a6c0698902bfa89516a34ec8a956c11e7"
 V1_ROUTE = "releases/202611260135-v1"

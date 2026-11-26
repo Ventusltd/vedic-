@@ -1,0 +1,45 @@
+{
+  "schema": "vedic.accelerator.loop-public.v1",
+  "baseline_commit": "1e09136afdc23fdb4aeef7f9404a299b738ae60e",
+  "seeds": {
+    "element": 193907,
+    "domain_sample": 20261130
+  },
+  "counts": {
+    "tracked_line_ids": 478800,
+    "indexed_elements": 34370,
+    "element_hypothesis_pairs": 17597440,
+    "line_domain_pairs": 21067200,
+    "unique_lines_with_operation_lead_or_domain_context": 255318,
+    "elements_with_one_group": 6264,
+    "newly_grouped_elements": 546,
+    "returned_to_review": 424,
+    "switched_groups": 201,
+    "stable_across_four_seeds": 5006
+  },
+  "coverage_definition": "Count each line ID once when it has a single proposed operation group from the element pass or a domain association from the line pass.",
+  "parity": {
+    "numpy_cupy_exact": true,
+    "domain_table_identical_to_previous": true
+  },
+  "sha256": {
+    "modular_sqlite": "bc4d7ddde0e60743508bbe473ec91662f6ed26d602751c2b2738f8c2b5f66462",
+    "elements_parquet": "bedff6fcdc77121e1025e969ec5909308a95133b8111e251cde142f2b2f8d5d9",
+    "domain_lines_parquet": "a5b47a6a4b963ff1867f7e60fbf598f700d99f9331f98606520262ec6da3d48b",
+    "disagreements_parquet": "162e3844836c090fed6b76773c45e31c23992af38877238e2612e0c44ed5fa59"
+  },
+  "source_witnesses": [
+    {
+      "element_id": 91775,
+      "group": "AGGREGATE DATA RECORDS",
+      "scope": "Historical price-history helper. Merges rows by UTC timestamp, gives captured rows precedence on a duplicate timestamp and sorts the result chronologically.",
+      "source": "https://github.com/Ventusltd/globalgrid2050/blob/1ee8a982f797fb7197941c2e8265bc784cf3b40a/uk_energy_tracking_v3/price-history-ui.js#L217-L222"
+    },
+    {
+      "element_id": 140699,
+      "group": "RENDER MAP OVERLAYS",
+      "scope": "Historical Kuiper canvas view. Draws voltage-class links, nodes and animated focus from existing topology and view state.",
+      "source": "https://github.com/Ventusltd/globalgrid2050/blob/2f4b7cb82ee154fa3c684cba634d45f2183c6e7d/kuiper-grid/i0087/cartridges/008700000000-kuiper-programs.js#L442-L589"
+    }
+  ]
+}
