@@ -1,0 +1,45 @@
+{
+  "schema": "vedic.accelerator.loop-public.v1",
+  "baseline_commit": "2a3321d8a0b0256b0b9fce65622def40c9e373f2",
+  "seeds": {
+    "element": 193906,
+    "domain_sample": 20261129
+  },
+  "counts": {
+    "tracked_line_ids": 478800,
+    "indexed_elements": 34370,
+    "element_hypothesis_pairs": 17597440,
+    "line_domain_pairs": 21067200,
+    "unique_lines_with_operation_lead_or_domain_context": 253790,
+    "elements_with_one_group": 6142,
+    "newly_grouped_elements": 540,
+    "returned_to_review": 443,
+    "switched_groups": 170,
+    "stable_across_three_seeds": 5172
+  },
+  "coverage_definition": "Count each line ID once when it has a single proposed operation group from the element pass or a domain association from the line pass.",
+  "parity": {
+    "numpy_cupy_exact": true,
+    "domain_table_identical_to_previous": true
+  },
+  "sha256": {
+    "modular_sqlite": "bc4d7ddde0e60743508bbe473ec91662f6ed26d602751c2b2738f8c2b5f66462",
+    "elements_parquet": "575f91f0bd560042c984e598eddd52eef132b85032ee13efb6082a43b9c4b006",
+    "domain_lines_parquet": "a5b47a6a4b963ff1867f7e60fbf598f700d99f9331f98606520262ec6da3d48b",
+    "disagreements_parquet": "dec8a0579800ff0e71a3eb45af05e6a6ba239cfb92af26ec026dd63d98f0034f"
+  },
+  "source_witnesses": [
+    {
+      "element_id": 154762,
+      "command": "REGISTER LIGHTNING MAP LAYER",
+      "scope": "Archived GridAtlas cartridge. Adds the optical satellite-flash layer configuration when absent and delegates to the original initializer.",
+      "source": "https://github.com/Ventusltd/gridatlas/blob/afffa9781f6130529ae93052604cd3d98d172a35/atlas/cartridges/202610221600-sld-sandbox-v9-8.js#L8680-L8698"
+    },
+    {
+      "element_id": 148828,
+      "group": "DRAW MAP FEATURES",
+      "scope": "Installs the pylon layer when absent and retries on map idle while the style is loading. This is a group witness.",
+      "source": "https://github.com/Ventusltd/globalgrid2050/blob/2f4b7cb82ee154fa3c684cba634d45f2183c6e7d/energy-transition-simulator/202609280014/mod/pylons-real.js#L159-L162"
+    }
+  ]
+}

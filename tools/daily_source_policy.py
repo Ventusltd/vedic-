@@ -8,6 +8,13 @@ from pathlib import Path
 from urllib.parse import quote
 
 from daily_intelligence import MAX_BYTES, PIN, ROOT, fetch
+from source_evidence import (
+    LIGHTNING_LAYER_SOURCE,
+    LIGHTNING_LAYER_SYMBOL,
+    source_link,
+    verify_blob,
+    verify_exact_span,
+)
 
 
 POLICY = "vedic.static-source.v1"
@@ -46,6 +53,23 @@ CONTRACTS = {
     },
 }
 
+LIGHTNING_CONTRACT = {
+    "word": "REGISTER LIGHTNING MAP LAYER",
+    "purpose": "Add the archived GridAtlas satellite-flash point layer to the map configuration when it is absent.",
+    "inputs": ["GridAtlas map initialization options with a layer-group configuration",
+               "original map initializer captured by the cartridge"],
+    "output": "The original initializer's result after adding the point-layer configuration if needed.",
+    "limits": "Source-only record for the archived cartridge. An existing layer is kept and the feed is registered without preload. The layer describes optical satellite flashes.",
+    "symbol": LIGHTNING_LAYER_SYMBOL,
+    "source": LIGHTNING_LAYER_SOURCE,
+    "estate_group": "GridAtlas",
+    "discipline": "Geospatial visualisation",
+    "periodic_category": "map layers",
+    "vedic_class_candidate": "Computation",
+    "aliases": [],
+    "receipt": source_link(LIGHTNING_LAYER_SOURCE),
+}
+
 
 def pinned_functions(raw):
     if len(raw) > MAX_BYTES:
@@ -79,6 +103,9 @@ def pinned_functions(raw):
 
 def reproduce_candidate(source, raw):
     """Reconstruct the exact allowed command for verification from source bytes."""
+    if source == LIGHTNING_LAYER_SOURCE:
+        verify_blob(source, raw)
+        return LIGHTNING_CONTRACT
     if any(source.get(key) != value for key, value in PIN.items()):
         raise ValueError("Source is outside the reviewed static policy")
     for anchor, candidate in pinned_functions(raw):
@@ -105,6 +132,13 @@ def main():
     args = parser.parse_args()
     archive = json.loads((ROOT / "data/admitted-queue-archive.json").read_bytes())
     queue = discover_candidates(fetch(PIN), archive)
+    from source_admissions import candidate_id, make_policy_receipt, read_policy_source
+
+    if candidate_id(LIGHTNING_CONTRACT) not in {row["candidate_id"] for row in archive["records"]}:
+        source = LIGHTNING_LAYER_SOURCE
+        raw = read_policy_source(source["repo"], source["commit"], source["path"])
+        verify_exact_span(source, LIGHTNING_LAYER_SYMBOL, raw)
+        queue["records"].append({**LIGHTNING_CONTRACT, "policy_receipt": make_policy_receipt(LIGHTNING_CONTRACT, raw)})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(queue, indent=2) + "\n", encoding="utf-8")
     print(f"Reproduced {len(queue['records'])} pending static source contracts")
