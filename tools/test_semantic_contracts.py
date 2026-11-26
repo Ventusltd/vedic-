@@ -1,6 +1,6 @@
 import unittest
 from semantic_contracts import (UNVERIFIED, compile_manifest, compatibility,
-                                git_blob, physical_lines, search, observations)
+                                git_blob, physical_lines, search, observations, verify_candidate_receipt)
 
 RAW = b"import math\r\ndef length(x):\r\n    return math.sqrt(x)"
 PIN = {"repo":"Ventusltd/example", "commit":"a"*40, "path":"length.py",
@@ -55,10 +55,10 @@ class SemanticContractsTests(unittest.TestCase):
     def test_partial_ast_does_not_claim_function(self):
         self.assertEqual(observations("x.py",RAW,3,3)["state"],"SPAN_NOT_EXACT_AST_NODE")
     def test_source_less_composition(self):
-        c = entry(2,kind="COMPOSITION",source=None,components=["GG2050-VEDIC-000001"])
-        out = build([entry(),c])["entries"][1]
+        c = entry(3,kind="COMPOSITION",source=None,components=["GG2050-VEDIC-000001","GG2050-VEDIC-000002"])
+        out = build([entry(),entry(2),c])["entries"][2]
         self.assertIsNone(out["mechanical"])
-        self.assertEqual(out["components"],["GG2050-VEDIC-000001"])
+        self.assertEqual(out["components"],["GG2050-VEDIC-000001","GG2050-VEDIC-000002"])
     def test_missing_component_rejected(self):
         with self.assertRaisesRegex(ValueError,"unknown composition"):
             build([entry(2,kind="COMPOSITION",source=None,components=["GG2050-VEDIC-000001"])])
@@ -78,6 +78,31 @@ class SemanticContractsTests(unittest.TestCase):
         self.assertEqual(compatibility(a,dict(a,state="UNVERIFIED")),"UNVERIFIED_PORTS")
         self.assertEqual(compatibility(a,dict(a,schema=None)),"UNVERIFIED_PORTS")
         self.assertEqual(compatibility("number","number"),"UNVERIFIED_PORTS")
+    def test_composition_cycle(self):
+        a = entry(2,kind="COMPOSITION",source=None,components=["GG2050-VEDIC-000001","GG2050-VEDIC-000003"])
+        b = entry(3,kind="COMPOSITION",source=None,components=["GG2050-VEDIC-000001","GG2050-VEDIC-000002"])
+        with self.assertRaisesRegex(ValueError,"composition cycle"):
+            build([entry(),a,b])
+    def test_function_requires_source(self):
+        with self.assertRaisesRegex(ValueError,"function missing source"):
+            build([entry(source=None)])
+    def test_candidate_receipt(self):
+        raw = b"function f(x) {\n    const y=x+1;\n    return y;\n}\nfunction g() {\n    return 1;\n}\n"
+        pin = dict(PIN,path="f.js",blob=git_blob(raw),first=2,last=3)
+        e = {"word":"INCREMENT","kind":"SUB_BODY","parent_symbol":"f","source":pin,
+             "purpose":"increment","inputs":["x"],"outputs":["y"],"mechanical":"add one",
+             "limits":"number assumed","activation":"example","dependencies":["parent"],
+             "state":"STATIC_SOURCE_REVIEW","application_state":"RELATED_APPLICATION_RUNTIME_UNVERIFIED",
+             "output_class":"ILLUSTRATIVE_INDICATIVE_MODEL"}
+        r = {"schema":"vedic.candidate-receipt.v1","entries":[e],"source_activation_evidence":[]}
+        out = verify_candidate_receipt(r,lambda *args:raw)
+        self.assertEqual(out["candidate_count"],1)
+        self.assertEqual(out["entries"][0]["line_count"],2)
+        self.assertFalse(out["runtime_verified"])
+        with self.assertRaisesRegex(ValueError,"crosses"):
+            verify_candidate_receipt(dict(r,entries=[dict(e,source=dict(pin,last=6))]),lambda *args:raw)
+        with self.assertRaisesRegex(ValueError,"identity"):
+            verify_candidate_receipt(dict(r,entries=[dict(e,vedic_id="invented")]),lambda *args:raw)
     def test_js_parser_optional(self):
         try:
             import esprima
