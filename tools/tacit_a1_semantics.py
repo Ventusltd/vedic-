@@ -1,9 +1,9 @@
 """Turn 17: bounded composition of existing VEDIC intent/coordinate resolver.
 No maths, arbitrary code generation, permanent IDs or admission changes.
 """
-import argparse, base64, copy, json, math, re, subprocess, sys, urllib.request
+import argparse, copy, json, math, re, sys, urllib.request
 from pathlib import Path
-from tacit_a_closure import blob, fetch, need, VEDIC
+from tacit_a_closure import blob, fetch, need, VEDIC, DICT, sha
 from tacit_a_bonds import download
 from tacit_a_index_grain import member
 from tacit_a_recovery import BOND_SHA, BOND_ZIP
@@ -14,7 +14,7 @@ RESOLVER="9330897d89214602077806a3915054b4afc301c5"
 PINS={"conversational_execution.py":"deea50be1666eda7bddcdc3c789f306c20049018",
       "semantic_retrieval.py":"0c16c18203b59f5d2f0a9f3b27aae965dcd184f9",
       "stars_retrieval.py":"ce8d5855f0dddff59cb343b998d20c0cfaf06499"}
-DATA={"dictionary.json":"175629827380983e69edcfe1b11e5a2a4a7aafa",
+DATA={"dictionary.json":DICT,
       "translation-geodesy.json":"707a182be358db746c4b944ee6bea1c87ceb07d6"}
 LIB_COMMIT="ed657689ca187d8cd237f8f4bd3307a020a5eb8a"
 LIB_BLOB="59f2d5e5e2a9a88108908af4e851f56f3913700e"
@@ -35,14 +35,14 @@ def acquire(root):
     root.mkdir(parents=True,exist_ok=True)
     for name,pin in PINS.items():fetch(VEDIC,RESOLVER,"tools/"+name,pin,root/name)
     for name,pin in DATA.items():
-        # Prefer exact checked-out Git object; raw endpoint may transform large text.
+        # Dictionary SHA256 is inherited from the already validated A closure.
         local=Path(__file__).resolve().parents[1]/"data"/name
         raw=local.read_bytes() if local.is_file() else b""
-        if blob(raw)!=pin:
-            obj=json.loads(subprocess.check_output(["gh","api","repos/"+VEDIC+"/git/blobs/"+pin],timeout=60))
-            need(obj["sha"]==pin and obj["encoding"]=="base64","DATA_OBJECT")
-            raw=base64.b64decode(obj["content"])
-        need(blob(raw)==pin,"DATA_BLOB:"+name)
+        digest=sha if len(pin)==64 else blob
+        if digest(raw)!=pin:
+            with urllib.request.urlopen("https://raw.githubusercontent.com/"+VEDIC+"/"+BASE+"/data/"+name,timeout=30) as r:
+                raw=r.read(2_000_001)
+        need(len(raw)<=2_000_000 and digest(raw)==pin,"DATA_PIN:"+name)
         (root/name).write_bytes(raw)
     with urllib.request.urlopen("https://raw.githubusercontent.com/Ventusltd/stars/"+LIB_COMMIT+"/library/standalone.mjs",timeout=60) as r:
         raw=r.read(10_000_001)
@@ -53,7 +53,7 @@ def acquire(root):
 def pinned(root,name,pin):
     p=root/name
     need(p.is_file() and not p.is_symlink() and p.stat().st_size<=10_000_000,"STAGED_FILE")
-    raw=p.read_bytes();need(blob(raw)==pin,"STAGED_PIN:"+name);return raw
+    raw=p.read_bytes();need((sha(raw) if len(pin)==64 else blob(raw))==pin,"STAGED_PIN:"+name);return raw
 
 def seal(p):return {**p,"plan_sha256":factory_hash(p)}
 def strict(raw):
