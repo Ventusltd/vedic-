@@ -117,6 +117,18 @@ jobs:
           e="$RUNNER_TEMP/factory-evidence"
           sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_composition.py --factory "$PWD" --app "$PWD/tacit-b-app" --nearest "$PWD/tacit-b-nearest" --activation "$RUNNER_TEMP/tacit-b-activation" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --out "$e/tacit-b-composition.json"
           sha256sum "$e/tacit-b-composition.json"
+      - name: Acquire A candidate evidence (not admission)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15137841195/zip > "$RUNNER_TEMP/tacit-a-candidate.zip"
+          echo "c1ea563a7be0c1343d547d5678f46b86952a73bc8d5346d330a0faf8e7667772  $RUNNER_TEMP/tacit-a-candidate.zip" | sha256sum -c -
+      - name: Offline intake and actual factory refusal of unreviewed evidence
+        run: |
+          set -euo pipefail
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" tacit-b/tools/tacit_b_candidate_intake.py --factory "$PWD" --archive "$RUNNER_TEMP/tacit-a-candidate.zip" --out "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
+          sha256sum "$RUNNER_TEMP/factory-evidence/tacit-b-candidate-intake.json"
       - uses: actions/upload-artifact@v4
         with:
           name: tacit-b-factory-composition-evidence
