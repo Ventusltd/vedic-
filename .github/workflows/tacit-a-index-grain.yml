@@ -1,0 +1,46 @@
+name: TACIT A fifth-turn indexing grain
+on:
+  pull_request:
+    paths:
+      - 'tools/tacit_a_*'
+      - '.github/workflows/tacit-a-index-grain.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Acquire pinned existing evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/tacit_a_index_grain.py acquire --root "$RUNNER_TEMP/grain"
+      - name: Existing producer parser
+        run: |
+          npm install --no-save --ignore-scripts --package-lock=false acorn@8.15.0 acorn-loose@8.5.2 acorn-walk@8.3.4
+          cp "$RUNNER_TEMP/grain/producer-lib.mjs" .
+          node tools/tacit_a_producer_ast.mjs "$RUNNER_TEMP/grain" > "$RUNNER_TEMP/grain/producer-ast.json"
+      - name: Reproduce diagnosis twice offline
+        run: |
+          mkdir evidence
+          for n in first second; do
+            sudo unshare --net -- setpriv --reuid "$(id -u)" --regid "$(id -g)" --clear-groups "$(command -v python)" tools/tacit_a_index_grain.py verify --root "$RUNNER_TEMP/grain" --out "evidence/$n.json"
+          done
+          cmp evidence/first.json evidence/second.json
+          mv evidence/first.json evidence/index-grain.json
+          rm evidence/second.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit-a-index-grain
+          path: evidence/
+          if-no-files-found: error
