@@ -6,13 +6,16 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_FILES = (
+LEGACY_PUBLIC_FILES = (
     "index.html",
     "data/anatomy.json",
     "data/translation-geodesy.json",
     "data/nearest-spider.json",
     "data/dictionary.json",
 )
+CATALOGUE = "data/prose-catalogue.json"
+PUBLICATION = "data/prose-publication.json"
+CURRENT_PUBLIC_FILES = (*LEGACY_PUBLIC_FILES, CATALOGUE, PUBLICATION)
 V1_COMMIT = "b17a153a6c0698902bfa89516a34ec8a956c11e7"
 V1_ROUTE = "releases/202611260135-v1"
 V2_ROUTE = "releases/202611261351"
@@ -23,7 +26,36 @@ def git_bytes(ref, name):
     return subprocess.check_output(["git","show",f"{ref}:{name}"],cwd=ROOT)
 def digest(data):
     return hashlib.sha256(data).hexdigest()
+
+def validate_publication(payload):
+    raw = payload[CATALOGUE]
+    if len(raw) > 8 * 1024 * 1024:
+        raise ValueError("Public prose requires a bounded catalogue")
+    catalogue = json.loads(raw)
+    publication = json.loads(payload[PUBLICATION])
+    records = catalogue["records"]
+    if catalogue["schema"] != "vedic.prose.catalogue.v1" or not isinstance(records, list) or not records:
+        raise ValueError("Missing published prose")
+    if publication["schema"] != "vedic.prose.publication-batch.v1" or publication["catalogue"] != {
+        "path": "prose-catalogue.json", "rows": len(records), "sha256": digest(raw)
+    }:
+        raise ValueError("Prose catalogue differs from approved batch")
+    ids = set()
+    hashes = []
+    for row in records:
+        for field in ("id", "software", "prose", "status", "provenance", "evidence"):
+            if not isinstance(row[field], str) or not row[field].strip():
+                raise ValueError("Invalid public prose field: " + field)
+        if row["id"] in ids:
+            raise ValueError("Duplicate public prose reference: " + row["id"])
+        ids.add(row["id"])
+        hashes.append({"id": row["id"], "sha256": digest(row["prose"].encode("utf-8"))})
+    if hashes != publication["records"]:
+        raise ValueError("Public prose text or reading order differs from approved batch")
+    return len(records)
+
 def write_bundle(destination, payload, version, ref):
+    prose_count = validate_publication(payload) if CATALOGUE in payload else None
     for name, data in payload.items():
         target=destination/name
         target.parent.mkdir(parents=True,exist_ok=True)
@@ -33,6 +65,8 @@ def write_bundle(destination, payload, version, ref):
     manifest={"schema":"vedic.pages.release.v1","version":version,"source_commit":ref,
         "row_count":len(json.loads(payload["data/dictionary.json"])["entries"]),
         "files":{name:digest(data) for name,data in payload.items()}}
+    if prose_count is not None:
+        manifest["prose_count"] = prose_count
     (destination/"release.json").write_text(json.dumps(manifest,sort_keys=True,indent=2)+"\n",encoding="utf-8")
     for name,h in manifest["files"].items():
         if digest((destination/name).read_bytes())!=h:
@@ -40,20 +74,22 @@ def write_bundle(destination, payload, version, ref):
         print(f"{h}  {destination/name}",flush=True)
 def stage(destination):
     head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=ROOT,text=True).strip()
-    current={name:git_bytes(head,name) for name in PUBLIC_FILES}
-    v3={name:git_bytes(V3_COMMIT,name) for name in PUBLIC_FILES}
-    v2={name:git_bytes(V2_COMMIT,name) for name in PUBLIC_FILES}
+    current={name:git_bytes(head,name) for name in CURRENT_PUBLIC_FILES}
+    v3={name:git_bytes(V3_COMMIT,name) for name in LEGACY_PUBLIC_FILES}
+    v2={name:git_bytes(V2_COMMIT,name) for name in LEGACY_PUBLIC_FILES}
     for name,data in current.items():
-        if git_bytes(head,name)!=data or (ROOT/name).read_bytes()!=data:
+        if (ROOT/name).read_bytes()!=data:
             raise ValueError("working tree differs from committed bytes: "+name)
-    prior={name:git_bytes(V1_COMMIT,name) for name in PUBLIC_FILES}
+    prior={name:git_bytes(V1_COMMIT,name) for name in LEGACY_PUBLIC_FILES}
     destination.mkdir(parents=True,exist_ok=False)
     write_bundle(destination,current,"20261126-prose-reader",head)
     write_bundle(destination/V1_ROUTE,prior,"202611260135-v1",V1_COMMIT)
     write_bundle(destination/V2_ROUTE,v2,"202611261351",V2_COMMIT)
     write_bundle(destination/V3_ROUTE,v3,"20261126-v3",V3_COMMIT)
     (destination/".nojekyll").touch()
-    expected={".nojekyll"}|{prefix+name for prefix in ("",V1_ROUTE+"/",V2_ROUTE+"/",V3_ROUTE+"/") for name in (*PUBLIC_FILES,"release.json")}
+    expected = {".nojekyll", "release.json", *CURRENT_PUBLIC_FILES}
+    expected.update(f"{route}/{name}" for route in (V1_ROUTE, V2_ROUTE, V3_ROUTE)
+                    for name in (*LEGACY_PUBLIC_FILES, "release.json"))
     actual={p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()}
     if actual!=expected:
         raise ValueError("public file-set mismatch")
