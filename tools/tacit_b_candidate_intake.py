@@ -53,7 +53,7 @@ def main():
         c_review=f.strict(c_json)
         f.need(c_review["schema"]=="vedic.tacit-c.independent-source-closure-review.v1" and
                c_review["reviewer"]=="TACIT C" and c_review["result"]=="BOUNDED_EVIDENCE_HONOURED" and
-               c_review["candidate_artifact"]==15137841195 and c_review["candidate_zip_sha256"]==ZIP_SHA and
+               c_review["candidate_artifact"]=="15137841195" and c_review["candidate_head"]=="5ae1e8d4d0f5d9f852aa589a0894e52f112eed6e" and c_review["candidate_zip_sha256"]==ZIP_SHA and
                c_review["candidate_sha256"]==CANDIDATE_SHA and c_review["formal_factory_admission"] is False and
                c_review["publication"] is False,"C_REVIEW_BOUNDARY")
         for family in ("nearest","electrical","orient"):
