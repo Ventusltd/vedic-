@@ -1,0 +1,174 @@
+{
+  "dictionary_baseline": {
+    "commit": "501bdee9f49672b3b8d6c1ce5f25dfd19a293809",
+    "rows": 69
+  },
+  "unit_tests_passed": 49,
+  "commands_proposed": 1,
+  "new_digital_language_ids_allocated": 0,
+  "distinct_commands_executed": 1,
+  "canonical_operations_in_executed_command": 2,
+  "package_admissions": 0,
+  "execution": {
+    "existing_vedic_id": "GG2050-VEDIC-000006",
+    "runtime_compatibility": "WINDOWS_SYSTEMROOT_ONLY",
+    "runtime_sha256": "22790b83a689ce6b5b04028a206c3c6b2127c58d7e69696a4f600ed1de272796",
+    "archive_sha256": "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787",
+    "receipt_sha256": "647bc21256576197ecff63e77f3d73097679a27e22cd56feb6a98b2ddc7e9f0b",
+    "output": {
+      "distance_km": 111.31949079327356,
+      "initial_bearing_deg": 90
+    },
+    "distribution": "PRIVATE_ONLY",
+    "independent_package_acceptance": false
+  },
+  "faraday": {
+    "runner_commit": "e439b450f37a8c124fa4a0cb38159ae0dc337062",
+    "candidate_number": 101,
+    "state": "STAGED_LOCAL_CANDIDATE",
+    "result": "CONFIRMED",
+    "seconds": 1.95,
+    "receipt_sha256": "9f7e70421b3133ebe2f77be339f56d2308ae6df5072f5523f69a9476c8bb0560",
+    "case_observations": {
+      "equator": {
+        "exit": 0,
+        "state": "EXECUTED_PRIVATE_PACKAGE",
+        "command_id": "GG2050-VEDIC-000006",
+        "components": [
+          "GG2050-VEDIC-000001",
+          "GG2050-VEDIC-000005"
+        ],
+        "output": {
+          "distance_km": 111.31949079327356,
+          "initial_bearing_deg": 90
+        },
+        "expected": {
+          "distance_km": 111.31949079327356,
+          "initial_bearing_deg": 90
+        },
+        "pattern_sha256": "389698f878b21ef6fc02a4938c60915fb23644bac565d3cf6df8521c3547c012"
+      },
+      "antimeridian": {
+        "exit": 0,
+        "state": "EXECUTED_PRIVATE_PACKAGE",
+        "command_id": "GG2050-VEDIC-000006",
+        "components": [
+          "GG2050-VEDIC-000001",
+          "GG2050-VEDIC-000005"
+        ],
+        "output": {
+          "distance_km": 222.6389815865462,
+          "initial_bearing_deg": 90
+        },
+        "expected": {
+          "distance_km": 222.63898158654712,
+          "initial_bearing_deg": 90
+        },
+        "pattern_sha256": "7a3b2abcc15074ef455d287b00b2da3a79a65dd0aaacbbff6c6668aca2b7f067"
+      },
+      "meridian": {
+        "exit": 0,
+        "state": "EXECUTED_PRIVATE_PACKAGE",
+        "command_id": "GG2050-VEDIC-000006",
+        "components": [
+          "GG2050-VEDIC-000001",
+          "GG2050-VEDIC-000005"
+        ],
+        "output": {
+          "distance_km": 333.95847237982065,
+          "initial_bearing_deg": 0
+        },
+        "expected": {
+          "distance_km": 333.9584723798207,
+          "initial_bearing_deg": 0
+        },
+        "pattern_sha256": "88faa937110b6c0ca0bc08c56acd9fbb34d9aad60634386714e02d8a7bf2107b"
+      },
+      "coincident": {
+        "exit": 2,
+        "receipt": {
+          "package_reason": "UPSTREAM_RESULT_REFUSED",
+          "reason": "PACKAGE_REFUSED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "antipodal": {
+        "exit": 2,
+        "receipt": {
+          "package_reason": "UPSTREAM_RESULT_REFUSED",
+          "reason": "PACKAGE_REFUSED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "polar_origin": {
+        "exit": 2,
+        "receipt": {
+          "package_reason": "UPSTREAM_RESULT_REFUSED",
+          "reason": "PACKAGE_REFUSED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "wrong_units": {
+        "exit": 2,
+        "receipt": {
+          "package_reason": "INPUT_UNITS",
+          "reason": "PACKAGE_REFUSED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "missing_coordinate": {
+        "exit": 2,
+        "receipt": {
+          "package_reason": "FIELDS",
+          "reason": "PACKAGE_REFUSED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "ambiguous_term": {
+        "exit": 2,
+        "receipt": {
+          "candidates": [
+            "GG2050-VEDIC-000017",
+            "GG2050-VEDIC-000019"
+          ],
+          "reason": "AMBIGUOUS_COMMAND",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      },
+      "unadmitted": {
+        "exit": 2,
+        "receipt": {
+          "reason": "PACKAGE_NOT_ADMITTED",
+          "schema": "vedic.command-execution.v1",
+          "state": "REFUSED"
+        }
+      }
+    }
+  },
+  "compiled_reuse": {
+    "starsCommit": "1cf9c7530c7d287ccf9b3cffd70f693fb83c8402",
+    "engineCommit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+    "libraryBlob": "0390a4ecbf9d5c7dd171fbd923a58f4be15f05fb",
+    "exportCount": 766,
+    "existingCompiledMatches": [
+      "GG2050-VEDIC-000002",
+      "GG2050-VEDIC-000003"
+    ],
+    "compiledParityCases": 6,
+    "withheldGeodesicAlias": {
+      "familyId": 5197,
+      "requestedRadiusKm": 500,
+      "actualVertexDistanceKm": 495.887553167947
+    },
+    "firmCapacityCases": 5,
+    "zeroFirmUtilisation": "Infinity",
+    "packageAdmissions": 0,
+    "receipt_sha256": "ac6bb5f5940d23737e1c363e8be6cbb5cd4dfb206416b638910371adb450e16f"
+  }
+}

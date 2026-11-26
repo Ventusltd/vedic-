@@ -1,0 +1,134 @@
+{
+  "schema": "vedic.execution-bindings.v1",
+  "bindings": {
+    "GG2050-VEDIC-000006": {
+      "sense_key": "composition:shared_inputs:GG2050-VEDIC-000001,GG2050-VEDIC-000005",
+      "aliases": [
+        "MEASURE DISTANCE AND BEARING"
+      ],
+      "components": [
+        "GG2050-VEDIC-000001",
+        "GG2050-VEDIC-000005"
+      ],
+      "operations": [
+        {
+          "vedic_id": "GG2050-VEDIC-000001",
+          "symbol": "distanceKm",
+          "inputs": [
+            "point_a.longitude",
+            "point_a.latitude",
+            "point_b.longitude",
+            "point_b.latitude"
+          ],
+          "output": "distance_km",
+          "dependencies": [
+            "DEG",
+            "EARTH_RADIUS_KM",
+            "Math"
+          ],
+          "source": {
+            "repo": "Ventusltd/ventus-grid-engine",
+            "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+            "path": "engine/v9-geodesy.js",
+            "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+            "first": 29,
+            "last": 47
+          },
+          "kuiper": {
+            "key": 86415575118,
+            "wafer_row": 14842,
+            "wafer_address_space": 115804934973,
+            "producer_commit": "eec3f1891294af9e93ce6613c10cdf71806802f2",
+            "state": "PINNED_PRODUCER_RECEIPT_MATCH_NOT_WAFER_REPLAY"
+          },
+          "stars_occurrence": {
+            "family_id": null,
+            "element_id": null,
+            "state": "OCCURRENCE_NOT_INDEXED",
+            "same_blob_indexed_witness": {
+              "commit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+              "tablet_id": 2690,
+              "family_id": 511,
+              "element_id": 80346,
+              "element_sha256": "ea009aa0a288331621f6a766ccb143ac5817652462a6d996ef4cd1ac979b845c",
+              "index_asset_sha256": "2379a68bd54096b94efcb13fb557aa8eaad68c756b5b3fdf09a64a51da5414c1"
+            }
+          }
+        },
+        {
+          "vedic_id": "GG2050-VEDIC-000005",
+          "symbol": "initialBearingDeg",
+          "inputs": [
+            "point_a.longitude",
+            "point_a.latitude",
+            "point_b.longitude",
+            "point_b.latitude"
+          ],
+          "output": "initial_bearing_deg",
+          "dependencies": [
+            "DEG",
+            "Math"
+          ],
+          "source": {
+            "repo": "Ventusltd/ventus-grid-engine",
+            "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+            "path": "engine/v9-geodesy.js",
+            "blob": "14023f06d4ef2ea806437863bd35dee954c46b11",
+            "first": 133,
+            "last": 139
+          },
+          "kuiper": {
+            "key": 86415575222,
+            "wafer_row": 14842,
+            "wafer_address_space": 115804934973,
+            "producer_commit": "eec3f1891294af9e93ce6613c10cdf71806802f2",
+            "state": "PINNED_PRODUCER_RECEIPT_MATCH_NOT_WAFER_REPLAY"
+          },
+          "stars_occurrence": {
+            "family_id": null,
+            "element_id": null,
+            "state": "OCCURRENCE_NOT_INDEXED",
+            "same_blob_indexed_witness": {
+              "commit": "7c2a7b42905674fdcd3aa4bb50af14bc352a7747",
+              "tablet_id": 2690,
+              "family_id": 8770,
+              "element_id": 32757,
+              "element_sha256": "66ae9d72460aa73fd7a13f7400f173314b39f2a3515112536c3aac28111c2b22",
+              "index_asset_sha256": "2379a68bd54096b94efcb13fb557aa8eaad68c756b5b3fdf09a64a51da5414c1"
+            }
+          }
+        }
+      ],
+      "ports": {
+        "crs": "WGS84",
+        "unit": "degrees",
+        "distance": "km",
+        "bearing": "degrees"
+      },
+      "refusals": [
+        "Both points must contain finite named longitude and latitude in degrees, within 180° and 90° respectively.",
+        "The bearing is undefined for coincident or antipodal points and for polar origins. The existing adapter applies a 1e-9 degree tolerance.",
+        "The supplied package and build receipt must match their exact admitted digests."
+      ],
+      "scope": "Uses a sphere of radius 6378.137 km. The result describes separation and initial bearing, with no engineering route or access assessment.",
+      "source_receipt_sha256": "83147e90c0f0831ee1f82ce5e721a3521dc843421a96ae9cba3425343d0b3c19",
+      "independent_package_acceptance": false,
+      "package": {
+        "family": "orient",
+        "export": "orient",
+        "runtime": "Node ESM >=18",
+        "runtime_dependencies": [],
+        "factory_commit": "2ccc717933f97e7d191dae85360559a12de7ed21",
+        "redistribution": "BLOCKED",
+        "archive_sha256": "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787",
+        "descriptor_sha256": "b45e61e955e0d0ddde15495f9be7c3fc4943c3193dd8f318a4249524f2fb5f53",
+        "build_receipt_sha256": "44f00a03f6d31e3a2781c6e55b9a634e615755dd132587acff0c6369222a2364",
+        "factory_files": {
+          "tools/package_factory.py": "fc0cea4dbb82c514d79ff02e7b4c755dd06adda6ddac6bccbf39f78d02c513eb",
+          "tools/typed_package_execution.py": "29796822ff4605006f982dfeb0aae463dee97e82ade091a8d597cff8386dbf6c",
+          "packages/factory/admissions/orient.json": "0a57071a5baf53dc3582b0c0cd58d975b3d5ebb8e94f54b686ca6a4378eb1115"
+        }
+      }
+    }
+  }
+}
