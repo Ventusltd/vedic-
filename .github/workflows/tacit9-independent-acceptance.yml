@@ -1,0 +1,41 @@
+name: TACIT 9 independent acceptance
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Acquire immutable original source and pinned parser
+        run: |
+          curl --fail --silent --show-error --location --retry 2 'https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/v9-geodesy.js' -o "$RUNNER_TEMP/v9-geodesy.js"
+          npm install --prefix "$RUNNER_TEMP/tacit9-parser" --ignore-scripts --no-audit --no-fund acorn@8.15.0
+      - name: Freeze receipt and run independent numerical and mutation controls
+        run: |
+          sha256sum tools/tacit9/heldout_queries.json "$RUNNER_TEMP/v9-geodesy.js"
+          python tools/tacit9/acceptance.py --source "$RUNNER_TEMP/v9-geodesy.js" --report "$RUNNER_TEMP/tacit9-audit.json"
+      - name: Formal source boundary controls
+        run: |
+          set -o pipefail
+          node tools/tacit9/boundaries.cjs "$RUNNER_TEMP/v9-geodesy.js" "$RUNNER_TEMP/tacit9-parser/node_modules/acorn" | tee "$RUNNER_TEMP/tacit9-boundaries.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tacit9-independent-audit
+          path: |
+            ${{ runner.temp }}/tacit9-audit.json
+            ${{ runner.temp }}/tacit9-boundaries.json
+            tools/tacit9/heldout_queries.json
+          if-no-files-found: error
