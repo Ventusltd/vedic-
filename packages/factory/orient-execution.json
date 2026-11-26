@@ -1,0 +1,25 @@
+{
+  "schema": "vedic.typed-package-request.v1",
+  "family": "orient",
+  "export": "orient",
+  "descriptor_sha256": "b45e61e955e0d0ddde15495f9be7c3fc4943c3193dd8f318a4249524f2fb5f53",
+  "archive_sha256": "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787",
+  "ports": {
+    "crs": "WGS84",
+    "unit": "degrees",
+    "distance": "km",
+    "bearing": "degrees"
+  },
+  "input": {
+    "crs": "WGS84",
+    "unit": "degrees",
+    "point_a": {
+      "longitude": 0,
+      "latitude": 0
+    },
+    "point_b": {
+      "longitude": 1,
+      "latitude": 0
+    }
+  }
+}

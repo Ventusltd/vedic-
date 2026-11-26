@@ -1,0 +1,95 @@
+name: TACIT 1b package factory
+on:
+  pull_request:
+    paths:
+      - 'packages/factory/**'
+      - 'tools/package_factory.py'
+      - 'tests/test_package_factory.py'
+      - 'tests/test_package_factory_second_family.py'
+      - 'tools/typed_package_execution.py'
+      - 'tests/test_typed_package_execution.py'
+      - 'tests/test_peer_plan_handoff.py'
+      - '.github/workflows/package-factory.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  factory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Acquire exact reviewed inputs (read only)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          mkdir -p "$p" "$RUNNER_TEMP/factory-evidence"
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126683549/zip > "$p/producer.zip"
+          python - "$p" <<'PY'
+          import pathlib, sys, zipfile
+          p=pathlib.Path(sys.argv[1])
+          assert (p/'producer.zip').stat().st_size <= 8*1024*1024
+          with zipfile.ZipFile(p/'producer.zip') as z:
+              for src,dest in [('source-receipt/receipt.json','receipt.json'),('source-receipt/v9-geodesy.mjs','module.mjs')]:
+                  assert z.namelist().count(src)==1 and z.getinfo(src).file_size <= 2*1024*1024
+                  (p/dest).write_bytes(z.read(src))
+          PY
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/LICENSE -o "$p/LICENSE"
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/vedic-/2adc1fa9c52f1d242e601b1580927996e7cb31da/tools/package_builder.py -o "$p/prototype.py"
+          q="$RUNNER_TEMP/factory-electrical"
+          mkdir -p "$q"
+          curl -fsSL --max-time 120 --max-filesize 2097152 https://raw.githubusercontent.com/Ventusltd/ventus-grid-engine/487ec7bd38dfa5aecb1c75da53b4a866ab2101cb/engine/voltage-drop.js -o "$q/module.mjs"
+          cp "$p/LICENSE" "$q/LICENSE"
+          for pair in adapter.mjs:adapter.mjs test.mjs:test.mjs consumer.mjs:consumer.mjs README.md:electrical-readme.md; do
+            curl -fsSL --max-time 120 --max-filesize 2097152 "https://raw.githubusercontent.com/Ventusltd/vedic-/4bf9c297c0cec8452327254a297fb7bd0d48e4dd/packages/electrical/${pair%:*}" -o "$q/${pair#*:}"
+          done
+          gh api repos/Ventusltd/vedic-/actions/artifacts/15126783600/zip > "$p/peer-execution.zip"
+          echo "0e2add04245fce64c55d906be0387cca87b2c77eec55c14312ee6d7074ef2172  $p/peer-execution.zip" | sha256sum -c -
+          python - "$p" <<'PY'
+          import pathlib,sys,zipfile
+          p=pathlib.Path(sys.argv[1]);z=zipfile.ZipFile(p/"peer-execution.zip")
+          assert z.namelist().count("orient.json")==1 and z.getinfo("orient.json").file_size<=2097152
+          (p/"peer-orient.json").write_bytes(z.read("orient.json"))
+          PY
+      - name: Offline validation, negative tests, clean consumer and repeated builds
+        run: |
+          set -euo pipefail
+          p="$RUNNER_TEMP/factory-input"
+          e="$RUNNER_TEMP/factory-evidence"
+          offline () {
+            sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" -- env -i PATH="$PATH" HOME="$HOME" "$(command -v python)" "$@"
+          }
+          offline tests/test_package_factory.py --real-inputs "$p" -v 2>&1 | tee "$e/contract-tests.txt"
+          offline tools/package_factory.py validate --descriptor packages/factory/admissions/orient.json
+          mkdir "$p/first"
+          offline tools/package_factory.py build --descriptor packages/factory/admissions/orient.json --inputs "$p" --out "$p/first/package.zip" | tee "$e/build-receipt.json"
+          cp "$p/first/package.zip" "$p/first-result.zip"
+          rm -r "$p/first"
+          mkdir "$p/second"
+          offline tools/package_factory.py build --descriptor packages/factory/admissions/orient.json --inputs "$p" --out "$p/second/package.zip" > "$p/repeat.json"
+          cmp "$p/first-result.zip" "$p/second/package.zip"
+          cmp "$e/build-receipt.json" "$p/repeat.json"
+          unzip -p "$p/second/package.zip" manifest.json > "$e/manifest.json"
+          echo "e83937c040499a7060b03ca2c4969e4414cdca48cb7f28a3ef9039f002486787  $p/second/package.zip" | sha256sum -c -
+          offline tests/test_package_factory_second_family.py -v 2>&1 | tee "$e/second-family-contracts.txt"
+          offline tools/package_factory.py probe-pending-electrical --descriptor packages/factory/pending/electrical.json --inputs "$RUNNER_TEMP/factory-electrical" | tee "$e/electrical-pre-admission.json"
+          offline tests/test_typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/typed-contracts.txt"
+          offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --request packages/factory/orient-execution.json | tee "$e/typed-execution.json"
+          offline tests/test_peer_plan_handoff.py --peer "$p/peer-orient.json" --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" -v 2>&1 | tee "$e/peer-plan-tests.txt"
+          offline tools/typed_package_execution.py --archive "$p/second/package.zip" --receipt "$e/build-receipt.json" --peer-execution "$p/peer-orient.json" | tee "$e/peer-plan-execution.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tacit1b-factory-evidence-only
+          path: ${{ runner.temp }}/factory-evidence/
+          if-no-files-found: error
+          retention-days: 30

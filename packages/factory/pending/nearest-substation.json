@@ -1,0 +1,112 @@
+{
+  "schema": "vedic.package-descriptor.v1",
+  "candidate": "local:geospatial:nearest-substation",
+  "name": "@ventus-internal/vedic-nearest",
+  "version": "0.1.0",
+  "runtime": "node-esm-18",
+  "family": "nearest-substation",
+  "edition": "0ee52af60036f32358759a67836578dce6d7da51",
+  "identity_tier": "GIT_SOURCE_VERIFIED_STARS_INCOMPLETE",
+  "licence": "BLOCKED_PRIVATE_UNLICENSED",
+  "exports": [
+    "nearestSubstation"
+  ],
+  "ports": {
+    "input": {
+      "crs": "EPSG:4326 only",
+      "query": "named longitude/latitude in decimal degrees",
+      "records": "array of unique id/name/location named coordinates/voltages_kv numeric positive kV; [] means unknown",
+      "minimumKv": "optional inclusive nonnegative kV threshold, default 0"
+    },
+    "output": {
+      "id": "selected original string ID or null result",
+      "distance_km": "spherical distance km, radius 6378.137; null result if no eligible record"
+    }
+  },
+  "dependencies": [],
+  "inputs": [
+    {
+      "role": "module",
+      "filename": "v9-nearest-search.js",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/v9-nearest-search.js",
+      "algorithm": "git-blob-sha1",
+      "digest": "d2ab3b111eb09f7af3df3a9fce9ad0a9dc1dea99",
+      "output": "v9-nearest-search.js"
+    },
+    {
+      "role": "local_dependency",
+      "filename": "v9-geodesy.js",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "engine/v9-geodesy.js",
+      "algorithm": "git-blob-sha1",
+      "digest": "14023f06d4ef2ea806437863bd35dee954c46b11",
+      "output": "v9-geodesy.js"
+    },
+    {
+      "role": "receipt",
+      "filename": "receipt.json",
+      "repo": "Ventusltd/vedic-",
+      "commit": "7e81854d840abe40e97ba1567f54fc28594ea9a7",
+      "path": "packages/nearest-candidate/provisional-source-selection.json",
+      "algorithm": "git-blob-sha1",
+      "digest": "1f93257de637d51f2f40eafbeb48fd101d6ff391",
+      "output": "source-receipt.json"
+    },
+    {
+      "role": "licence",
+      "filename": "LICENSE",
+      "repo": "Ventusltd/ventus-grid-engine",
+      "commit": "487ec7bd38dfa5aecb1c75da53b4a866ab2101cb",
+      "path": "LICENSE",
+      "algorithm": "git-blob-sha1",
+      "digest": "d645695673349e3947e8e5ae42332d0ac3164cd7",
+      "output": "UPSTREAM-LICENSE"
+    },
+    {
+      "role": "adapter",
+      "filename": "adapter.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "7e81854d840abe40e97ba1567f54fc28594ea9a7",
+      "path": "packages/nearest-candidate/index.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "4f31929dab709d22eea053c474616f72ee4f4153",
+      "output": null
+    },
+    {
+      "role": "consumer_test",
+      "filename": "consumer.test.mjs",
+      "repo": "Ventusltd/vedic-",
+      "commit": "7e81854d840abe40e97ba1567f54fc28594ea9a7",
+      "path": "packages/nearest-candidate/consumer.test.mjs",
+      "algorithm": "git-blob-sha1",
+      "digest": "83e6b2df37537c1ee3d731172d346e634828e8af",
+      "output": null
+    },
+    {
+      "role": "fixture",
+      "filename": "fixture.json",
+      "repo": "Ventusltd/vedic-",
+      "commit": "7e81854d840abe40e97ba1567f54fc28594ea9a7",
+      "path": "packages/nearest-candidate/consumer-fixture.json",
+      "algorithm": "git-blob-sha1",
+      "digest": "ad27fb91e939b953dcd78f7cbf537d54ec17dcc7",
+      "output": null
+    }
+  ],
+  "evidence": [
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846716940",
+    "https://github.com/Ventusltd/vedic-/actions/runs/45846716940/artifacts/15131688147",
+    "https://github.com/Ventusltd/vedic-/blob/7e81854d840abe40e97ba1567f54fc28594ea9a7/packages/nearest-candidate/provisional-source-selection.json"
+  ],
+  "obligations": [
+    "replace provisional receipt with TACIT10 exact source receipt for both module occurrences before admission",
+    "TACIT13 graph closure confirmation",
+    "TACIT9 independent package acceptance",
+    "licence clearance",
+    "TACIT1b reviewed nearest-substation handler and allowlist entry; flat local ESM dependency"
+  ],
+  "build": "reviewed-family-adapter-v1"
+}
