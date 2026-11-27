@@ -14,6 +14,89 @@ from stage_pages import FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE
 
 ROOT = Path(__file__).resolve().parents[1]
 
+def audit_all_code_rows(page, entries, expected_links):
+    """Exercise every lazy-loaded source control, not just sample rows."""
+    for entry in entries:
+        identity = entry["gg_id"]
+        page.locator("#dictSearch").fill(identity)
+        row = page.locator("#dictRows tr")
+        assert row.count() == 1, identity
+        assert row.locator("td").first.inner_text() == entry["word"], identity
+        button = row.locator(".code-cell button")
+        if button.count():
+            button.click()
+        try:
+            row.locator("a.code-source").first.wait_for(timeout=8000)
+        except Exception as exc:
+            raise AssertionError(f"{identity} {entry['word']}: {row.inner_text()}") from exc
+        selectors = ['a.code-source', 'a[href^="https://raw.githubusercontent.com/"]',
+                     'a[href^="https://ventusltd.github.io/stars/code.html"]',
+                     'a[href^="https://ventusltd.github.io/kuiper-belt/"]']
+        actual = [row.locator(".code-cell").locator(sel).evaluate_all(
+            "(links) => links.map(link => link.href)") for sel in selectors]
+        assert actual == expected_links(entry), (identity, actual, expected_links(entry))
+        assert not row.get_by_text("Command details unavailable", exact=False).count(), identity
+    print(f"PASS all {len(entries)} command code controls and source targets", flush=True)
+
+
+def audit_live():
+    """Read-only audit of the deployed website, independent of the checkout."""
+    url = "https://ventusltd.github.io/vedic-/"
+    with sync_playwright() as p:
+        for engine in (p.chromium, p.webkit):
+            browser = engine.launch(headless=True)
+            try:
+                page = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True,
+                                        has_touch=True, device_scale_factor=3)
+                errors, failed = [], []
+                page.on("pageerror", lambda err: errors.append(str(err)))
+                page.on("response", lambda response: failed.append((response.status, response.url))
+                        if response.url.startswith(url) and response.status >= 400 else None)
+                page.on("requestfailed", lambda req: failed.append((req.failure, req.url))
+                        if req.url.startswith(url) else None)
+                page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                def live_json(path):
+                    response = page.request.get(url + path, headers={"Cache-Control": "no-cache"}, timeout=30000)
+                    assert response.ok, (path, response.status)
+                    return response.json()
+                release = live_json("release.json")
+                entries = live_json("data/dictionary.json")["entries"]
+                translations = {r["id"]: r for r in live_json("data/translation-geodesy.json")["records"]}
+                identities = {e["gg_id"]: e for e in entries}
+                def sources(entry, seen=None):
+                    if seen is None:
+                        seen = set()
+                    if entry["gg_id"] in seen:
+                        return []
+                    seen.add(entry["gg_id"])
+                    src = translations.get(entry.get("translation_ref"), {}).get("source") or entry.get("source")
+                    if src:
+                        return [src]
+                    return [s for identity in entry.get("components", []) for s in sources(identities[identity], seen)]
+                def expected(entry):
+                    ss = sources(entry)
+                    return [
+                        ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in ss],
+                        ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in ss],
+                        ["https://ventusltd.github.io/stars/code.html" for s in ss],
+                        ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
+                    ]
+                assert release["row_count"] == len(entries), release
+                print(f"LIVE {engine.name}: {release['source_commit']} / {len(entries)} commands", flush=True)
+                audit_all_code_rows(page, entries, expected)
+                assert not errors, errors
+                assert not failed, failed
+                page.reload(wait_until="domcontentloaded", timeout=45000)
+                page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                audit_all_code_rows(page, entries[:3], expected)
+                assert not errors, errors
+                assert not failed, failed
+                page.close()
+            finally:
+                browser.close()
+
+
 def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
     data_root = root / base_path
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
@@ -108,12 +191,11 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         wait_dictionary()
                         assert page.locator("#dictRows tr").count() == 1
                         if paged:
-                            code_button = page.locator("#dictRows .code-cell button")
-                            code_button.focus()
-                            code_button.press("Enter")
                             code_link = page.locator("#dictRows .code-cell a.code-source").first
                             code_link.wait_for()
+                            code_link.focus()
                             assert code_link.evaluate("(element) => element === document.activeElement")
+                            assert not any("/data/command-pages/" in x for x in requests)
                         assert page.locator("#dictRows .code-cell a.code-source").count() == 2
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
@@ -132,10 +214,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             assert len(rows) == min(100, len(entries) - 100*i)
                             for identity, href, links in rows:
                                 assert expected.pop(identity) == href
-                                if paged:
-                                    assert all(not group for group in links), (identity, links)
-                                else:
-                                    assert links == expected_links(identities[identity]), (identity, links)
+                                assert links == expected_links(identities[identity]), (identity, links)
                             if i+1 < expected_pages:
                                 page.locator("#dictNext").click()
                                 wait_dictionary()
@@ -197,10 +276,10 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             if paged:
                                 before = [request for request in requests if "/data/command-pages/" in request]
                                 row = page.locator("#dictRows tr").first
-                                assert not row.locator("a.code-source").count()
-                                row.locator(".code-cell button").click()
                                 row.locator(".code-cell a.code-source").first.wait_for()
-                                assert row.get_by_text("How to see it:", exact=False).count() == 1
+                                assert row.locator(".code-cell button").count() == 0
+                                row.locator("td:nth-child(4) summary").click()
+                                row.get_by_text("How to see it:", exact=False).wait_for()
                                 assert row.locator("a.code-source").evaluate_all("(links) => links.map(link => link.href)") == expected_links(last)[0]
                                 after = [request for request in requests if "/data/command-pages/" in request]
                                 assert len(after) >= len(before)
@@ -210,11 +289,15 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                                     page.locator("#dictSearch").fill(second["gg_id"])
                                     wait_dictionary()
                                     assert page.locator("#dictRows tr").count() == 1
-                                    page.locator("#dictRows .code-cell button").click()
                                     page.locator("#dictRows .code-cell a.code-source").first.wait_for()
+                                    page.locator("#dictRows td:nth-child(4) summary").click()
+                                    page.locator("#dictRows").get_by_text("How to see it:", exact=False).wait_for()
                                     assert any("/"+second["page"] in request for request in requests)
                             assert not page.locator("#dictRows img").count()
                             assert all("fixture-should-never-request" not in url for url in requests)
+                        if paged and not catalogue:
+                            page.locator("#dictClear").click()
+                            audit_all_code_rows(page, entries, expected_links)
                         assert not errors, errors
                         page.close()
                         passed += 1
@@ -229,3 +312,4 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
 
 if __name__ == "__main__":
     main()
+    audit_live()

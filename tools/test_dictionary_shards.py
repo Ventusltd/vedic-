@@ -19,6 +19,11 @@ class ShardsTests(unittest.TestCase):
         self.assertEqual({e["gg_id"] for e in rows},{e["gg_id"] for e in d["entries"]})
         self.assertTrue(all("source" not in e and "application" not in e for e in idx["entries"]))
         self.assertTrue(any("Measure and calculate" in e["patterns"] for e in idx["entries"]))
+        self.assertTrue(all(e["code_sources"] for e in idx["entries"]))
+        self.assertEqual(len(next(e for e in idx["entries"] if e["word"]=="ORIENT")["code_sources"]),2)
+        for entry in idx["entries"]:
+            for record in entry["code_sources"]:
+                self.assertEqual(set(record["source"]),{"repo","commit","path","first","last"})
     def test_101_rows(self):
         d=json.loads((ROOT/"data/dictionary.json").read_bytes())
         t=json.loads((ROOT/"data/translation-geodesy.json").read_bytes())

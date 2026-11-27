@@ -20,7 +20,7 @@ function loadPage(path){
   if(!/^data\/command-pages\/\d{6}\.json$/.test(path))throw Error("Invalid command page");
   if(!loadedPages.has(path)){
     const pending=(async()=>{
-      const response=await fetch("./"+path);
+      const response=await fetch("./"+path,{cache:"no-cache"});
       if(!response.ok)throw Error("Command page unavailable");
       const page=await response.json();
       if(page.schema!=="vedic.command-page.v1"||!Array.isArray(page.entries)||page.entries.length>pageSize)throw Error("Invalid command page");
@@ -58,7 +58,7 @@ function codeSources(entry,records,details,seen=new Set()){
   });
 }
 function codeCell(entry,records,details){
-  const cell=el('td',undefined,'code-cell'),sources=codeSources(entry,records,details);
+  const cell=el('td',undefined,'code-cell'),sources=entry.code_sources??codeSources(entry,records,details);
   if(!sources.length){cell.append(el('span','Not mapped','muted'));return cell;}
   const reuse=el('details'),summary=el('summary','Reuse / dependencies');
   reuse.append(summary);
@@ -82,7 +82,12 @@ function drawCommandRow(summary,records){
   const evidence=el('button','View code');
   evidence.type='button';
   evidence.onclick=()=>{detail.open=true;load();};
-  code.append(evidence);
+  // Source links are available from the initial index; only prose is lazy-loaded.
+  if(Array.isArray(summary.code_sources)){
+    code.append(...codeCell(summary,records,new Map()).childNodes);
+  }else{
+    code.append(evidence); // Compatibility with an older cached index.
+  }
   let loading=false,loaded=false;
   async function load(){
     if(loading||loaded)return;
@@ -122,10 +127,12 @@ function drawCommandRow(summary,records){
         }
         detail.append(list);
       }
-      const sourceCell=codeCell(row,records,details);
-      const returnFocus=document.activeElement===evidence;
-      code.replaceChildren(...sourceCell.childNodes);
-      if(returnFocus)(code.querySelector('a.code-source')||detail.querySelector('summary')).focus();
+      if(!Array.isArray(summary.code_sources)){
+        const sourceCell=codeCell(row,records,details);
+        const returnFocus=document.activeElement===evidence;
+        code.replaceChildren(...sourceCell.childNodes);
+        if(returnFocus)(code.querySelector('a.code-source')||detail.querySelector('summary')).focus();
+      }
       loaded=true;
     }catch(error){
       status.textContent='Command details unavailable: '+error.message;
@@ -153,7 +160,7 @@ function drawDictionary(){
   root.append(...rows.slice(dictPage*pageSize,(dictPage+1)*pageSize).map(row=>drawCommandRow(row,records)));
   root.setAttribute('aria-busy','false');
 }
-async function initDictionary(){try{const r=await fetch('./data/command-index.json');if(!r.ok)throw Error('Dictionary unavailable');dictionary=await r.json();if(dictionary.schema!=='vedic.command-index.v1'||dictionary.count!==dictionary.entries.length||dictionary.page_size!==pageSize)throw Error('Unsupported dictionary schema');indexById=new Map(dictionary.entries.map(e=>[e.gg_id,e]));for(const [id,key] of [['estateFilter','estate_group'],['disciplineFilter','discipline'],['classFilter','vedic_class_candidate']]){for(const value of [...new Set(dictionary.entries.map(e=>e[key]))].sort()){const opt=el('option',value);opt.value=value;$(id).append(opt)}}for(const p of [...new Set(dictionary.entries.flatMap(e=>e.patterns))].sort()){const opt=el('option',p);opt.value=p;$('patternFilter').append(opt)}for(const [name,url] of Object.entries(dictionary.resources))$('dictResources').append(link(name.replaceAll('_',' '),url));for(const id of ['dictSearch','estateFilter','disciplineFilter','classFilter','patternFilter','dictSort'])$(id).addEventListener(id==='dictSearch'?'input':'change',()=>{dictPage=0;drawDictionary()});$('dictClear').onclick=()=>{for(const id of ['dictSearch','estateFilter','disciplineFilter','classFilter','patternFilter'])$(id).value='';$('dictSort').value='word';dictPage=0;drawDictionary()};$('dictPrev').onclick=()=>{dictPage--;drawDictionary()};$('dictNext').onclick=()=>{dictPage++;drawDictionary()};for(const b of document.querySelectorAll('[data-dsort]'))b.onclick=()=>{$('dictSort').value=b.dataset.dsort==='word'&&$('dictSort').value==='word'?'word_desc':b.dataset.dsort;dictPage=0;drawDictionary()};drawDictionary()}catch(e){$('dictStatus').textContent='Dictionary unavailable: '+e.message}}
+async function initDictionary(){try{const r=await fetch('./data/command-index.json',{cache:'no-cache'});if(!r.ok)throw Error('Dictionary unavailable');dictionary=await r.json();if(dictionary.schema!=='vedic.command-index.v1'||dictionary.count!==dictionary.entries.length||dictionary.page_size!==pageSize)throw Error('Unsupported dictionary schema');indexById=new Map(dictionary.entries.map(e=>[e.gg_id,e]));for(const [id,key] of [['estateFilter','estate_group'],['disciplineFilter','discipline'],['classFilter','vedic_class_candidate']]){for(const value of [...new Set(dictionary.entries.map(e=>e[key]))].sort()){const opt=el('option',value);opt.value=value;$(id).append(opt)}}for(const p of [...new Set(dictionary.entries.flatMap(e=>e.patterns))].sort()){const opt=el('option',p);opt.value=p;$('patternFilter').append(opt)}for(const [name,url] of Object.entries(dictionary.resources))$('dictResources').append(link(name.replaceAll('_',' '),url));for(const id of ['dictSearch','estateFilter','disciplineFilter','classFilter','patternFilter','dictSort'])$(id).addEventListener(id==='dictSearch'?'input':'change',()=>{dictPage=0;drawDictionary()});$('dictClear').onclick=()=>{for(const id of ['dictSearch','estateFilter','disciplineFilter','classFilter','patternFilter'])$(id).value='';$('dictSort').value='word';dictPage=0;drawDictionary()};$('dictPrev').onclick=()=>{dictPage--;drawDictionary()};$('dictNext').onclick=()=>{dictPage++;drawDictionary()};for(const b of document.querySelectorAll('[data-dsort]'))b.onclick=()=>{$('dictSort').value=b.dataset.dsort==='word'&&$('dictSort').value==='word'?'word_desc':b.dataset.dsort;dictPage=0;drawDictionary()};drawDictionary()}catch(e){$('dictStatus').textContent='Dictionary unavailable: '+e.message}}
 function drawApps(){ $('apps').replaceChildren();for(const a of data.apps){const b=el('button',a.name);b.type='button';b.setAttribute('aria-pressed',String(a===app));b.onclick=()=>{app=a;selected=a.capabilities[0]||null;$('search').value='';drawApps();drawCaps();drawDetail()};$('apps').append(b)}}
 function drawCaps(){const q=$('search').value.trim().toLowerCase();const list=app.capabilities.filter(c=>(c.name+' '+c.purpose).toLowerCase().includes(q));$('capabilities').replaceChildren();if(!list.length)$('capabilities').append(el('p',app.capabilities.length?'No matching capabilities.':'Not mapped yet. No capability or completeness claim.','muted'));for(const c of list){const b=el('button',c.name,'cap');b.type='button';b.setAttribute('aria-pressed',String(c===selected));b.onclick=()=>{selected=c;drawCaps();drawDetail()};$('capabilities').append(b)}}
 function drawTranslation(root){if(!translation||app.id!==translation.app||selected.id!==translation.capability)return;const section=el('section',undefined,'card');section.append(el('h2','03 / VEDIC functional language'),el('p',translation.relationship,'notice muted'));for(const t of translation.records){const card=el('article',undefined,'card');card.append(el('h3',t.purpose),el('p','STATIC SOURCE REVIEW · runtime use not proven','state'));for(const [label,value] of [['Input',t.inputs],['Output',t.outputs],['Limit',t.limits],['Periodic Table candidate',t.block_candidate]]){const p=el('p');p.append(el('strong',label+': '),document.createTextNode(value));card.append(p)}const s=t.source;card.append(link(t.name+' · source L'+s.first+'–'+s.last,'https://github.com/'+s.repo+'/blob/'+s.commit+'/'+s.path+'#L'+s.first+'-L'+s.last),el('p','Family / unique line IDs and execution proof: not measured.','muted'));section.append(card)}section.append(link('Translation evidence receipt',translation.receipt));root.append(section)}
