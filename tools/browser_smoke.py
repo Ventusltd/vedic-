@@ -127,54 +127,60 @@ def audit_live(*, expected_identity):
         for engine in (p.chromium, p.webkit):
             browser = engine.launch(headless=True)
             try:
-                page = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True,
-                                        has_touch=True, device_scale_factor=3)
-                errors, failed = [], []
-                page.on("pageerror", lambda err: errors.append(str(err)))
-                page.on("response", lambda response: failed.append((response.status, response.url))
-                        if response.url.startswith(url) and response.status >= 400 else None)
-                page.on("requestfailed", lambda req: failed.append((req.failure, req.url))
-                        if req.url.startswith(url) else None)
-                page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                page.locator("#dictRows tr").first.wait_for(timeout=30000)
-                def live_json(path):
-                    response = page.request.get(url + path, headers={"Cache-Control": "no-cache"}, timeout=30000)
-                    assert response.ok, (path, response.status)
-                    return response.json()
-                release = live_json("release.json")
-                entries = live_json("data/dictionary.json")["entries"]
-                translations = {r["id"]: r for r in live_json("data/translation-geodesy.json")["records"]}
-                identities = {e["gg_id"]: e for e in entries}
-                def sources(entry, seen=None):
-                    if seen is None:
-                        seen = set()
-                    if entry["gg_id"] in seen:
-                        return []
-                    seen.add(entry["gg_id"])
-                    src = translations.get(entry.get("translation_ref"), {}).get("source") or entry.get("source")
-                    if src:
-                        return [src]
-                    return [s for identity in entry.get("components", []) for s in sources(identities[identity], seen)]
-                def expected(entry):
-                    ss = sources(entry)
-                    return [
-                        ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in ss],
-                        ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in ss],
-                        ["https://ventusltd.github.io/stars/code.html" for s in ss],
-                        ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
-                    ]
-                assert release["source_commit"] == expected_identity, (expected_identity, release)
-                assert release["row_count"] == len(entries), release
-                print(f"LIVE {engine.name}: {release['source_commit']} / {len(entries)} commands", flush=True)
-                audit_all_code_rows(page, entries, expected)
-                assert not errors, errors
-                assert not failed, failed
-                page.reload(wait_until="domcontentloaded", timeout=45000)
-                page.locator("#dictRows tr").first.wait_for(timeout=30000)
-                audit_all_code_rows(page, entries[:3], expected)
-                assert not errors, errors
-                assert not failed, failed
-                page.close()
+                for width, height in ((1280, 800), (390, 844), (844, 390)):
+                    mobile = min(width, height) <= 390
+                    page = browser.new_page(viewport={"width": width, "height": height},
+                                            is_mobile=mobile, has_touch=mobile,
+                                            device_scale_factor=3 if mobile else 1)
+                    errors, failed = [], []
+                    page.on("pageerror", lambda err: errors.append(str(err)))
+                    page.on("response", lambda response: failed.append((response.status, response.url))
+                            if response.url.startswith(url) and response.status >= 400 else None)
+                    page.on("requestfailed", lambda req: failed.append((req.failure, req.url))
+                            if req.url.startswith(url) else None)
+                    page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                    def live_json(path):
+                        response = page.request.get(url + path, headers={"Cache-Control": "no-cache"}, timeout=30000)
+                        assert response.ok, (path, response.status)
+                        return response.json()
+                    release = live_json("release.json")
+                    entries = live_json("data/dictionary.json")["entries"]
+                    translations = {r["id"]: r for r in live_json("data/translation-geodesy.json")["records"]}
+                    identities = {e["gg_id"]: e for e in entries}
+                    def sources(entry, seen=None):
+                        if seen is None:
+                            seen = set()
+                        if entry["gg_id"] in seen:
+                            return []
+                        seen.add(entry["gg_id"])
+                        src = translations.get(entry.get("translation_ref"), {}).get("source") or entry.get("source")
+                        if src:
+                            return [src]
+                        return [s for identity in entry.get("components", []) for s in sources(identities[identity], seen)]
+                    def expected(entry):
+                        ss = sources(entry)
+                        return [
+                            ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in ss],
+                            ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in ss],
+                            ["https://ventusltd.github.io/stars/code.html" for s in ss],
+                            ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
+                        ]
+                    assert release["source_commit"] == expected_identity, (expected_identity, release)
+                    assert release["row_count"] == len(entries), release
+                    print(f"LIVE {engine.name} {width}x{height}: {release['source_commit']} / {len(entries)} commands", flush=True)
+                    audit_all_code_rows(page, entries, expected, actionability=True)
+                    assert not errors, errors
+                    assert not failed, failed
+                    page.reload(wait_until="domcontentloaded", timeout=45000)
+                    page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                    audit_all_code_rows(page, entries[:3], expected)
+                    assert not errors, errors
+                    assert not failed, failed
+                    audit_navigation(page, url, entries, expected, mobile=mobile)
+                    assert not errors, errors
+                    assert not failed, failed
+                    page.close()
             finally:
                 browser.close()
 
