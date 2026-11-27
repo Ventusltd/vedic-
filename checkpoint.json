@@ -1,0 +1,168 @@
+{
+  "schema": "vedic.daily-state.v1",
+  "source_commit": "7f73db3d896bd49f5d35d4017fc9b33b19e98f0d",
+  "run_id": 46003928731,
+  "family": {
+    "schema": "vedic.daily-family-pulse.v2",
+    "producer_asset": {
+      "id": 799958843,
+      "size": 3725784,
+      "digest": "sha256:e8f9e631f3e4af870bdaa40af5260870bd3221421f237e8f2960e6c28270b2ed",
+      "updated_at": "2026-11-27T10:08:47Z"
+    },
+    "producer_family_count": 33508,
+    "current_placement_family_count": 27409,
+    "scanned_families": 100,
+    "previous_cursor": 0,
+    "next_cursor": 100,
+    "cursor_family_hash": "12b01b9b0b28999b3ec66458c2ef534a711d1d38236cdc12abff03cc86ef9b93",
+    "status": "research_candidates",
+    "dictionary_count": 94,
+    "proposed_dictionary_count": 94,
+    "proposed_additions": [],
+    "held": [
+      {
+        "word": "CHECK FIRM CAPACITY",
+        "reason": "existing word, symbol, sense or family; reconcile, do not duplicate"
+      }
+    ],
+    "execution_claim": false,
+    "coverage": "permanent family IDs; placement metadata where present"
+  },
+  "accelerator": {
+    "schema": "vedic.daily-accelerator.v1",
+    "database_sha256": "422621eb325abed4e1ceb373b80a110886f1616d5f2a184040d7ecff86059c0b",
+    "method_sha256": "ddb6ebb8b39e2740f4dcf1d8fe35455441ca95d17b0d37682ae2da8483c4d77e",
+    "completed_rounds": 1,
+    "probe_coverage": {
+      "MEASURE GEODESIC DISTANCE": {
+        "tested": 16,
+        "total": 75
+      },
+      "FIND INITIAL BEARING": {
+        "tested": 16,
+        "total": 24
+      },
+      "CHECK GRID CAPACITY": {
+        "tested": 16,
+        "total": 75
+      },
+      "SIZE ENERGY STORAGE": {
+        "tested": 16,
+        "total": 147
+      },
+      "CALCULATE ELECTRICAL POWER": {
+        "tested": 16,
+        "total": 140
+      },
+      "ESTIMATE ELECTRICAL LOSSES": {
+        "tested": 16,
+        "total": 84
+      },
+      "CONVERT MAP COORDINATES": {
+        "tested": 16,
+        "total": 112
+      },
+      "DRAW MAP FEATURES": {
+        "tested": 16,
+        "total": 140
+      },
+      "FIND PROJECT LOCATIONS": {
+        "tested": 16,
+        "total": 75
+      },
+      "FILTER PROJECT REGISTER": {
+        "tested": 16,
+        "total": 105
+      },
+      "BUILD PROJECT MAP LINKS": {
+        "tested": 16,
+        "total": 105
+      },
+      "LOAD COLUMNAR DATA": {
+        "tested": 16,
+        "total": 90
+      },
+      "VALIDATE SECTOR DATA": {
+        "tested": 16,
+        "total": 105
+      },
+      "VERIFY SOURCE IDENTITY": {
+        "tested": 16,
+        "total": 180
+      },
+      "BUILD RELEASE MANIFESTS": {
+        "tested": 16,
+        "total": 126
+      },
+      "TRACK SOURCE PROVENANCE": {
+        "tested": 16,
+        "total": 105
+      },
+      "SCHEDULE RETRY REQUESTS": {
+        "tested": 16,
+        "total": 126
+      },
+      "FILTER AND RANK RECORDS": {
+        "tested": 16,
+        "total": 168
+      },
+      "AGGREGATE DATA RECORDS": {
+        "tested": 16,
+        "total": 147
+      },
+      "PARSE STRUCTURED DOCUMENTS": {
+        "tested": 16,
+        "total": 180
+      },
+      "CONTROL MAP VIEW": {
+        "tested": 16,
+        "total": 196
+      },
+      "RENDER USER INTERFACE": {
+        "tested": 16,
+        "total": 180
+      },
+      "UPDATE APPLICATION STATE": {
+        "tested": 16,
+        "total": 126
+      },
+      "CHECK SOFTWARE BEHAVIOUR": {
+        "tested": 16,
+        "total": 105
+      },
+      "START APPLICATION": {
+        "tested": 16,
+        "total": 360
+      },
+      "BUILD INTERFACE LAYOUT": {
+        "tested": 16,
+        "total": 315
+      },
+      "WRITE RESEARCH REPORTS": {
+        "tested": 16,
+        "total": 196
+      },
+      "READ REMOTE DATA": {
+        "tested": 16,
+        "total": 168
+      },
+      "RENDER MAP OVERLAYS": {
+        "tested": 16,
+        "total": 168
+      },
+      "CREATE ELECTRICAL CIRCUITS": {
+        "tested": 16,
+        "total": 168
+      },
+      "MANAGE LOCAL FILES": {
+        "tested": 16,
+        "total": 196
+      },
+      "MATCH DATA IDENTIFIERS": {
+        "tested": 16,
+        "total": 196
+      }
+    }
+  }
+}
