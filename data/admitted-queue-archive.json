@@ -734,6 +734,42 @@
           "contract_sha256": "3120c2738591d95ed0c9aa32072194df74c900d4957b2bc56657c3f5caf295a4"
         }
       }
+    },
+    {
+      "manifest_commit": "7f879463aae53a5666b03fe17dd874c8b8fcc5ec",
+      "index": 23,
+      "candidate_id": "89647524572983b513b11f5af6f218d53fcec1102143c4a874d0394160849b23",
+      "candidate": {
+        "word": "ESTIMATE SOLAR LOOP AREA",
+        "purpose": "Estimate weighted DC conductor loop area for one solar string from declared segment geometry.",
+        "inputs": [
+          "Solar string segment rows with a single run, topology and string and contiguous segment indexes from one",
+          "Conductor length in metres, pole separation in millimetres and a dimensionless participation weight per segment"
+        ],
+        "output": "Deterministic geometry receipt with loop area in square metres, per-segment contributions, route lengths, paired-route fraction and warnings.",
+        "limits": "Engineering screening approximation. Supply finite, nonnegative lengths and separations. The estimate uses declared geometry and weights and warns about missing separation on participating segments and assumed or defaulted geometry.",
+        "symbol": "calculate_geometry_receipt",
+        "source": {
+          "repo": "Ventusltd/solar-electrical-topology-analysis-engine-text-based",
+          "commit": "d3b4c497144c2c9b3e8f0e82117e7e9abe4672b9",
+          "blob": "e3014bc950722a78e91810e97610b05326e94531",
+          "path": "src/solar_topology/geometry_receipts.py",
+          "first": 50,
+          "last": 122
+        },
+        "estate_group": "Solar Electrical Topology",
+        "discipline": "Solar electrical design",
+        "periodic_category": "conductor geometry",
+        "vedic_class_candidate": "Computation",
+        "aliases": [],
+        "receipt": "https://github.com/Ventusltd/solar-electrical-topology-analysis-engine-text-based/blob/d3b4c497144c2c9b3e8f0e82117e7e9abe4672b9/src/solar_topology/geometry_receipts.py#L50-L122",
+        "policy_receipt": {
+          "schema": "vedic.static-policy-receipt.v1",
+          "policy": "vedic.static-source.v1",
+          "source_sha256": "1d02e26d3d749df48b4488f1894a687767584a8baf9b0ed371a3497e725e54ca",
+          "contract_sha256": "421b5cd986a436ac534775beac760fa06b0cbce7b61249cf0be09ead46ad951a"
+        }
+      }
     }
   ]
 }
