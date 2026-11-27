@@ -191,12 +191,11 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         wait_dictionary()
                         assert page.locator("#dictRows tr").count() == 1
                         if paged:
-                            code_button = page.locator("#dictRows .code-cell button")
-                            code_button.focus()
-                            code_button.press("Enter")
                             code_link = page.locator("#dictRows .code-cell a.code-source").first
                             code_link.wait_for()
+                            code_link.focus()
                             assert code_link.evaluate("(element) => element === document.activeElement")
+                            assert not any("/data/command-pages/" in x for x in requests)
                         assert page.locator("#dictRows .code-cell a.code-source").count() == 2
                         assert "2026-11-26T01:35:15Z" in page.locator("#dictRows").inner_text()
                         page.get_by_role("button",name="CLEAR FILTERS").click()
@@ -215,10 +214,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             assert len(rows) == min(100, len(entries) - 100*i)
                             for identity, href, links in rows:
                                 assert expected.pop(identity) == href
-                                if paged:
-                                    assert all(not group for group in links), (identity, links)
-                                else:
-                                    assert links == expected_links(identities[identity]), (identity, links)
+                                assert links == expected_links(identities[identity]), (identity, links)
                             if i+1 < expected_pages:
                                 page.locator("#dictNext").click()
                                 wait_dictionary()
@@ -280,10 +276,10 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             if paged:
                                 before = [request for request in requests if "/data/command-pages/" in request]
                                 row = page.locator("#dictRows tr").first
-                                assert not row.locator("a.code-source").count()
-                                row.locator(".code-cell button").click()
                                 row.locator(".code-cell a.code-source").first.wait_for()
-                                assert row.get_by_text("How to see it:", exact=False).count() == 1
+                                assert row.locator(".code-cell button").count() == 0
+                                row.locator("td:nth-child(4) summary").click()
+                                row.get_by_text("How to see it:", exact=False).wait_for()
                                 assert row.locator("a.code-source").evaluate_all("(links) => links.map(link => link.href)") == expected_links(last)[0]
                                 after = [request for request in requests if "/data/command-pages/" in request]
                                 assert len(after) >= len(before)
@@ -293,8 +289,9 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                                     page.locator("#dictSearch").fill(second["gg_id"])
                                     wait_dictionary()
                                     assert page.locator("#dictRows tr").count() == 1
-                                    page.locator("#dictRows .code-cell button").click()
                                     page.locator("#dictRows .code-cell a.code-source").first.wait_for()
+                                    page.locator("#dictRows td:nth-child(4) summary").click()
+                                    page.locator("#dictRows").get_by_text("How to see it:", exact=False).wait_for()
                                     assert any("/"+second["page"] in request for request in requests)
                             assert not page.locator("#dictRows img").count()
                             assert all("fixture-should-never-request" not in url for url in requests)

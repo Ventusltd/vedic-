@@ -24,7 +24,23 @@ def encode(value):
     return (json.dumps(value,ensure_ascii=False,separators=(",",":"))+"\n").encode()
 
 def build(d,t):
-    meanings={r["id"]:r.get("purpose","") for r in t["records"]}
+    translations={r["id"]:r for r in t["records"]}
+    meanings={key:r.get("purpose","") for key,r in translations.items()}
+    identities={e["gg_id"]:e for e in d["entries"]}
+
+    def code_sources(entry, seen=None):
+        if seen is None:
+            seen=set()
+        identity=entry["gg_id"]
+        if identity in seen:
+            return []
+        seen.add(identity)
+        tr=translations.get(entry.get("translation_ref"),{})
+        src=tr.get("source") or entry.get("source")
+        if src:
+            symbol=tr.get("name") or (entry.get("translation_ref") or "").rsplit(":",1)[-1] or entry["word"]
+            return [{"symbol":symbol,"source":{k:src[k] for k in ("repo","commit","path","first","last")}}]
+        return [s for cid in entry.get("components",[]) for s in code_sources(identities[cid],seen)]
     rows=sorted(d["entries"],key=lambda e:(e["word"].casefold(),e["number"]))
     result, index = {}, []
     for start in range(0,len(rows),SIZE):
@@ -42,7 +58,7 @@ def build(d,t):
             row={k:e[k] for k in ("gg_id","number","word","estate_group","discipline","vedic_class_candidate","created_utc")}
             app=e.get("application") or {}
             row.update(purpose=purpose, launch=[app["name"],app["url"]] if app else None,
-                       priority=e.get("priority",9),page=path,components=e.get("components",[]),patterns=patterns,
+                       priority=e.get("priority",9),page=path,components=e.get("components",[]),patterns=patterns,code_sources=code_sources(e),
                        search=tokens(" ".join([e["word"],e["gg_id"],purpose,e["estate_group"],e["discipline"],
                              e["vedic_class_candidate"],symbol,*aliases,*patterns,
                              *("family "+str(n) for n in e.get("modular_family_refs",[]))])))
