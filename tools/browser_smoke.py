@@ -14,7 +14,7 @@ from stage_pages import FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def audit_all_code_rows(page, entries, expected_links, *, require_direct=True):
+def audit_all_code_rows(page, entries, expected_links, *, require_direct=True, actionability=False):
     """Check every pinned source anchor, without requiring detail expansion."""
     for entry in entries:
         identity = entry["gg_id"]
@@ -37,14 +37,59 @@ def audit_all_code_rows(page, entries, expected_links, *, require_direct=True):
         actual = [row.locator(".code-cell").locator(sel).evaluate_all(
             "(links) => links.map(link => link.href)") for sel in selectors]
         assert actual == expected_links(entry), (identity, actual, expected_links(entry))
+        if actionability:
+            # Trial performs real browser hit-testing, scrolling and actionability checks without leaving the page.
+            for anchor in row.locator("a.code-source").all():
+                anchor.click(trial=True, timeout=5000)
         assert not row.get_by_text("Command details unavailable", exact=False).count(), identity
     print(f"PASS all {len(entries)} command code controls and source targets", flush=True)
+
+
+def audit_navigation(page, url, entries, expected_links, *, mobile=False):
+    """Activate representative links using real browser input and a bounded intercepted destination.
+
+    The external GitHub source bytes are independently verified by online provenance tests.
+    This fixture proves the browser initiates navigation to the exact URL/line anchor; it
+    does not claim that GitHub's external UI rendered or that all possible tap positions work.
+    """
+    cases = {entry["gg_id"]: entry for entry in (entries[0], entries[-1])}
+    cases.update({entry["gg_id"]: entry for entry in entries if entry["word"] == "ORIENT"})
+    visited = []
+    def destination(route):
+        assert route.request.is_navigation_request()
+        visited.append(route.request.url.split("#", 1)[0])
+        route.fulfill(status=200, content_type="text/html", body="<title>Source navigation fixture</title>")
+    page.route("https://github.com/Ventusltd/**", destination)
+    checked = 0
+    try:
+        for entry in cases.values():
+            for i, target in enumerate(expected_links(entry)[0]):
+                page.goto(url, wait_until="domcontentloaded")
+                page.locator("#dictRows tr").first.wait_for()
+                page.locator("#dictSearch").fill(entry["gg_id"])
+                anchor = page.locator("#dictRows tr a.code-source").nth(i)
+                assert anchor.evaluate("(a) => a.href") == target
+                before = len(visited)
+                if mobile:
+                    anchor.tap(timeout=5000)
+                else:
+                    anchor.click(timeout=5000)
+                page.wait_for_url(target, wait_until="domcontentloaded", timeout=8000)
+                assert page.title() == "Source navigation fixture", target
+                assert visited[before:] == [target.split("#", 1)[0]], (entry["gg_id"], visited[before:])
+                checked += 1
+    finally:
+        page.unroute("https://github.com/Ventusltd/**", destination)
+    page.goto(url, wait_until="domcontentloaded")
+    page.locator("#dictRows tr").first.wait_for()
+    print(f"PASS {checked} actual browser navigation fixtures; external rendering not measured", flush=True)
 
 
 def audit_detail_independence(browser, url, entries, expected_links, width, height):
     """Prove source links survive an unavailable or stale command detail shard."""
     for mode in ("missing", "stale"):
-        page = browser.new_page(viewport={"width": width, "height": height})
+        mobile = min(width, height) <= 390
+        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
         hits, errors = [], []
         page.on("pageerror", lambda err: errors.append(str(err)))
         def unavailable(route):
@@ -134,7 +179,7 @@ def audit_live(*, expected_identity):
                 browser.close()
 
 
-def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
+def main(root=ROOT, *, run_demos=True, offline=False, base_path='', verify_navigation=False):
     data_root = root / base_path
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -177,7 +222,8 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                 browser = engine.launch(headless=True)
                 try:
                     for width, height in ((1280, 800), (390, 844), (844, 390)):
-                        page = browser.new_page(viewport={"width": width, "height": height})
+                        mobile = min(width, height) <= 390
+                        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
                         errors = []
                         page.on("pageerror", lambda err: errors.append(str(err)))
                         if offline:
@@ -334,8 +380,10 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             assert all("fixture-should-never-request" not in url for url in requests)
                         if paged and not catalogue:
                             page.locator("#dictClear").click()
-                            audit_all_code_rows(page, entries, expected_links)
+                            audit_all_code_rows(page, entries, expected_links, actionability=verify_navigation)
                             audit_detail_independence(browser, url, entries, expected_links, width, height)
+                            if verify_navigation:
+                                audit_navigation(page, url, entries, expected_links, mobile=mobile)
                         assert not errors, errors
                         page.close()
                         passed += 1
