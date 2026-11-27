@@ -71,6 +71,34 @@ LIGHTNING_CONTRACT = {
 }
 
 
+SOLAR_LOOP_AREA_SOURCE = {
+    "repo": "Ventusltd/solar-electrical-topology-analysis-engine-text-based",
+    "commit": "d3b4c497144c2c9b3e8f0e82117e7e9abe4672b9",
+    "blob": "e3014bc950722a78e91810e97610b05326e94531",
+    "path": "src/solar_topology/geometry_receipts.py",
+    "first": 50,
+    "last": 122,
+}
+SOLAR_LOOP_AREA_CONTRACT = {
+    "word": "ESTIMATE SOLAR LOOP AREA",
+    "purpose": "Estimate weighted DC conductor loop area for one solar string from declared segment geometry.",
+    "inputs": ["Solar string segment rows with a single run, topology and string and contiguous segment indexes from one",
+               "Conductor length in metres, pole separation in millimetres and a dimensionless participation weight per segment"],
+    "output": "Deterministic geometry receipt with loop area in square metres, per-segment contributions, route lengths, paired-route fraction and warnings.",
+    "limits": "Engineering screening approximation. Supply finite, nonnegative lengths and separations. The estimate uses declared geometry and weights and warns about missing separation on participating segments and assumed or defaulted geometry.",
+    "symbol": "calculate_geometry_receipt",
+    "source": SOLAR_LOOP_AREA_SOURCE,
+    "estate_group": "Solar Electrical Topology",
+    "discipline": "Solar electrical design",
+    "periodic_category": "conductor geometry",
+    "vedic_class_candidate": "Computation",
+    "aliases": [],
+    "receipt": source_link(SOLAR_LOOP_AREA_SOURCE),
+}
+
+EXPLICIT_CONTRACTS = (LIGHTNING_CONTRACT, SOLAR_LOOP_AREA_CONTRACT)
+
+
 def pinned_functions(raw):
     if len(raw) > MAX_BYTES:
         raise ValueError("Policy source exceeds the byte budget")
@@ -103,9 +131,10 @@ def pinned_functions(raw):
 
 def reproduce_candidate(source, raw):
     """Reconstruct the exact allowed command for verification from source bytes."""
-    if source == LIGHTNING_LAYER_SOURCE:
-        verify_blob(source, raw)
-        return LIGHTNING_CONTRACT
+    for candidate in EXPLICIT_CONTRACTS:
+        if source == candidate["source"]:
+            verify_blob(source, raw)
+            return candidate
     if any(source.get(key) != value for key, value in PIN.items()):
         raise ValueError("Source is outside the reviewed static policy")
     for anchor, candidate in pinned_functions(raw):
@@ -134,11 +163,14 @@ def main():
     queue = discover_candidates(fetch(PIN), archive)
     from source_admissions import candidate_id, make_policy_receipt, read_policy_source
 
-    if candidate_id(LIGHTNING_CONTRACT) not in {row["candidate_id"] for row in archive["records"]}:
-        source = LIGHTNING_LAYER_SOURCE
+    admitted = {row["candidate_id"] for row in archive["records"]}
+    for candidate in EXPLICIT_CONTRACTS:
+        if candidate_id(candidate) in admitted:
+            continue
+        source = candidate["source"]
         raw = read_policy_source(source["repo"], source["commit"], source["path"])
-        verify_exact_span(source, LIGHTNING_LAYER_SYMBOL, raw)
-        queue["records"].append({**LIGHTNING_CONTRACT, "policy_receipt": make_policy_receipt(LIGHTNING_CONTRACT, raw)})
+        verify_exact_span(source, candidate["symbol"], raw)
+        queue["records"].append({**candidate, "policy_receipt": make_policy_receipt(candidate, raw)})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(queue, indent=2) + "\n", encoding="utf-8")
     print(f"Reproduced {len(queue['records'])} pending static source contracts")
