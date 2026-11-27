@@ -85,6 +85,44 @@ def audit_navigation(page, url, entries, expected_links, *, mobile=False):
     print(f"PASS {checked} actual browser navigation fixtures; external rendering not measured", flush=True)
 
 
+def audit_index_recovery(browser, url, entries, expected_links, width, height):
+    """Old cached index and malformed pinned source cannot silently reintroduce the old interaction."""
+    mobile = min(width, height) <= 390
+    for mode in ("recover", "persistent", "bad_pin"):
+        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
+        response = page.request.get(url + "data/command-index.json")
+        assert response.ok
+        good = response.json()
+        stale = json.loads(json.dumps(good))
+        if mode == "bad_pin":
+            stale["entries"][0]["code_sources"][0]["source"]["commit"] = "main"
+        else:
+            for row in stale["entries"]:
+                row.pop("code_sources", None)
+        hits, details, errors = [], [], []
+        page.on("pageerror", lambda err: errors.append(str(err)))
+        page.on("request", lambda req: details.append(req.url) if "/data/command-pages/" in req.url else None)
+        def intercept(route):
+            hits.append(route.request.url)
+            candidate = good if mode == "recover" and len(hits) == 2 else stale
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(candidate))
+        page.route("**/data/command-index.json", intercept)
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            if mode == "recover":
+                page.locator("#dictRows tr").first.wait_for()
+                audit_all_code_rows(page, entries, expected_links)
+            else:
+                page.get_by_text("Source index unavailable or incompatible; reload the page.", exact=False).wait_for()
+                assert page.locator("#dictRows a.code-source, #dictRows .code-cell button").count() == 0
+            assert len(hits) == 2, (mode, hits)
+            assert not details, (mode, details)
+            assert not errors, errors
+            print(f"PASS command index {mode}: bounded recovery or explicit refusal", flush=True)
+        finally:
+            page.close()
+
+
 def audit_detail_independence(browser, url, entries, expected_links, width, height):
     """Prove source links survive an unavailable or stale command detail shard."""
     for mode in ("missing", "stale"):
@@ -389,6 +427,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path='', verify_navig
                             audit_all_code_rows(page, entries, expected_links, actionability=verify_navigation)
                             audit_detail_independence(browser, url, entries, expected_links, width, height)
                             if verify_navigation:
+                                audit_index_recovery(browser, url, entries, expected_links, width, height)
                                 audit_navigation(page, url, entries, expected_links, mobile=mobile)
                         assert not errors, errors
                         page.close()
