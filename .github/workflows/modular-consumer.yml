@@ -158,9 +158,19 @@ jobs:
           python tools/daily_operations.py proposal --output "$RUNNER_TEMP/proposal" --created-at "$started"
           status=$(jq -r .status "$RUNNER_TEMP/proposal/proposal.json")
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          if [ "$status" = 'ready_for_review' ]; then
-            echo 'A verified Git bundle is available in the VEDIC proposal artifact.' >> "$GITHUB_STEP_SUMMARY"
-          fi
+          case "$status" in
+            no_change)
+              echo 'No pending source admissions; preserve receipt and stop the proposal step successfully.' >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+              ;;
+            ready_for_review)
+              echo 'A verified Git bundle is available in the VEDIC proposal artifact.' >> "$GITHUB_STEP_SUMMARY"
+              ;;
+            *)
+              echo "Unrecognised proposal status: $status" >&2
+              exit 1
+              ;;
+          esac
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: vedic-proposal-${{ github.run_id }}
