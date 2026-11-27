@@ -96,7 +96,32 @@ SOLAR_LOOP_AREA_CONTRACT = {
     "receipt": source_link(SOLAR_LOOP_AREA_SOURCE),
 }
 
-EXPLICIT_CONTRACTS = (LIGHTNING_CONTRACT, SOLAR_LOOP_AREA_CONTRACT)
+FIND_CAPABILITY_SOURCE = {
+    "repo": "Ventusltd/seed-data",
+    "commit": "153c1159ff58edcb8be5f598c2c78d13c85b6afd",
+    "blob": "b67bcb84f2a5efb1e88885f97a910bf857e05c21",
+    "path": "experiments/economical-seeds/vedic_candidate.py",
+    "first": 12,
+    "last": 31,
+}
+FIND_CAPABILITY_CONTRACT = {
+    "word": "FIND CAPABILITY",
+    "purpose": "Find candidate instruments for a stated objective in a bounded SEED catalogue.",
+    "inputs": ["Non-blank objective text", "Curated SEED SQLite catalogue",
+               "Optional integer result limit from one to five, default three"],
+    "output": "Lookup status, up to the requested number of demonstrated instrument matches with evidence locators, and query metrics.",
+    "limits": "Lexical lookup over the selected catalogue. An empty result only describes that catalogue. The result is a shortlist; execution planning and actual invocation remain separate.",
+    "symbol": "invoke",
+    "source": FIND_CAPABILITY_SOURCE,
+    "estate_group": "SEED",
+    "discipline": "Capability retrieval",
+    "periodic_category": "evidence catalogue lookup",
+    "vedic_class_candidate": "Data",
+    "aliases": [],
+    "receipt": source_link(FIND_CAPABILITY_SOURCE),
+}
+
+EXPLICIT_CONTRACTS = (LIGHTNING_CONTRACT, SOLAR_LOOP_AREA_CONTRACT, FIND_CAPABILITY_CONTRACT)
 
 
 def pinned_functions(raw):
