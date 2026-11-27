@@ -14,8 +14,8 @@ from stage_pages import FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def audit_all_code_rows(page, entries, expected_links):
-    """Exercise every lazy-loaded source control, not just sample rows."""
+def audit_all_code_rows(page, entries, expected_links, *, require_direct=True):
+    """Check every pinned source anchor, without requiring detail expansion."""
     for entry in entries:
         identity = entry["gg_id"]
         page.locator("#dictSearch").fill(identity)
@@ -23,7 +23,9 @@ def audit_all_code_rows(page, entries, expected_links):
         assert row.count() == 1, identity
         assert row.locator("td").first.inner_text() == entry["word"], identity
         button = row.locator(".code-cell button")
-        if button.count():
+        if require_direct:
+            assert button.count() == 0, (identity, "source requires a second click")
+        elif button.count():
             button.click()
         try:
             row.locator("a.code-source").first.wait_for(timeout=8000)
@@ -39,7 +41,41 @@ def audit_all_code_rows(page, entries, expected_links):
     print(f"PASS all {len(entries)} command code controls and source targets", flush=True)
 
 
-def audit_live():
+def audit_detail_independence(browser, url, entries, expected_links, width, height):
+    """Prove source links survive an unavailable or stale command detail shard."""
+    for mode in ("missing", "stale"):
+        page = browser.new_page(viewport={"width": width, "height": height})
+        hits, errors = [], []
+        page.on("pageerror", lambda err: errors.append(str(err)))
+        def unavailable(route):
+            hits.append(route.request.url)
+            if mode == "missing":
+                route.fulfill(status=404, body="missing detail fixture")
+            else:
+                route.fulfill(status=200, content_type="application/json",
+                              body=json.dumps({"schema": "vedic.command-page.v1",
+                                               "entries": [{"gg_id": "STALE-IDENTITY"}]}))
+        page.route("**/data/command-pages/*.json", unavailable)
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            page.locator("#dictRows tr").first.wait_for()
+            audit_all_code_rows(page, entries, expected_links)
+            assert not hits, (mode, "source anchors requested a detail shard", hits)
+            # Trigger the deliberately broken prose path, then verify its own row's links survive.
+            row = page.locator("#dictRows tr")
+            row.locator("td:nth-child(4) summary").click()
+            row.get_by_text("Command details unavailable", exact=False).wait_for()
+            assert hits, (mode, "fault injection was never exercised")
+            assert row.locator("a.code-source").evaluate_all(
+                "(links) => links.map(link => link.href)") == expected_links(entries[-1])[0]
+            audit_all_code_rows(page, entries, expected_links)
+            assert not errors, errors
+            print(f"PASS {mode} detail shard: all {len(entries)} direct anchors remain accessible", flush=True)
+        finally:
+            page.close()
+
+
+def audit_live(*, expected_identity):
     """Read-only audit of the deployed website, independent of the checkout."""
     url = "https://ventusltd.github.io/vedic-/"
     with sync_playwright() as p:
@@ -82,6 +118,7 @@ def audit_live():
                         ["https://ventusltd.github.io/stars/code.html" for s in ss],
                         ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
                     ]
+                assert release["source_commit"] == expected_identity, (expected_identity, release)
                 assert release["row_count"] == len(entries), release
                 print(f"LIVE {engine.name}: {release['source_commit']} / {len(entries)} commands", flush=True)
                 audit_all_code_rows(page, entries, expected)
@@ -298,6 +335,7 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                         if paged and not catalogue:
                             page.locator("#dictClear").click()
                             audit_all_code_rows(page, entries, expected_links)
+                            audit_detail_independence(browser, url, entries, expected_links, width, height)
                         assert not errors, errors
                         page.close()
                         passed += 1
@@ -312,4 +350,3 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
 
 if __name__ == "__main__":
     main()
-    audit_live()
