@@ -44,3 +44,13 @@ class SourcePolicyTests(unittest.TestCase):
             reproduce_candidate({**anchor, "last": anchor["last"] - 1}, RAW)
         with self.assertRaisesRegex(ValueError, "outside the reviewed"):
             reproduce_candidate({**anchor, "commit": "b" * 40}, RAW)
+
+    def test_explicit_contract_requires_reviewed_blob_and_span(self):
+        anchor = {**PIN, "repo": "Ventusltd/explicit-fixture", "first": 1, "last": 2}
+        candidate = {**CONTRACT, "source": anchor, "symbol": "validate_fixture"}
+        with patch("daily_source_policy.EXPLICIT_CONTRACTS", (candidate,)):
+            self.assertEqual(reproduce_candidate(anchor, RAW), candidate)
+            with self.assertRaisesRegex(ValueError, "blob differs"):
+                reproduce_candidate(anchor, RAW + b"\n")
+            with self.assertRaisesRegex(ValueError, "outside the reviewed"):
+                reproduce_candidate({**anchor, "last": 1}, RAW)
