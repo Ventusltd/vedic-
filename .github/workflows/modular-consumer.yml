@@ -79,10 +79,35 @@ jobs:
           run=()
           if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
             run=(--run-id "$GITHUB_RUN_ID" --accelerator)
-          elif [ "$ACCELERATOR_PREVIEW" = "true" ]; then
-            run=(--accelerator)
           fi
           python tools/daily_operations.py research --output "$RUNNER_TEMP/receipts" "${run[@]}"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] && [ "$ACCELERATOR_PREVIEW" = "true" ]; then
+            gh run download 45913405432 --repo "$GITHUB_REPOSITORY" \
+              --name vedic-accelerator-45913405432-1 --dir "$RUNNER_TEMP/prior-accelerator"
+            PYTHONPATH=tools python - "$RUNNER_TEMP/receipts" "$RUNNER_TEMP/prior-accelerator/accelerator-research.json" <<'PYTHON'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+
+          from daily_accelerator import method_digest, research, validate
+
+          payload = Path(sys.argv[2]).read_bytes()
+          expected = "26297f8c7a173191db18f79a2dd4d1e7998e40a0c78442fe77fe9a6c94eafd24"
+          if hashlib.sha256(payload).hexdigest() != expected:
+              raise SystemExit("Round 1 hosted receipt did not match its pinned digest")
+          receipt = json.loads(payload)
+          previous = validate(receipt["checkpoint"])
+          root = Path.cwd()
+          if receipt["backend"] != "numpy" or previous["completed_rounds"] != 1:
+              raise SystemExit("Expected the successful round 1 NumPy receipt")
+          if previous["method_sha256"] != method_digest(root):
+              raise SystemExit("Round 1 scorer method differs from this checkout")
+          result = research(root, Path(sys.argv[1]), previous)
+          if result["completed_rounds"] != 2:
+              raise SystemExit("Hosted accelerator did not advance to round 2")
+          PYTHON
+          fi
           if [ -f "$RUNNER_TEMP/receipts/accelerator-research.json" ]; then
             echo 'accelerator=true' >> "$GITHUB_OUTPUT"
           fi
