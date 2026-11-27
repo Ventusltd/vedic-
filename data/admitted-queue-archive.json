@@ -770,6 +770,43 @@
           "contract_sha256": "421b5cd986a436ac534775beac760fa06b0cbce7b61249cf0be09ead46ad951a"
         }
       }
+    },
+    {
+      "manifest_commit": "40c07c0de288d6d33c60c29cda4b20d8798246fe",
+      "index": 24,
+      "candidate_id": "7d984b971063e087693217fc7e156f0abef2be4d07322382e8af9fc80d063884",
+      "candidate": {
+        "word": "FIND CAPABILITY",
+        "purpose": "Find candidate instruments for a stated objective in a bounded SEED catalogue.",
+        "inputs": [
+          "Non-blank objective text",
+          "Curated SEED SQLite catalogue",
+          "Optional integer result limit from one to five, default three"
+        ],
+        "output": "Lookup status, up to the requested number of demonstrated instrument matches with evidence locators, and query metrics.",
+        "limits": "Lexical lookup over the selected catalogue. An empty result only describes that catalogue. The result is a shortlist; execution planning and actual invocation remain separate.",
+        "symbol": "invoke",
+        "source": {
+          "repo": "Ventusltd/seed-data",
+          "commit": "153c1159ff58edcb8be5f598c2c78d13c85b6afd",
+          "blob": "b67bcb84f2a5efb1e88885f97a910bf857e05c21",
+          "path": "experiments/economical-seeds/vedic_candidate.py",
+          "first": 12,
+          "last": 31
+        },
+        "estate_group": "SEED",
+        "discipline": "Capability retrieval",
+        "periodic_category": "evidence catalogue lookup",
+        "vedic_class_candidate": "Data",
+        "aliases": [],
+        "receipt": "https://github.com/Ventusltd/seed-data/blob/153c1159ff58edcb8be5f598c2c78d13c85b6afd/experiments/economical-seeds/vedic_candidate.py#L12-L31",
+        "policy_receipt": {
+          "schema": "vedic.static-policy-receipt.v1",
+          "policy": "vedic.static-source.v1",
+          "source_sha256": "aa5f578b265064e027b5f6effa5df9a8a462e71463d90db465219205d165beb4",
+          "contract_sha256": "73be07e60969d66f03ac3ead964da6719d3dd647392c791945ef40dc708c52b6"
+        }
+      }
     }
   ]
 }
