@@ -29,7 +29,7 @@ def exercise_pagination(site):
         dictionary.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     write_command_shards(site)
     print(f"Browser pagination fixture: {len(entries)} rows", flush=True)
-    browser_smoke(site, run_demos=False, offline=True)
+    browser_smoke(site, run_demos=False, offline=True, verify_navigation=True)
 
 
 def exercise_public(public):
@@ -55,7 +55,7 @@ def exercise_public(public):
     baseline = json.loads((latest / "data/dictionary.json").read_bytes())["entries"]
     current = json.loads((public / "data/dictionary.json").read_bytes())["entries"]
     assert current[:len(baseline)] == baseline
-    browser_smoke(public, run_demos=False, offline=True)
+    browser_smoke(public, run_demos=False, offline=True, verify_navigation=True)
     for route in (V1_ROUTE,V2_ROUTE,V3_ROUTE,FIRST_PROSE_ROUTE,TELEPRINTER_PROSE_ROUTE):
         browser_smoke(public, run_demos=False, offline=True, base_path=route)
 

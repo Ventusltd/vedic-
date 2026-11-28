@@ -14,8 +14,8 @@ from stage_pages import FIRST_PROSE_ROUTE, TELEPRINTER_PROSE_ROUTE
 
 ROOT = Path(__file__).resolve().parents[1]
 
-def audit_all_code_rows(page, entries, expected_links):
-    """Exercise every lazy-loaded source control, not just sample rows."""
+def audit_all_code_rows(page, entries, expected_links, *, require_direct=True, actionability=False):
+    """Check every pinned source anchor, without requiring detail expansion."""
     for entry in entries:
         identity = entry["gg_id"]
         page.locator("#dictSearch").fill(identity)
@@ -23,7 +23,9 @@ def audit_all_code_rows(page, entries, expected_links):
         assert row.count() == 1, identity
         assert row.locator("td").first.inner_text() == entry["word"], identity
         button = row.locator(".code-cell button")
-        if button.count():
+        if require_direct:
+            assert button.count() == 0, (identity, "source requires a second click")
+        elif button.count():
             button.click()
         try:
             row.locator("a.code-source").first.wait_for(timeout=8000)
@@ -35,69 +37,193 @@ def audit_all_code_rows(page, entries, expected_links):
         actual = [row.locator(".code-cell").locator(sel).evaluate_all(
             "(links) => links.map(link => link.href)") for sel in selectors]
         assert actual == expected_links(entry), (identity, actual, expected_links(entry))
+        if actionability:
+            # Trial performs real browser hit-testing, scrolling and actionability checks without leaving the page.
+            for anchor in row.locator("a.code-source").all():
+                anchor.click(trial=True, timeout=5000)
         assert not row.get_by_text("Command details unavailable", exact=False).count(), identity
     print(f"PASS all {len(entries)} command code controls and source targets", flush=True)
 
 
-def audit_live():
+def audit_navigation(page, url, entries, expected_links, *, mobile=False):
+    """Activate representative links using real browser input and a bounded intercepted destination.
+
+    The external GitHub source bytes are independently verified by online provenance tests.
+    This fixture proves the browser initiates navigation to the exact URL/line anchor; it
+    does not claim that GitHub's external UI rendered or that all possible tap positions work.
+    """
+    cases = {entry["gg_id"]: entry for entry in (entries[0], entries[-1])}
+    cases.update({entry["gg_id"]: entry for entry in entries if entry["word"] == "ORIENT"})
+    visited = []
+    def destination(route):
+        assert route.request.is_navigation_request()
+        visited.append(route.request.url.split("#", 1)[0])
+        route.fulfill(status=200, content_type="text/html", body="<title>Source navigation fixture</title>")
+    page.route("https://github.com/Ventusltd/**", destination)
+    checked = 0
+    try:
+        for entry in cases.values():
+            for i, target in enumerate(expected_links(entry)[0]):
+                page.goto(url, wait_until="domcontentloaded")
+                page.locator("#dictRows tr").first.wait_for()
+                page.locator("#dictSearch").fill(entry["gg_id"])
+                anchor = page.locator("#dictRows tr a.code-source").nth(i)
+                assert anchor.evaluate("(a) => a.href") == target
+                before = len(visited)
+                if mobile:
+                    anchor.tap(timeout=5000)
+                else:
+                    anchor.click(timeout=5000)
+                page.wait_for_url(target, wait_until="domcontentloaded", timeout=8000)
+                assert page.title() == "Source navigation fixture", target
+                assert visited[before:] == [target.split("#", 1)[0]], (entry["gg_id"], visited[before:])
+                checked += 1
+    finally:
+        page.unroute("https://github.com/Ventusltd/**", destination)
+    page.goto(url, wait_until="domcontentloaded")
+    page.locator("#dictRows tr").first.wait_for()
+    print(f"PASS {checked} actual browser navigation fixtures; external rendering not measured", flush=True)
+
+
+def audit_index_recovery(browser, url, entries, expected_links, width, height):
+    """Old cached index and malformed pinned source cannot silently reintroduce the old interaction."""
+    mobile = min(width, height) <= 390
+    for mode in ("recover", "persistent", "bad_pin"):
+        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
+        response = page.request.get(url + "data/command-index.json")
+        assert response.ok
+        good = response.json()
+        stale = json.loads(json.dumps(good))
+        if mode == "bad_pin":
+            stale["entries"][0]["code_sources"][0]["source"]["commit"] = "main"
+        else:
+            for row in stale["entries"]:
+                row.pop("code_sources", None)
+        hits, details, errors = [], [], []
+        page.on("pageerror", lambda err: errors.append(str(err)))
+        page.on("request", lambda req: details.append(req.url) if "/data/command-pages/" in req.url else None)
+        def intercept(route):
+            hits.append(route.request.url)
+            candidate = good if mode == "recover" and len(hits) == 2 else stale
+            route.fulfill(status=200, content_type="application/json", body=json.dumps(candidate))
+        page.route("**/data/command-index.json", intercept)
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            if mode == "recover":
+                page.locator("#dictRows tr").first.wait_for()
+                audit_all_code_rows(page, entries, expected_links)
+            else:
+                page.get_by_text("Source index unavailable or incompatible; reload the page.", exact=False).wait_for()
+                assert page.locator("#dictRows a.code-source, #dictRows .code-cell button").count() == 0
+            assert len(hits) == 2, (mode, hits)
+            assert not details, (mode, details)
+            assert not errors, errors
+            print(f"PASS command index {mode}: bounded recovery or explicit refusal", flush=True)
+        finally:
+            page.close()
+
+
+def audit_detail_independence(browser, url, entries, expected_links, width, height):
+    """Prove source links survive an unavailable or stale command detail shard."""
+    for mode in ("missing", "stale"):
+        mobile = min(width, height) <= 390
+        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
+        hits, errors = [], []
+        page.on("pageerror", lambda err: errors.append(str(err)))
+        def unavailable(route):
+            hits.append(route.request.url)
+            if mode == "missing":
+                route.fulfill(status=404, body="missing detail fixture")
+            else:
+                route.fulfill(status=200, content_type="application/json",
+                              body=json.dumps({"schema": "vedic.command-page.v1",
+                                               "entries": [{"gg_id": "STALE-IDENTITY"}]}))
+        page.route("**/data/command-pages/*.json", unavailable)
+        try:
+            page.goto(url, wait_until="domcontentloaded")
+            page.locator("#dictRows tr").first.wait_for()
+            audit_all_code_rows(page, entries, expected_links)
+            assert not hits, (mode, "source anchors requested a detail shard", hits)
+            # Trigger the deliberately broken prose path, then verify its own row's links survive.
+            row = page.locator("#dictRows tr")
+            row.locator("td:nth-child(4) summary").click()
+            row.get_by_text("Command details unavailable", exact=False).wait_for()
+            assert hits, (mode, "fault injection was never exercised")
+            assert row.locator("a.code-source").evaluate_all(
+                "(links) => links.map(link => link.href)") == expected_links(entries[-1])[0]
+            audit_all_code_rows(page, entries, expected_links)
+            assert not errors, errors
+            print(f"PASS {mode} detail shard: all {len(entries)} direct anchors remain accessible", flush=True)
+        finally:
+            page.close()
+
+
+def audit_live(*, expected_identity):
     """Read-only audit of the deployed website, independent of the checkout."""
     url = "https://ventusltd.github.io/vedic-/"
     with sync_playwright() as p:
         for engine in (p.chromium, p.webkit):
             browser = engine.launch(headless=True)
             try:
-                page = browser.new_page(viewport={"width": 390, "height": 844}, is_mobile=True,
-                                        has_touch=True, device_scale_factor=3)
-                errors, failed = [], []
-                page.on("pageerror", lambda err: errors.append(str(err)))
-                page.on("response", lambda response: failed.append((response.status, response.url))
-                        if response.url.startswith(url) and response.status >= 400 else None)
-                page.on("requestfailed", lambda req: failed.append((req.failure, req.url))
-                        if req.url.startswith(url) else None)
-                page.goto(url, wait_until="domcontentloaded", timeout=45000)
-                page.locator("#dictRows tr").first.wait_for(timeout=30000)
-                def live_json(path):
-                    response = page.request.get(url + path, headers={"Cache-Control": "no-cache"}, timeout=30000)
-                    assert response.ok, (path, response.status)
-                    return response.json()
-                release = live_json("release.json")
-                entries = live_json("data/dictionary.json")["entries"]
-                translations = {r["id"]: r for r in live_json("data/translation-geodesy.json")["records"]}
-                identities = {e["gg_id"]: e for e in entries}
-                def sources(entry, seen=None):
-                    if seen is None:
-                        seen = set()
-                    if entry["gg_id"] in seen:
-                        return []
-                    seen.add(entry["gg_id"])
-                    src = translations.get(entry.get("translation_ref"), {}).get("source") or entry.get("source")
-                    if src:
-                        return [src]
-                    return [s for identity in entry.get("components", []) for s in sources(identities[identity], seen)]
-                def expected(entry):
-                    ss = sources(entry)
-                    return [
-                        ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in ss],
-                        ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in ss],
-                        ["https://ventusltd.github.io/stars/code.html" for s in ss],
-                        ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
-                    ]
-                assert release["row_count"] == len(entries), release
-                print(f"LIVE {engine.name}: {release['source_commit']} / {len(entries)} commands", flush=True)
-                audit_all_code_rows(page, entries, expected)
-                assert not errors, errors
-                assert not failed, failed
-                page.reload(wait_until="domcontentloaded", timeout=45000)
-                page.locator("#dictRows tr").first.wait_for(timeout=30000)
-                audit_all_code_rows(page, entries[:3], expected)
-                assert not errors, errors
-                assert not failed, failed
-                page.close()
+                for width, height in ((1280, 800), (390, 844), (844, 390)):
+                    mobile = min(width, height) <= 390
+                    page = browser.new_page(viewport={"width": width, "height": height},
+                                            is_mobile=mobile, has_touch=mobile,
+                                            device_scale_factor=3 if mobile else 1)
+                    errors, failed = [], []
+                    page.on("pageerror", lambda err: errors.append(str(err)))
+                    page.on("response", lambda response: failed.append((response.status, response.url))
+                            if response.url.startswith(url) and response.status >= 400 else None)
+                    page.on("requestfailed", lambda req: failed.append((req.failure, req.url))
+                            if req.url.startswith(url) else None)
+                    page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                    page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                    def live_json(path):
+                        response = page.request.get(url + path, headers={"Cache-Control": "no-cache"}, timeout=30000)
+                        assert response.ok, (path, response.status)
+                        return response.json()
+                    release = live_json("release.json")
+                    entries = live_json("data/dictionary.json")["entries"]
+                    translations = {r["id"]: r for r in live_json("data/translation-geodesy.json")["records"]}
+                    identities = {e["gg_id"]: e for e in entries}
+                    def sources(entry, seen=None):
+                        if seen is None:
+                            seen = set()
+                        if entry["gg_id"] in seen:
+                            return []
+                        seen.add(entry["gg_id"])
+                        src = translations.get(entry.get("translation_ref"), {}).get("source") or entry.get("source")
+                        if src:
+                            return [src]
+                        return [s for identity in entry.get("components", []) for s in sources(identities[identity], seen)]
+                    def expected(entry):
+                        ss = sources(entry)
+                        return [
+                            ["https://github.com/"+s["repo"]+"/blob/"+s["commit"]+"/"+quote(s["path"], safe="/")+"#L"+str(s["first"])+"-L"+str(s["last"]) for s in ss],
+                            ["https://raw.githubusercontent.com/"+s["repo"]+"/"+s["commit"]+"/"+quote(s["path"], safe="/") for s in ss],
+                            ["https://ventusltd.github.io/stars/code.html" for s in ss],
+                            ["https://ventusltd.github.io/kuiper-belt/see-through/202611020012/#repo="+quote(s["repo"].split("/")[1], safe="") for s in ss],
+                        ]
+                    assert release["source_commit"] == expected_identity, (expected_identity, release)
+                    assert release["row_count"] == len(entries), release
+                    print(f"LIVE {engine.name} {width}x{height}: {release['source_commit']} / {len(entries)} commands", flush=True)
+                    audit_all_code_rows(page, entries, expected, actionability=True)
+                    assert not errors, errors
+                    assert not failed, failed
+                    page.reload(wait_until="domcontentloaded", timeout=45000)
+                    page.locator("#dictRows tr").first.wait_for(timeout=30000)
+                    audit_all_code_rows(page, entries[:3], expected)
+                    assert not errors, errors
+                    assert not failed, failed
+                    audit_navigation(page, url, entries, expected, mobile=mobile)
+                    assert not errors, errors
+                    assert not failed, failed
+                    page.close()
             finally:
                 browser.close()
 
 
-def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
+def main(root=ROOT, *, run_demos=True, offline=False, base_path='', verify_navigation=False):
     data_root = root / base_path
     server = ThreadingHTTPServer(("127.0.0.1", 0), partial(SimpleHTTPRequestHandler, directory=str(root)))
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -140,7 +266,8 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                 browser = engine.launch(headless=True)
                 try:
                     for width, height in ((1280, 800), (390, 844), (844, 390)):
-                        page = browser.new_page(viewport={"width": width, "height": height})
+                        mobile = min(width, height) <= 390
+                        page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=mobile, has_touch=mobile)
                         errors = []
                         page.on("pageerror", lambda err: errors.append(str(err)))
                         if offline:
@@ -297,7 +424,11 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
                             assert all("fixture-should-never-request" not in url for url in requests)
                         if paged and not catalogue:
                             page.locator("#dictClear").click()
-                            audit_all_code_rows(page, entries, expected_links)
+                            audit_all_code_rows(page, entries, expected_links, actionability=verify_navigation)
+                            audit_detail_independence(browser, url, entries, expected_links, width, height)
+                            if verify_navigation:
+                                audit_index_recovery(browser, url, entries, expected_links, width, height)
+                                audit_navigation(page, url, entries, expected_links, mobile=mobile)
                         assert not errors, errors
                         page.close()
                         passed += 1
@@ -312,4 +443,3 @@ def main(root=ROOT, *, run_demos=True, offline=False, base_path=''):
 
 if __name__ == "__main__":
     main()
-    audit_live()
